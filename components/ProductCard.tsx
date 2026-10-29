@@ -66,7 +66,7 @@ export default function ProductCard({
 
         <div className="mt-2">
           <div className="text-xs font-extrabold text-slate-900 mb-2">
-            UGX {Number(product.price).toLocaleString()}
+            {Number(product.price).toLocaleString()}
           </div>
           <button
             onClick={() => onRent(product)}
