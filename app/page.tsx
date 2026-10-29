@@ -84,7 +84,7 @@ export default function HomePage() {
 
     setFeedback({
       ok: true,
-      msg: `🎉 You invested in ${product.name}! Daily return: ${Number(product.daily_return).toLocaleString()} ${me?.currency}`,
+      msg: `🎉 You invested in ${product.name}! Daily return: ${me?.currency} ${Number(product.daily_return).toLocaleString()}`,
     });
     await loadMe();
     setTimeout(() => {
@@ -169,7 +169,12 @@ export default function HomePage() {
 
       <div className="space-y-3">
         {products.map((p) => (
-          <ProductCard key={p.id} product={p} onRent={handleRent} />
+          <ProductCard 
+            key={p.id} 
+            product={p} 
+            currency={me?.currency || 'UGX'} 
+            onRent={handleRent} 
+          />
         ))}
       </div>
 
@@ -245,7 +250,7 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
         </div>
 
         {shortfall > 0 && !feedback && (
-          <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl mb-3">You need {shortfall.toLocaleString()} more.</div>
+          <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl mb-3">You need {currency} {shortfall.toLocaleString()} more.</div>
         )}
 
         {feedback && (
@@ -254,7 +259,7 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
 
         {!feedback?.ok && (
           <button onClick={go} className="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl" disabled={loading}>
-            {loading ? 'Processing…' : `Invest ${price.toLocaleString()}`}
+            {loading ? 'Processing…' : `Invest ${currency} ${price.toLocaleString()}`}
           </button>
         )}
       </div>
@@ -358,4 +363,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-        }
+    }
