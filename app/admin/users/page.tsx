@@ -21,11 +21,24 @@ type Product = {
   price: number;
 };
 
+// 🚨 Country Tabs Data
+const COUNTRIES = [
+  { code: 'ALL', label: 'All', flag: '🌍' },
+  { code: 'UG', label: 'Uganda', flag: '🇺🇬' },
+  { code: 'KE', label: 'Kenya', flag: '🇰🇪' },
+  { code: 'RW', label: 'Rwanda', flag: '🇷🇼' },
+  { code: 'ZM', label: 'Zambia', flag: '🇿🇲' },
+  { code: 'CM', label: 'Cameroon', flag: '🇨🇲' },
+];
+
 export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  
+  // 🚨 State for the active country tab
+  const [activeCountry, setActiveCountry] = useState('ALL');
 
   async function loadUsers() {
     setLoading(true);
@@ -48,27 +61,55 @@ export default function AdminUsersPage() {
     loadUsers();
   }, [router]);
 
+  // 🚨 Filter users based on the selected country tab
+  const filteredUsers = users.filter(u => 
+    activeCountry === 'ALL' || u.country === activeCountry
+  );
+
   return (
     <main className="min-h-screen bg-slate-900 pb-24">
-      <div className="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/admin" className="text-slate-400 text-xl active:scale-95 transition">←</Link>
-          <h1 className="text-xl font-bold text-white">Manage Users</h1>
+      
+      {/* Header & Country Tabs */}
+      <div className="bg-slate-800 border-b border-slate-700 sticky top-0 z-10">
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin" className="text-slate-400 text-xl active:scale-95 transition">←</Link>
+            <h1 className="text-xl font-bold text-white">Manage Users</h1>
+          </div>
+          <div className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-400/20">
+            {filteredUsers.length} Users
+          </div>
         </div>
-        <div className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-400/20">
-          {users.length} Users
+
+        {/* Country Scrollable Tabs */}
+        <div className="flex overflow-x-auto gap-2 px-4 pb-3 scrollbar-hide">
+          {COUNTRIES.map((c) => (
+            <button
+              key={c.code}
+              onClick={() => setActiveCountry(c.code)}
+              className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                activeCountry === c.code
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20'
+                  : 'bg-slate-900/50 text-slate-400 border-slate-700 hover:text-white'
+              }`}
+            >
+              <span>{c.flag}</span>
+              {c.label}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* User List */}
       <div className="p-4 space-y-3">
         {loading ? (
           <div className="text-center text-slate-400 py-10">Loading users…</div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <div className="text-center text-slate-500 py-10 bg-slate-800 rounded-2xl border border-slate-700">
-            No users found.
+            No users found for this country.
           </div>
         ) : (
-          users.map((u) => (
+          filteredUsers.map((u) => (
             <button
               key={u.id}
               onClick={() => setSelectedUserId(u.id)}
@@ -89,13 +130,14 @@ export default function AdminUsersPage() {
               </div>
               <div className="flex justify-between items-center text-[10px] text-slate-400">
                 <span>{u.phone}</span>
-                <span>{u.country}</span>
+                <span className="bg-slate-900 px-2 py-1 rounded-md border border-slate-700">{u.country || 'N/A'}</span>
               </div>
             </button>
           ))
         )}
       </div>
 
+      {/* User Details Modal */}
       {selectedUserId && (
         <UserDetailModal
           userId={selectedUserId}
@@ -110,6 +152,9 @@ export default function AdminUsersPage() {
   );
 }
 
+// ==========================================
+// USER DETAILS MODAL
+// ==========================================
 function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClose: () => void, onRefresh: () => void }) {
   const [data, setData] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -118,7 +163,6 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
   const [msg, setMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Action States
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
@@ -128,21 +172,13 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
       setLoading(true);
       setErrorMsg('');
       
-      // Load user details
       const res = await fetch(`/api/admin/users/${userId}?t=` + Date.now());
-      
-      if (!res.ok) {
-        throw new Error(`Failed to load user (Status: ${res.status})`);
-      }
+      if (!res.ok) throw new Error(`Failed to load user (Status: ${res.status})`);
       
       const json = await res.json();
-      if (!json.user) {
-        throw new Error('User data not found in response');
-      }
-      
+      if (!json.user) throw new Error('User data not found in response');
       setData(json);
 
-      // Load products for granting
       const prodRes = await fetch(`/api/admin/products?t=` + Date.now());
       const prodData = await prodRes.json();
       setProducts(prodData.products ?? []);
@@ -282,74 +318,39 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
         {/* Action Sections */}
         <div className="space-y-4 pt-4 border-t border-slate-700">
           
-          {/* Adjust Balance */}
           <div>
             <div className="text-[10px] text-slate-500 font-bold uppercase mb-2">Adjust Balance (Use - to subtract)</div>
             <div className="flex gap-2 mb-2">
-              <input 
-                type="number" 
-                placeholder="e.g. 5000" 
-                value={adjustAmount} 
-                onChange={e => setAdjustAmount(e.target.value)}
-                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm"
-              />
-              <input 
-                type="text" 
-                placeholder="Reason" 
-                value={adjustReason} 
-                onChange={e => setAdjustReason(e.target.value)}
-                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm"
-              />
+              <input type="number" placeholder="e.g. 5000" value={adjustAmount} onChange={e => setAdjustAmount(e.target.value)} className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm" />
+              <input type="text" placeholder="Reason" value={adjustReason} onChange={e => setAdjustReason(e.target.value)} className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm" />
             </div>
-            <button 
-              onClick={() => { handleAction('adjust', { amount: Number(adjustAmount), reason: adjustReason }); setAdjustAmount(''); setAdjustReason(''); }}
-              disabled={!adjustAmount || actionLoading}
-              className="w-full bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold disabled:opacity-50"
-            >
+            <button onClick={() => { handleAction('adjust', { amount: Number(adjustAmount), reason: adjustReason }); setAdjustAmount(''); setAdjustReason(''); }} disabled={!adjustAmount || actionLoading} className="w-full bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold disabled:opacity-50">
               Apply Balance Adjustment
             </button>
           </div>
 
-          {/* Grant Product */}
           <div>
             <div className="text-[10px] text-slate-500 font-bold uppercase mb-2">Grant Free Asset</div>
             <div className="flex gap-2">
-              <select 
-                value={selectedProduct} 
-                onChange={e => setSelectedProduct(e.target.value)}
-                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm"
-              >
+              <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm">
                 {products.map(p => (
                   <option key={p.id} value={p.id}>{p.name} ({Number(p.price).toLocaleString()})</option>
                 ))}
               </select>
-              <button 
-                onClick={() => handleAction('grant', { productId: selectedProduct })}
-                disabled={!selectedProduct || actionLoading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-50"
-              >
+              <button onClick={() => handleAction('grant', { productId: selectedProduct })} disabled={!selectedProduct || actionLoading} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-50">
                 Grant
               </button>
             </div>
           </div>
 
-          {/* Ban/Unban */}
-          <button 
-            onClick={() => handleAction('ban')}
-            disabled={actionLoading}
-            className={`w-full py-3 rounded-xl text-xs font-bold transition ${user.is_banned ? 'bg-emerald-600 text-white' : 'bg-red-600/20 text-red-400 border border-red-600/30'}`}
-          >
+          <button onClick={() => handleAction('ban')} disabled={actionLoading} className={`w-full py-3 rounded-xl text-xs font-bold transition ${user.is_banned ? 'bg-emerald-600 text-white' : 'bg-red-600/20 text-red-400 border border-red-600/30'}`}>
             {user.is_banned ? 'Unban Account' : 'Ban Account'}
           </button>
 
-          {msg && (
-            <div className="text-center text-xs font-bold text-emerald-400 bg-emerald-400/10 py-2 rounded-lg">
-              {msg}
-            </div>
-          )}
+          {msg && <div className="text-center text-xs font-bold text-emerald-400 bg-emerald-400/10 py-2 rounded-lg">{msg}</div>}
 
         </div>
       </div>
     </div>
   );
-}
+            }
