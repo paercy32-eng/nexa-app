@@ -22,16 +22,26 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
+      // 🚨 Get the raw text first
+      const text = await res.text();
 
-      if (!res.ok) {
-        setError(data.error || 'Login failed');
-      } else {
-        router.replace('/admin');
-        router.refresh();
+      try {
+        // Try to parse it as JSON
+        const data = JSON.parse(text);
+        if (!res.ok) {
+          setError(data.error || 'Login failed');
+        } else {
+          router.replace('/admin');
+          router.refresh();
+        }
+      } catch (parseError) {
+        // If it fails to parse, it means Vercel returned an HTML error page
+        console.error("Server returned HTML:", text.substring(0, 100));
+        setError(`Server crashed (Status ${res.status}). Check Vercel logs.`);
       }
-    } catch {
-      setError('Something went wrong. Please try again.');
+
+    } catch (err: any) {
+      setError(err.message || 'Network error.');
     } finally {
       setLoading(false);
     }
