@@ -7,7 +7,6 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { pesajet } from '@/lib/pesajet';
-// import { marzpay } from '@/lib/marzpay'; // You will uncomment this when MarzPay is imported
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,20 +19,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') ?? 'pending';
 
-    let query = supabaseAdmin
-      .from('withdrawals')
-      .select('*');
-
-    if (status !== 'all') {
-      query = query.eq('status', status);
-    }
+    let query = supabaseAdmin.from('withdrawals').select('*');
+    if (status !== 'all') query = query.eq('status', status);
 
     const { data, error } = await query.order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Admin withdrawals fetch error:', error);
-      return NextResponse.json({ error: 'Failed to load' }, { status: 500 });
-    }
+    if (error) return NextResponse.json({ error: 'Failed to load' }, { status: 500 });
 
     // Fetch user details for each withdrawal
     const userIds = Array.from(new Set((data ?? []).map((w) => w.user_id)));
@@ -59,7 +50,6 @@ export async function GET(req: NextRequest) {
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
     );
   } catch (err) {
-    console.error('Admin withdrawals error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -78,24 +68,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
+    // Fetch the withdrawal AND the user's country
     const { data: wd } = await supabaseAdmin
       .from('withdrawals')
-      .select('*')
+      .select(`
+        *,
+        users (country)
+      `)
       .eq('id', withdrawalId)
       .maybeSingle();
 
     if (!wd) return NextResponse.json({ error: 'Withdrawal not found' }, { status: 404 });
     if (wd.status !== 'pending') return NextResponse.json({ error: `Already ${wd.status}` }, { status: 400 });
 
+    const userCountry = wd.users?.country || 'UG';
+
     // ==============================
     // APPROVE
     // ==============================
     if (action === 'approve') {
       const userNet = Math.round(Number(wd.amount) * 0.84); // 16% fee
+      const reference = crypto.randomUUID();
 
       try {
         // 🚨 ROUTING: PesaJet for UG, MarzPay for others
-        if (wd.gateway === 'pesajet') {
+        if (wd.gateway === 'pesajet' || userCountry === 'UG') {
            const formattedPhone = pesajet.utils.formatPhoneNumber(wd.recipient_phone);
            let provider = pesajet.utils.detectProvider(wd.recipient_phone);
            if (!provider) provider = 'mtn'; 
@@ -106,24 +103,60 @@ export async function POST(req: NextRequest) {
              currency: wd.currency,
              phoneNumber: formattedPhone,
              provider: provider,
-             reference: crypto.randomUUID(),
+             reference: reference,
              description: `Nexa Withdrawal for ${wd.recipient_name}`,
            });
 
            console.log('PesaJet Payout initiated:', payout.transactionId);
-        } else {
-           // 🚨 PLACEHOLDER FOR MARZPAY (Once you import the keys, you will add the MarzPay fetch logic here)
-           console.log('MarzPay payout logic needs to be added here for', wd.currency);
-           // throw new Error('MarzPay integration not yet complete');
+        } 
+        else {
+           // 🚨 MARZPAY INTEGRATION FOR KENYA, RWANDA, ZAMBIA, CAMEROON
+           const marzpayKey = process.env.MARZPAY_API_KEY;
+           const marzpaySecret = process.env.MARZPAY_API_SECRET;
+           const marzpayBaseUrl = 'https://wallet.wearemarz.com/api/v1';
+           const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://your-nexa-domain.com';
+
+           if (!marzpayKey || !marzpaySecret) {
+             throw new Error('MarzPay API credentials are missing in Vercel.');
+           }
+
+           const authToken = Buffer.from(`${marzpayKey}:${marzpaySecret}`).toString('base64');
+
+           const marzpayRes = await fetch(`${marzpayBaseUrl}/send-money`, {
+             method: 'POST',
+             headers: {
+               'Authorization': `Basic ${authToken}`,
+               'Content-Type': 'application/json',
+               Accept: 'application/json',
+             },
+             body: JSON.stringify({
+               amount: userNet,
+               phone_number: wd.recipient_phone,
+               country: userCountry, // KE, RW, ZM, CM
+               recipient_name: wd.recipient_name,
+               reference: reference,
+               callback_url: `${appUrl}/api/webhooks/marzpay`,
+               description: `Nexa Withdrawal for ${wd.recipient_name}`,
+               metadata: [{ withdrawalId: wd.id }],
+             }),
+           });
+
+           const marzpayData = await marzpayRes.json().catch(() => ({}));
+
+           if (!marzpayRes.ok || marzpayData?.status === 'error') {
+             console.error('MarzPay payout failed:', marzpayData);
+             throw new Error(marzpayData?.message || 'MarzPay payout failed');
+           }
+
+           console.log('MarzPay Payout initiated:', marzpayData);
         }
 
-        // Update withdrawal status
+        // If we reach here, the API call was successful. Mark as completed.
         await supabaseAdmin
           .from('withdrawals')
           .update({ status: 'completed' })
           .eq('id', withdrawalId);
 
-        // Update transaction log
         await supabaseAdmin
           .from('transactions')
           .update({ status: 'completed', type: 'withdrawal' })
