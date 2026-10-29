@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { comparePassword, signSession, SESSION_COOKIE } from '@/lib/auth';
+import { comparePassword, signSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,11 +11,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Find the admin in the database
-    const { data: admin } = await supabaseAdmin
+    const { data: admin, error } = await supabaseAdmin
       .from('admins')
       .select('id, username, password_hash')
       .eq('username', username)
       .maybeSingle();
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
+    }
 
     if (!admin) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
@@ -28,7 +33,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Create the admin session cookie
-    // Note: We use a separate cookie name for admin so it doesn't conflict with user sessions
     const token = await signSession({ userId: admin.id, phone: 'admin' });
     
     const res = NextResponse.json({ success: true });
@@ -43,8 +47,8 @@ export async function POST(req: NextRequest) {
 
     return res;
 
-  } catch (err) {
-    console.error('Admin login error:', err);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  } catch (err: any) {
+    console.error('Admin login crash:', err);
+    return NextResponse.json({ error: `Server crash: ${err.message}` }, { status: 500 });
   }
 }
