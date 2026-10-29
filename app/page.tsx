@@ -31,6 +31,9 @@ export default function HomePage() {
   const [selected, setSelected] = useState<Product | null>(null);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
 
+  const [showRecharge, setShowRecharge] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
     if (res.status === 401) {
@@ -67,12 +70,27 @@ export default function HomePage() {
   }
 
   async function confirmRent(product: Product) {
-    // This will be connected to the backend purchase route later
-    setFeedback({ ok: true, msg: `Ready to invest in ${product.name}!` });
+    const res = await fetch('/api/rentals/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: product.id }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setFeedback({ ok: false, msg: data.error || 'Failed to invest.' });
+      return;
+    }
+
+    setFeedback({
+      ok: true,
+      msg: `🎉 You invested in ${product.name}! Daily return: ${Number(product.daily_return).toLocaleString()} ${me?.currency}`,
+    });
+    await loadMe();
     setTimeout(() => {
       setSelected(null);
       setFeedback(null);
-    }, 2000);
+    }, 2500);
   }
 
   if (loading) {
@@ -116,14 +134,14 @@ export default function HomePage() {
       {/* 4 Circular Action Icons */}
       <div className="grid grid-cols-4 gap-2 mb-6">
         
-        <button onClick={() => alert('Deposit modal coming soon!')} className="flex flex-col items-center gap-2 active:scale-95 transition">
+        <button onClick={() => setShowRecharge(true)} className="flex flex-col items-center gap-2 active:scale-95 transition">
           <div className="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <span className="text-xs font-semibold text-slate-700">Deposit</span>
         </button>
 
-        <button onClick={() => alert('Withdraw modal coming soon!')} className="flex flex-col items-center gap-2 active:scale-95 transition">
+        <button onClick={() => setShowWithdraw(true)} className="flex flex-col items-center gap-2 active:scale-95 transition">
           <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /><path d="M15 15h3" /></svg>
           </div>
@@ -155,18 +173,189 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Basic Purchase Modal Placeholder */}
+      {/* Recharge Modal */}
+      {showRecharge && (
+        <RechargeModal
+          currency={me?.currency || 'UGX'}
+          onClose={() => setShowRecharge(false)}
+          onSuccess={async () => {
+            await loadMe();
+            setShowRecharge(false);
+          }}
+        />
+      )}
+
+      {/* Withdraw Modal */}
+      {showWithdraw && (
+        <WithdrawModal
+          balance={me?.balance ?? 0}
+          currency={me?.currency || 'UGX'}
+          onClose={() => setShowWithdraw(false)}
+          onSuccess={async () => {
+            await loadMe();
+            setShowWithdraw(false);
+          }}
+        />
+      )}
+
+      {/* Purchase Modal */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelected(null)}>
-          <div className="w-full max-w-md bg-white rounded-3xl p-5" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Confirm Investment</h3>
-            <p className="text-sm text-gray-500 mb-4">{selected.name}</p>
-            {feedback && <div className="p-3 bg-green-50 text-green-700 rounded-xl text-sm mb-4">{feedback.msg}</div>}
-            <button onClick={() => confirmRent(selected)} className="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl">Invest {selected.price.toLocaleString()}</button>
-            <button onClick={() => setSelected(null)} className="w-full mt-2 text-gray-500 text-sm">Cancel</button>
-          </div>
-        </div>
+        <RentModal
+          product={selected}
+          balance={me?.balance ?? 0}
+          currency={me?.currency || 'UGX'}
+          feedback={feedback}
+          onClose={() => {
+            setSelected(null);
+            setFeedback(null);
+          }}
+          onConfirm={confirmRent}
+        />
       )}
     </main>
   );
 }
+
+function RentModal({ product, balance, currency, feedback, onClose, onConfirm }: any) {
+  const [loading, setLoading] = useState(false);
+  const price = Number(product.price);
+  const shortfall = price - balance;
+
+  async function go() {
+    setLoading(true);
+    await onConfirm(product);
+    setLoading(false);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="w-full max-w-md bg-white rounded-3xl p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <div className="text-lg font-bold text-gray-900">Confirm Investment</div>
+            <div className="text-xs text-emerald-600 font-bold">{product.name}</div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 text-xl">×</button>
+        </div>
+
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs mb-4 space-y-2">
+          <div className="flex justify-between"><span className="text-gray-500">Price</span><span className="font-semibold">{currency} {price.toLocaleString()}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Daily return</span><span className="font-bold text-emerald-600">{currency} {Number(product.daily_return).toLocaleString()}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Your balance</span><span className="font-semibold">{currency} {balance.toLocaleString()}</span></div>
+        </div>
+
+        {shortfall > 0 && !feedback && (
+          <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl mb-3">You need {shortfall.toLocaleString()} more.</div>
+        )}
+
+        {feedback && (
+          <div className={`p-3 rounded-xl text-sm mb-3 border ${feedback.ok ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'}`}>{feedback.msg}</div>
+        )}
+
+        {!feedback?.ok && (
+          <button onClick={go} className="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl" disabled={loading}>
+            {loading ? 'Processing…' : `Invest ${price.toLocaleString()}`}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RechargeModal({ currency, onClose, onSuccess }: any) {
+  const [amount, setAmount] = useState('20000');
+  const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/me').then(res => res.json()).then(data => { if (data?.user?.phone) setPhone(data.user.phone); });
+  }, []);
+
+  async function submit(e: any) {
+    e.preventDefault();
+    setLoading(true);
+    setMsg('');
+    try {
+      const res = await fetch('/api/deposits/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Number(amount), phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) setMsg(data.error);
+      else { setSent(true); setTimeout(onSuccess, 3000); }
+    } catch { setMsg('Something went wrong.'); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70" onClick={onClose}>
+      <div className="w-full max-w-md bg-white rounded-t-3xl p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-lg font-bold text-gray-900">Deposit {currency}</div>
+          <button onClick={onClose} className="text-gray-400 text-xl">×</button>
+        </div>
+        {!sent ? (
+          <form onSubmit={submit} className="space-y-4">
+            <div>
+              <label className="block text-[10px] text-gray-500 font-bold mb-1">AMOUNT</label>
+              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-4 py-3" required />
+            </div>
+            <div>
+              <label className="block text-[10px] text-gray-500 font-bold mb-1">PHONE NUMBER</label>
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-4 py-3" required />
+            </div>
+            {msg && <div className="text-red-500 text-sm">{msg}</div>}
+            <button type="submit" disabled={loading} className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">{loading ? 'Sending...' : 'Send Request'}</button>
+          </form>
+        ) : (
+          <div className="text-center py-6 text-emerald-600 font-bold">Check your phone for the PIN prompt!</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function submit(e: any) {
+    e.preventDefault();
+    setLoading(true);
+    setMsg('');
+    try {
+      const res = await fetch('/api/withdrawals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Number(amount) }),
+      });
+      const data = await res.json();
+      if (!res.ok) setMsg(data.error);
+      else onSuccess();
+    } catch { setMsg('Something went wrong.'); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70" onClick={onClose}>
+      <div className="w-full max-w-md bg-white rounded-t-3xl p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-lg font-bold text-gray-900">Withdraw {currency}</div>
+          <button onClick={onClose} className="text-gray-400 text-xl">×</button>
+        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block text-[10px] text-gray-500 font-bold mb-1">AMOUNT</label>
+            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-4 py-3" required />
+          </div>
+          {msg && <div className="text-red-500 text-sm">{msg}</div>}
+          <button type="submit" disabled={loading} className="w-full bg-orange-500 text-white font-bold py-3 rounded-xl">{loading ? 'Submitting...' : 'Request Withdrawal'}</button>
+        </form>
+      </div>
+    </div>
+  );
+        }
