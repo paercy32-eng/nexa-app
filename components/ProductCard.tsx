@@ -11,9 +11,11 @@ type Product = {
 
 export default function ProductCard({
   product,
+  currency,
   onRent,
 }: {
   product: Product;
+  currency: string;
   onRent: (p: Product) => void;
 }) {
   const totalReturn = Number(product.daily_return) * product.cycle_days;
@@ -52,13 +54,13 @@ export default function ProductCard({
             <div className="flex justify-between items-center text-[10px]">
               <span className="text-slate-500 font-medium">Daily</span>
               <span className="font-bold text-emerald-600">
-                {Number(product.daily_return).toLocaleString()}
+                {currency} {Number(product.daily_return).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between items-center text-[10px]">
               <span className="text-slate-500 font-medium">Total</span>
               <span className="font-bold text-slate-900">
-                {totalReturn.toLocaleString()}
+                {currency} {totalReturn.toLocaleString()}
               </span>
             </div>
           </div>
@@ -66,7 +68,7 @@ export default function ProductCard({
 
         <div className="mt-2">
           <div className="text-xs font-extrabold text-slate-900 mb-2">
-            {Number(product.price).toLocaleString()}
+            {currency} {Number(product.price).toLocaleString()}
           </div>
           <button
             onClick={() => onRent(product)}
