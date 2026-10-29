@@ -37,37 +37,41 @@ export default function MyPortfolioPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-emerald-600 font-semibold">Loading…</div>
+      <main className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
+        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 animate-fade-in bg-slate-50 pb-24">
-      <div className="px-2 mb-6">
-        <h1 className="text-3xl font-black text-slate-900">My Portfolio</h1>
-        <p className="text-slate-500 text-sm mt-1 font-medium">
+    <main className="min-h-screen px-4 py-6 animate-fade-in bg-[#0a0a0f] text-zinc-100 pb-24 selection:bg-violet-500/30">
+      
+      {/* Header */}
+      <div className="px-1 mb-8">
+        <h1 className="text-3xl font-black text-white tracking-tight">My Portfolio</h1>
+        <p className="text-zinc-500 text-xs mt-1 font-medium uppercase tracking-wider">
           {rentals.length === 0
             ? 'Your active assets will appear here.'
-            : `You have ${rentals.length} active asset${rentals.length > 1 ? 's' : ''}.`}
+            : `You have ${rentals.length} active asset${rentals.length > 1 ? 's' : ''}`}
         </p>
       </div>
 
       {rentals.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="mb-6 text-slate-300">
+        <div className="flex flex-col items-center justify-center py-20 opacity-70">
+          <div className="mb-6 text-zinc-600">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 8L12 3L3 8V16L12 21L21 16V8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
               <path d="M3 8L12 13L21 8" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
               <path d="M12 21V13" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-              <path d="M12 3L3 8L12 13L21 8L12 3Z" fill="#F1F5F9" />
             </svg>
           </div>
           
-          <div className="text-slate-400 mb-6 font-bold text-lg">
+          <div className="text-zinc-500 font-bold text-lg tracking-wide uppercase">
             No active assets
           </div>
+          <button onClick={() => router.push('/')} className="mt-6 text-xs text-violet-400 font-bold hover:text-violet-300 transition">
+            Browse Assets &rarr;
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -80,53 +84,61 @@ export default function MyPortfolioPage() {
             );
 
             return (
-              <div key={r.id} className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200">
-                <div className="flex items-start justify-between mb-4">
+              <div key={r.id} className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl group">
+                
+                {/* Subtle Glow Effect */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 blur-2xl rounded-full group-hover:bg-cyan-500/10 transition"></div>
+
+                <div className="relative z-10 flex items-start justify-between mb-5">
                   <div>
-                    <div className="font-bold text-slate-900 text-base">
+                    <div className="font-black text-white text-lg tracking-wide">
                       {r.product_name}
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
-                      Started {new Date(r.start_at).toLocaleString()}
+                    <div className="text-[10px] text-zinc-500 mt-1 font-medium uppercase tracking-wider">
+                      Started {new Date(r.start_at).toLocaleDateString()}
                     </div>
                     {r.status === 'active' && (
-                      <div className="text-[10px] text-emerald-600 mt-1 font-bold">
-                        Next payout: {nextPayout.toLocaleString()}
+                      <div className="text-[10px] text-violet-400 mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Next: {nextPayout.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     )}
                   </div>
                   <div
-                    className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-full ${
+                    className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border ${
                       r.status === 'active'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-zinc-800 text-zinc-400 border-zinc-700'
                     }`}
                   >
                     {r.status}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 mb-4">
+                {/* Stats Grid */}
+                <div className="relative z-10 grid grid-cols-3 gap-3 mb-5">
                   <Stat
-                    label="DAILY"
+                    label="Daily Yield"
                     value={`${r.daily_profit.toLocaleString()}`}
-                    highlight
+                    highlight="cyan"
                   />
                   <Stat
-                    label="EARNED"
+                    label="Total Earned"
                     value={`${r.total_earned.toLocaleString()}`}
+                    highlight="violet"
                   />
-                  <Stat label="DAYS LEFT" value={r.days_remaining.toString()} />
+                  <Stat label="Days Left" value={r.days_remaining.toString()} />
                 </div>
 
-                <div>
-                  <div className="flex justify-between text-[10px] text-slate-500 font-bold mb-1.5">
-                    <span>Progress</span>
+                {/* Progress Bar */}
+                <div className="relative z-10">
+                  <div className="flex justify-between text-[10px] text-zinc-400 font-bold mb-2 tracking-wider uppercase">
+                    <span>Asset Progress</span>
                     <span>{Math.round(progress)}%</span>
                   </div>
-                  <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="w-full h-2 rounded-full bg-black/50 overflow-hidden border border-white/5">
                     <div
-                      className="h-full rounded-full bg-emerald-500 transition-all"
+                      className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_10px_rgba(139,92,246,0.5)] transition-all"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -147,16 +159,18 @@ function Stat({
 }: {
   label: string;
   value: string;
-  highlight?: boolean;
+  highlight?: 'cyan' | 'violet';
 }) {
   return (
-    <div className="rounded-2xl p-2.5 text-center bg-slate-50 border border-slate-100">
-      <div className="text-[9px] text-slate-500 font-bold mb-1">
+    <div className="rounded-2xl p-3 text-center bg-black/40 border border-white/5">
+      <div className="text-[9px] text-zinc-500 font-bold mb-1.5 uppercase tracking-wider">
         {label}
       </div>
       <div
-        className={`text-[11px] font-bold ${
-          highlight ? 'text-emerald-600' : 'text-slate-900'
+        className={`text-[11px] font-black ${
+          highlight === 'cyan' ? 'text-cyan-400' : 
+          highlight === 'violet' ? 'text-violet-400' : 
+          'text-zinc-200'
         }`}
       >
         {value}
