@@ -1,0 +1,37 @@
+export const dynamic = 'force-dynamic';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { verifySession } from '@/lib/auth';
+import { cookies } from 'next/headers';
+
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get('nexa_admin_session')?.value;
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    
+    const userId = params.id;
+
+    // 1. Get user
+    const { data: user, error } = await supabaseAdmin.from('users').select('*').eq('id', userId).single();
+    if (error || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
+    // 2. Get active products (modules)
+    const { data: modules } = await supabaseAdmin.from('user_modules').select('*').eq('user_id', userId).eq('status', 'active');
+
+    // 3. Get referrals (Level 1)
+    const { data: referrals } = await supabaseAdmin.from('users').select('id, name, phone, created_at').eq('referred_by', userId);
+
+    // 4. Calculate total deposited
+    const { data: deposits } = await supabaseAdmin.from('deposits').select('amount').eq('user_id', userId).eq('status', 'completed');
+    const totalDeposited = (deposits || []).reduce((sum, d) => sum + Number(d.amount), 0);
+
+    return NextResponse.json({
+      user: { ...user, total_deposited: totalDeposited },
+      activeModules: modules || [],
+      referrals: referrals || []
+    });
+  } catch (err) {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}
