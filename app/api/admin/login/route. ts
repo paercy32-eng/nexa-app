@@ -1,0 +1,50 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { comparePassword, signSession, SESSION_COOKIE } from '@/lib/auth';
+
+export async function POST(req: NextRequest) {
+  try {
+    const { username, password } = await req.json();
+
+    if (!username || !password) {
+      return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
+    }
+
+    // 1. Find the admin in the database
+    const { data: admin } = await supabaseAdmin
+      .from('admins')
+      .select('id, username, password_hash')
+      .eq('username', username)
+      .maybeSingle();
+
+    if (!admin) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    // 2. Check the password
+    const isValid = await comparePassword(password, admin.password_hash);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    // 3. Create the admin session cookie
+    // Note: We use a separate cookie name for admin so it doesn't conflict with user sessions
+    const token = await signSession({ userId: admin.id, phone: 'admin' });
+    
+    const res = NextResponse.json({ success: true });
+    
+    res.cookies.set('nexa_admin_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
+
+    return res;
+
+  } catch (err) {
+    console.error('Admin login error:', err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}
