@@ -50,7 +50,7 @@ function ProfileIcon({ active }: IconProps) {
 
 const tabs = [
   { href: '/', label: 'Home', Icon: HomeIcon },
-  { href: '/my-pumps', label: 'Pumps', Icon: OrderIcon }, 
+  { href: '/my-portfolio', label: 'Portfolio', Icon: OrderIcon }, // 🚨 Updated here
   { href: '/team', label: 'Team', Icon: TeamIcon },
   { href: '/profile', label: 'Profile', Icon: ProfileIcon },
 ];
