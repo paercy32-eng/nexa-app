@@ -96,16 +96,16 @@ export default function TeamPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20 bg-slate-50 min-h-screen">
-        <div className="w-8 h-8 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin" />
+      <div className="flex justify-center py-20 bg-[#0a0a0f] min-h-screen">
+        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="text-center py-12 bg-slate-50 min-h-screen">
-        <p className="text-slate-500 text-sm">Could not load team data.</p>
+      <div className="text-center py-12 bg-[#0a0a0f] min-h-screen">
+        <p className="text-zinc-500 text-sm">Could not load team data.</p>
       </div>
     );
   }
@@ -124,42 +124,51 @@ export default function TeamPage() {
   const referralLink = `${baseUrl}/register?ref=${data.referralCode}`;
 
   return (
-    <div className="animate-fade-in bg-slate-50 min-h-screen pb-24">
+    <div className="animate-fade-in bg-[#0a0a0f] min-h-screen pb-24 text-zinc-100 selection:bg-violet-500/30">
       
       {/* Header */}
-      <div className="bg-white px-4 py-6 shadow-sm mb-4 border-b border-slate-200">
-        <h1 className="text-2xl font-black text-slate-900">Nexa Team</h1>
-        <p className="text-emerald-600 font-bold text-xs mt-1 tracking-wide uppercase">Build your network & earn commissions</p>
+      <div className="px-5 pt-8 pb-6">
+        <h1 className="text-3xl font-black text-white tracking-tight">Network Hub</h1>
+        <p className="text-violet-400 font-bold text-[10px] mt-1 tracking-[0.2em] uppercase">Build your downline & earn</p>
       </div>
 
       <div className="px-4">
         
-        {/* Top Totals */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm text-center">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Commission</div>
-            <div className="text-xl font-black text-emerald-600">UGX {data.totalEarnings.toLocaleString()}</div>
+        {/* Top Totals (Glassmorphism) */}
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="relative overflow-hidden bg-gradient-to-br from-violet-900/40 to-[#12121a] border border-violet-500/20 rounded-3xl p-5 shadow-2xl">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/20 blur-2xl rounded-full"></div>
+            <div className="text-[9px] text-violet-300 font-bold uppercase tracking-widest mb-1.5 relative z-10">Total Commission</div>
+            <div className="text-xl font-black text-white relative z-10">
+              <span className="text-xs text-violet-400 mr-1">UGX</span>
+              {data.totalEarnings.toLocaleString()}
+            </div>
           </div>
-          <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm text-center">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Team Size</div>
-            <div className="text-xl font-black text-slate-900">{data.counts.level1 + data.counts.level2 + data.counts.level3}</div>
+          
+          <div className="relative overflow-hidden bg-gradient-to-br from-cyan-900/40 to-[#12121a] border border-cyan-500/20 rounded-3xl p-5 shadow-2xl">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-500/20 blur-2xl rounded-full"></div>
+            <div className="text-[9px] text-cyan-300 font-bold uppercase tracking-widest mb-1.5 relative z-10">Team Size</div>
+            <div className="text-xl font-black text-white relative z-10">
+              {data.counts.level1 + data.counts.level2 + data.counts.level3}
+              <span className="text-xs text-cyan-400 ml-1.5 font-bold">Members</span>
+            </div>
           </div>
         </div>
 
         {/* Referral Link Section */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm mb-6">
-          <div className="mb-4">
-            <label className="block text-[10px] text-slate-500 font-bold mb-1.5 uppercase tracking-wider">Your Invite Code</label>
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-xl mb-8 relative overflow-hidden">
+          <div className="mb-5">
+            <label className="block text-[9px] text-zinc-500 font-bold mb-2 uppercase tracking-widest">Your Invite Code</label>
             <div className="flex gap-2">
               <input
                 type="text"
                 readOnly
                 value={data.referralCode}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-bold font-mono tracking-widest text-sm outline-none"
+                className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-violet-300 font-black font-mono tracking-widest text-sm outline-none"
               />
               <button
                 onClick={() => copyToClipboard(data.referralCode, 'code')}
-                className="bg-emerald-600 text-white px-4 rounded-xl text-xs font-bold active:scale-95 transition"
+                className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 rounded-xl text-[10px] font-bold uppercase tracking-wider active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.3)]"
               >
                 Copy
               </button>
@@ -167,17 +176,17 @@ export default function TeamPage() {
           </div>
 
           <div>
-            <label className="block text-[10px] text-slate-500 font-bold mb-1.5 uppercase tracking-wider">Your Invite Link</label>
+            <label className="block text-[9px] text-zinc-500 font-bold mb-2 uppercase tracking-widest">Your Invite Link</label>
             <div className="flex gap-2">
               <input
                 type="text"
                 readOnly
                 value={referralLink}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-500 text-xs outline-none"
+                className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-zinc-400 text-xs outline-none"
               />
               <button
                 onClick={() => copyToClipboard(referralLink, 'link')}
-                className="bg-emerald-600 text-white px-4 rounded-xl text-xs font-bold active:scale-95 transition"
+                className="bg-white/10 hover:bg-white/20 text-white px-5 rounded-xl text-[10px] font-bold uppercase tracking-wider active:scale-95 transition border border-white/10"
               >
                 Copy
               </button>
@@ -185,8 +194,8 @@ export default function TeamPage() {
           </div>
         </div>
 
-        {/* Level Tabs */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        {/* Level Tabs (Horizontal Pill Design) */}
+        <div className="grid grid-cols-3 gap-2 mb-6 bg-[#12121a] p-1.5 rounded-2xl border border-white/5">
           {([1, 2, 3] as const).map((level) => {
             const count = level === 1 ? data.counts.level1 : level === 2 ? data.counts.level2 : data.counts.level3;
             const isActive = activeLevel === level;
@@ -195,65 +204,77 @@ export default function TeamPage() {
               <button
                 key={level}
                 onClick={() => setActiveLevel(level)}
-                className={`py-3 rounded-2xl text-xs font-bold transition flex flex-col items-center leading-tight border ${
+                className={`py-3 rounded-xl text-xs font-bold transition flex flex-col items-center leading-tight ${
                   isActive
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20'
-                    : 'bg-white border-slate-200 text-slate-600'
+                    ? 'bg-gradient-to-r from-violet-600/20 to-indigo-600/20 border border-violet-500/30 text-white shadow-[0_0_10px_rgba(139,92,246,0.1)]'
+                    : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
                 }`}
               >
-                <span>Level {level} ({count})</span>
-                <span className={`text-[10px] mt-1 font-semibold ${isActive ? 'text-emerald-200' : 'text-emerald-600'}`}>
-                  {LEVEL_RATES[level]}
+                <span className="uppercase tracking-wider">Level {level}</span>
+                <span className={`text-[10px] mt-1 font-black ${isActive ? 'text-cyan-400' : 'text-zinc-600'}`}>
+                  {LEVEL_RATES[level]} ({count})
                 </span>
               </button>
             );
           })}
         </div>
 
-        {/* Level Stats */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm mb-4">
-          <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
+        {/* Level Stats Card */}
+        <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-lg mb-6">
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-violet-500/5 blur-3xl rounded-full"></div>
+           
+          <div className="relative z-10 flex items-center justify-between mb-4 pb-4 border-b border-white/5">
             <div>
-              <p className="text-slate-900 font-bold text-sm">Level {activeLevel} Network</p>
-              <p className="text-slate-500 text-[10px]">Direct {activeLevel === 1 ? 'referrals' : 'sub-referrals'}</p>
+              <p className="text-white font-black text-lg tracking-wide">Level {activeLevel} Network</p>
+              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">Direct sub-referrals</p>
             </div>
-            <p className="text-slate-900 font-black text-2xl">{currentCount}</p>
+            <p className="text-cyan-400 font-black text-3xl drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">{currentCount}</p>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="relative z-10 flex items-center justify-between pt-2">
             <div>
-              <p className="text-slate-900 font-bold text-sm">Earned from Level {activeLevel}</p>
-              <p className="text-slate-500 text-[10px]">Commission generated</p>
+              <p className="text-white font-bold text-sm tracking-wide">Commission Generated</p>
+              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">From Level {activeLevel}</p>
             </div>
             <div className="text-right">
-              <p className="text-emerald-600 font-black text-lg">UGX {currentEarnings.toLocaleString()}</p>
+              <p className="text-violet-400 font-black text-xl drop-shadow-[0_0_10px_rgba(139,92,246,0.3)]">
+                UGX {currentEarnings.toLocaleString()}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Members List */}
-        {currentLevel.length > 0 && (
-          <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm mt-4">
-             <div className="p-4 bg-slate-50 border-b border-slate-200">
-               <p className="text-xs font-bold text-slate-700">Members</p>
-             </div>
-             <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
-               {currentLevel.map((member) => (
-                 <div key={member.id} className="p-4 flex items-center justify-between">
-                   <div>
-                     <p className="text-sm font-bold text-slate-900">{member.name}</p>
-                     <p className="text-[10px] text-slate-500">{member.phone}</p>
-                   </div>
-                   <span className={`text-[9px] font-bold uppercase px-2 py-1 rounded-md ${member.isValid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                     {member.isValid ? 'Active' : 'Pending'}
-                   </span>
-                 </div>
-               ))}
-             </div>
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h2 className="text-sm font-bold text-zinc-200 tracking-wide uppercase">Member List</h2>
+          <div className="h-px bg-gradient-to-r from-violet-500/50 to-transparent flex-1 ml-4"></div>
+        </div>
+
+        {currentLevel.length > 0 ? (
+          <div className="space-y-3">
+            {currentLevel.map((member) => (
+              <div key={member.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between hover:bg-white/10 transition">
+                <div>
+                  <p className="text-sm font-bold text-zinc-200 tracking-wide">{member.name}</p>
+                  <p className="text-[10px] text-zinc-500 font-medium mt-0.5">{member.phone}</p>
+                </div>
+                <span className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border ${
+                  member.isValid 
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' 
+                    : 'bg-zinc-800/50 text-zinc-500 border-zinc-700'
+                }`}>
+                  {member.isValid ? 'Active' : 'Pending'}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-[#12121a] rounded-2xl border border-white/5">
+            <p className="text-xs text-zinc-500 font-medium">No members at Level {activeLevel} yet.</p>
           </div>
         )}
 
       </div>
     </div>
   );
-          }
+                }
