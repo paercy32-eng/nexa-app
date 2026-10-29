@@ -50,7 +50,7 @@ function ProfileIcon({ active }: IconProps) {
 
 const tabs = [
   { href: '/', label: 'Home', Icon: HomeIcon },
-  { href: '/my-portfolio', label: 'Portfolio', Icon: OrderIcon }, // 🚨 Updated here
+  { href: '/my-portfolio', label: 'Portfolio', Icon: OrderIcon },
   { href: '/team', label: 'Team', Icon: TeamIcon },
   { href: '/profile', label: 'Profile', Icon: ProfileIcon },
 ];
@@ -58,7 +58,7 @@ const tabs = [
 export default function BottomNav() {
   const pathname = usePathname();
 
-  // Hide nav on auth pages
+  // Hide nav on auth pages and admin panel
   if (pathname.includes('/login') || pathname.includes('/register') || pathname.includes('/admin')) {
     return null;
   }
