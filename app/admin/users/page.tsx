@@ -116,6 +116,7 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Action States
   const [adjustAmount, setAdjustAmount] = useState('');
@@ -124,9 +125,21 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
 
   async function loadDetails() {
     try {
+      setLoading(true);
+      setErrorMsg('');
+      
       // Load user details
       const res = await fetch(`/api/admin/users/${userId}?t=` + Date.now());
+      
+      if (!res.ok) {
+        throw new Error(`Failed to load user (Status: ${res.status})`);
+      }
+      
       const json = await res.json();
+      if (!json.user) {
+        throw new Error('User data not found in response');
+      }
+      
       setData(json);
 
       // Load products for granting
@@ -137,8 +150,9 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
       if (prodData.products?.length > 0) {
         setSelectedProduct(prodData.products[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setErrorMsg(err.message || 'Failed to load user details.');
     } finally {
       setLoading(false);
     }
@@ -175,10 +189,21 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
     }
   }
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (errorMsg || !data) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="bg-slate-900 border border-red-500/50 p-6 rounded-3xl text-center max-w-sm w-full">
+          <p className="text-red-400 font-bold mb-4">{errorMsg || 'Could not load user data.'}</p>
+          <button onClick={onClose} className="bg-slate-800 text-white px-6 py-2 rounded-xl text-sm font-bold active:scale-95 transition">Close</button>
+        </div>
       </div>
     );
   }
@@ -213,16 +238,16 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
           </div>
           <div className="bg-slate-800 border border-slate-700 p-3 rounded-xl">
             <div className="text-[9px] text-slate-500 font-bold uppercase">Active Products</div>
-            <div className="text-white font-bold text-sm mt-1">{activeModules.length}</div>
+            <div className="text-white font-bold text-sm mt-1">{activeModules?.length || 0}</div>
           </div>
           <div className="bg-slate-800 border border-slate-700 p-3 rounded-xl">
             <div className="text-[9px] text-slate-500 font-bold uppercase">Direct Referrals</div>
-            <div className="text-white font-bold text-sm mt-1">{referrals.length}</div>
+            <div className="text-white font-bold text-sm mt-1">{referrals?.length || 0}</div>
           </div>
         </div>
 
         {/* Active Products List */}
-        {activeModules.length > 0 && (
+        {activeModules && activeModules.length > 0 && (
           <div className="mb-5">
             <div className="text-[10px] text-slate-500 font-bold uppercase mb-2">Active Assets</div>
             <div className="space-y-2">
@@ -240,7 +265,7 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
         )}
 
         {/* Referrals List */}
-        {referrals.length > 0 && (
+        {referrals && referrals.length > 0 && (
           <div className="mb-5">
             <div className="text-[10px] text-slate-500 font-bold uppercase mb-2">Referred Users (Level 1)</div>
             <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
@@ -260,7 +285,7 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
           {/* Adjust Balance */}
           <div>
             <div className="text-[10px] text-slate-500 font-bold uppercase mb-2">Adjust Balance (Use - to subtract)</div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-2">
               <input 
                 type="number" 
                 placeholder="e.g. 5000" 
@@ -268,14 +293,21 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
                 onChange={e => setAdjustAmount(e.target.value)}
                 className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm"
               />
-              <button 
-                onClick={() => { handleAction('adjust', { amount: Number(adjustAmount), reason: adjustReason }); setAdjustAmount(''); }}
-                disabled={!adjustAmount || actionLoading}
-                className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-50"
-              >
-                Apply
-              </button>
+              <input 
+                type="text" 
+                placeholder="Reason" 
+                value={adjustReason} 
+                onChange={e => setAdjustReason(e.target.value)}
+                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm"
+              />
             </div>
+            <button 
+              onClick={() => { handleAction('adjust', { amount: Number(adjustAmount), reason: adjustReason }); setAdjustAmount(''); setAdjustReason(''); }}
+              disabled={!adjustAmount || actionLoading}
+              className="w-full bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold disabled:opacity-50"
+            >
+              Apply Balance Adjustment
+            </button>
           </div>
 
           {/* Grant Product */}
@@ -320,4 +352,4 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
       </div>
     </div>
   );
-                }
+}
