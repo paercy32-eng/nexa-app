@@ -15,14 +15,13 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Get user's referral code
+    // 🚨 Added 'currency' to the select statement
     const { data: me } = await supabaseAdmin
       .from('users')
-      .select('referral_code')
+      .select('referral_code, currency')
       .eq('id', userId)
       .single();
 
-    // 2. Fetch Level 1
     const { data: l1Data } = await supabaseAdmin
       .from('users')
       .select('id, name, phone, created_at')
@@ -30,7 +29,6 @@ export async function GET(req: NextRequest) {
     const level1 = l1Data ?? [];
     const l1Ids = level1.map(u => u.id);
 
-    // 3. Fetch Level 2
     let level2: any[] = [];
     if (l1Ids.length > 0) {
       const { data: l2Data } = await supabaseAdmin
@@ -41,7 +39,6 @@ export async function GET(req: NextRequest) {
     }
     const l2Ids = level2.map(u => u.id);
 
-    // 4. Fetch Level 3
     let level3: any[] = [];
     if (l2Ids.length > 0) {
       const { data: l3Data } = await supabaseAdmin
@@ -51,7 +48,6 @@ export async function GET(req: NextRequest) {
       level3 = l3Data ?? [];
     }
 
-    // 5. Check active pumps for validation
     const allReferredIds = [...l1Ids, ...l2Ids, ...level3.map(u => u.id)];
     let activePumpUserIds = new Set<string>();
 
@@ -65,7 +61,6 @@ export async function GET(req: NextRequest) {
       activePumpUserIds = new Set((activeModules ?? []).map(m => m.user_id));
     }
 
-    // 6. Calculate earnings from transactions
     const { data: transactions } = await supabaseAdmin
       .from('transactions')
       .select('amount, meta')
@@ -85,7 +80,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // 7. Format data
     const formatUsers = (users: any[]) => users.map(u => ({
       id: u.id,
       referred_id: u.id,
@@ -99,6 +93,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       referralCode: me?.referral_code || 'N/A',
+      currency: me?.currency || 'UGX', // 🚨 Send currency to frontend
       totalEarnings: totalEarnings,
       counts: {
         level1: level1.length,
@@ -116,4 +111,4 @@ export async function GET(req: NextRequest) {
     console.error('Team API error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-      }
+}
