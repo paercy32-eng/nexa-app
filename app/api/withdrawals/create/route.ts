@@ -5,14 +5,13 @@ export const fetchCache = 'force-no-store';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth';
+import { convertFromUGX } from '@/lib/currency';
 
-const MIN_WITHDRAWS: Record<string, number> = {
-  UGX: 4000,
-  KES: 200,
-  RWF: 2000,
-  ZMW: 100,
-  XAF: 2000,
-};
+// Base minimum in UGX (which we convert to local currency)
+const BASE_MIN_WITHDRAW_UGX = 4000;
+const WITHDRAW_OPEN_HOUR = 9;
+const WITHDRAW_CLOSE_HOUR = 17;
+const DAILY_LIMIT = 2;
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,21 +29,55 @@ export async function POST(req: NextRequest) {
     if (userErr || !user) return NextResponse.json({ error: 'User account not found.' }, { status: 404 });
     if (user.is_banned) return NextResponse.json({ error: 'Account suspended' }, { status: 403 });
 
+    const bypass = user.bypass_withdraw_limits === true;
     const userCurrency = user.currency || 'UGX';
-    const minWithdraw = MIN_WITHDRAWS[userCurrency] || 4000;
+    const localMinWithdraw = convertFromUGX(BASE_MIN_WITHDRAW_UGX, userCurrency);
 
-    // 1. Check for Active Pump in 'user_modules'
-    const { count: activePumps } = await supabaseAdmin
-      .from('user_modules')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', session.userId)
-      .eq('status', 'active');
+    // 1. 🚨 Check for Active Product
+    if (!bypass) {
+      const { count: activeProducts } = await supabaseAdmin
+        .from('user_modules')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', session.userId)
+        .eq('status', 'active');
 
-    if (!activePumps || activePumps === 0) {
-      return NextResponse.json({ error: 'You must have an active investment to withdraw.' }, { status: 400 });
+      if (!activeProducts || activeProducts === 0) {
+        return NextResponse.json({ error: 'You must have an active asset to withdraw.' }, { status: 400 });
+      }
     }
 
-    // 2. Duplicate pending check
+    // 2. Time window check
+    if (!bypass) {
+      const nowUTC = new Date();
+      const eatHour = (nowUTC.getUTCHours() + 3) % 24;
+      const eatTotalMinutes = eatHour * 60 + nowUTC.getUTCMinutes();
+      const openTotalMinutes = WITHDRAW_OPEN_HOUR * 60;
+      const closeTotalMinutes = WITHDRAW_CLOSE_HOUR * 60;
+
+      if (eatTotalMinutes < openTotalMinutes || eatTotalMinutes >= closeTotalMinutes) {
+        return NextResponse.json({ error: `Withdrawals are only available between 7:00 AM and 5:00 PM EAT.` }, { status: 400 });
+      }
+    }
+
+    // 3. Daily limit check
+    if (!bypass) {
+      const nowEat = new Date(Date.now() + 3 * 60 * 60 * 1000);
+      const startOfDayEat = new Date(
+        Date.UTC(nowEat.getUTCFullYear(), nowEat.getUTCMonth(), nowEat.getUTCDate(), 0, 0, 0, 0) - 3 * 60 * 60 * 1000
+      );
+
+      const { count: todayCount } = await supabaseAdmin
+        .from('withdrawals')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', session.userId)
+        .gte('created_at', startOfDayEat.toISOString());
+
+      if ((todayCount ?? 0) >= DAILY_LIMIT) {
+        return NextResponse.json({ error: `You can only submit ${DAILY_LIMIT} withdrawal request per day.` }, { status: 400 });
+      }
+    }
+
+    // 4. Duplicate pending check
     const { data: existingPending } = await supabaseAdmin
       .from('withdrawals')
       .select('id, amount')
@@ -53,18 +86,18 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existingPending) {
-      return NextResponse.json({ error: `You already have a pending withdrawal of ${Number(existingPending.amount).toLocaleString()} ${userCurrency}.` }, { status: 400 });
+      return NextResponse.json({ error: `You already have a pending withdrawal of ${userCurrency} ${Number(existingPending.amount).toLocaleString()}.` }, { status: 400 });
     }
 
-    // 3. Parse body and validate amount
+    // 5. Parse body and validate amount
     const { amount } = await req.json();
     const numAmount = Number(amount);
 
-    if (!numAmount || isNaN(numAmount) || numAmount < minWithdraw) {
-      return NextResponse.json({ error: `Minimum withdrawal is ${minWithdraw.toLocaleString()} ${userCurrency}` }, { status: 400 });
+    if (!numAmount || isNaN(numAmount) || numAmount < localMinWithdraw) {
+      return NextResponse.json({ error: `Minimum withdrawal is ${userCurrency} ${localMinWithdraw.toLocaleString()}` }, { status: 400 });
     }
     
-    // 4. Check bound account details
+    // 6. Check bound account details
     const payoutPhone = user.bound_phone;
     const payoutName = user.bound_name;
 
@@ -72,12 +105,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please bind your mobile money account in the profile page first.' }, { status: 400 });
     }
 
-    // 5. Check balance
+    // 7. Check balance
     if (Number(user.balance) < numAmount) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
-    // 6. Deduct balance and create withdrawal
+    // 8. Deduct balance and create withdrawal
     await supabaseAdmin
       .from('users')
       .update({ balance: Number(user.balance) - numAmount })
@@ -102,7 +135,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create withdrawal request' }, { status: 500 });
     }
 
-    // 7. Log transaction
+    // 9. Log transaction
     await supabaseAdmin.from('transactions').insert({
       user_id: session.userId,
       type: 'withdrawal_request',
@@ -115,8 +148,8 @@ export async function POST(req: NextRequest) {
       success: true,
       withdrawalId: withdrawal.id,
       amount: numAmount,
-      netAmount: Math.round(numAmount * 0.84), 
-      fee: Math.round(numAmount * 0.16),
+      netAmount: Math.round(numAmount * 0.87), // 🚨 13% fee (87% net)
+      fee: Math.round(numAmount * 0.13),
     });
 
   } catch (err) {
