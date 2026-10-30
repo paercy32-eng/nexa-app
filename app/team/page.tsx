@@ -32,6 +32,9 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(1);
   const [baseUrl, setBaseUrl] = useState('');
+  
+  // 🚨 State for the modal
+  const [showMembersModal, setShowMembersModal] = useState(false);
 
   async function loadReferrals() {
     setLoading(true);
@@ -55,8 +58,6 @@ export default function TeamPage() {
 
   useEffect(() => {
     loadReferrals();
-    
-    // 🚨 Use the Vercel Env Variable first, fallback to window if not set
     if (typeof window !== 'undefined') {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
       setBaseUrl(appUrl);
@@ -119,75 +120,70 @@ export default function TeamPage() {
     <div className="animate-fade-in bg-[#0a0a0f] min-h-screen pb-24 text-zinc-100 selection:bg-violet-500/30">
       
       {/* Header */}
-      <div className="px-5 pt-8 pb-6">
-        <h1 className="text-3xl font-black text-white tracking-tight">Network Hub</h1>
-        <p className="text-violet-400 font-bold text-[10px] mt-1 tracking-[0.2em] uppercase">Build your downline & earn</p>
+      <div className="px-4 pt-6 pb-4">
+        <h1 className="text-2xl font-black text-white tracking-tight">Network Hub</h1>
+        <p className="text-violet-400 font-bold text-[9px] mt-1 tracking-[0.2em] uppercase">Build your downline & earn</p>
       </div>
 
       <div className="px-4">
         
-        {/* Top Totals */}
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          <div className="relative overflow-hidden bg-gradient-to-br from-violet-900/40 to-[#12121a] border border-violet-500/20 rounded-3xl p-5 shadow-2xl">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/20 blur-2xl rounded-full"></div>
-            <div className="text-[9px] text-violet-300 font-bold uppercase tracking-widest mb-1.5 relative z-10">Total Commission</div>
-            <div className="text-xl font-black text-white relative z-10">
-              <span className="text-xs text-violet-400 mr-1">{data.currency || 'UGX'}</span>
-              {data.totalEarnings.toLocaleString()}
+        {/* MINIMIZED Top Totals */}
+        <div className="flex gap-2 mb-6">
+          <div className="flex-1 bg-[#12121a] border border-violet-500/20 rounded-2xl p-3 text-center">
+            <div className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Commission</div>
+            <div className="text-sm font-black text-violet-400">
+              {data.currency} {data.totalEarnings.toLocaleString()}
             </div>
           </div>
-          
-          <div className="relative overflow-hidden bg-gradient-to-br from-cyan-900/40 to-[#12121a] border border-cyan-500/20 rounded-3xl p-5 shadow-2xl">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-500/20 blur-2xl rounded-full"></div>
-            <div className="text-[9px] text-cyan-300 font-bold uppercase tracking-widest mb-1.5 relative z-10">Team Size</div>
-            <div className="text-xl font-black text-white relative z-10">
-              {data.counts.level1 + data.counts.level2 + data.counts.level3}
-              <span className="text-xs text-cyan-400 ml-1.5 font-bold">Members</span>
+          <div className="flex-1 bg-[#12121a] border border-cyan-500/20 rounded-2xl p-3 text-center">
+            <div className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Team Size</div>
+            <div className="text-sm font-black text-cyan-400">
+              {data.counts.level1 + data.counts.level2 + data.counts.level3} Members
             </div>
           </div>
         </div>
 
-        {/* Referral Link Section */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-xl mb-8 relative overflow-hidden">
-          <div className="mb-5">
-            <label className="block text-[9px] text-zinc-500 font-bold mb-2 uppercase tracking-widest">Your Invite Code</label>
-            <div className="flex gap-2">
+        {/* MINIMIZED Referral Link Section */}
+        <div className="bg-[#12121a] border border-white/5 rounded-2xl p-3 shadow-lg mb-6">
+          <div className="flex gap-2 mb-3">
+            <div className="flex-1">
+              <label className="block text-[8px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Code</label>
               <input
                 type="text"
                 readOnly
                 value={data.referralCode}
-                className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-violet-300 font-black font-mono tracking-widest text-sm outline-none"
+                className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-violet-300 font-black font-mono tracking-widest text-xs outline-none"
               />
-              <button
-                onClick={() => copyToClipboard(data.referralCode, 'code')}
-                className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 rounded-xl text-[10px] font-bold uppercase tracking-wider active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.3)]"
-              >
-                Copy
-              </button>
             </div>
+            <button
+              onClick={() => copyToClipboard(data.referralCode, 'code')}
+              className="mt-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider active:scale-95 transition"
+            >
+              Copy
+            </button>
           </div>
 
-          <div>
-            <label className="block text-[9px] text-zinc-500 font-bold mb-2 uppercase tracking-widest">Your Invite Link</label>
-            <div className="flex gap-2">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="block text-[8px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Link</label>
               <input
                 type="text"
                 readOnly
                 value={referralLink}
-                className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-zinc-400 text-xs outline-none"
+                className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-zinc-400 text-xs outline-none"
               />
-              <button
-                onClick={() => copyToClipboard(referralLink, 'link')}
-                className="bg-white/10 hover:bg-white/20 text-white px-5 rounded-xl text-[10px] font-bold uppercase tracking-wider active:scale-95 transition border border-white/10"
-              >
-                Copy
-              </button>
             </div>
+            <button
+              onClick={() => copyToClipboard(referralLink, 'link')}
+              className="mt-4 bg-white/10 text-white px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider active:scale-95 transition border border-white/10"
+            >
+              Copy
+            </button>
           </div>
         </div>
 
         {/* Level Tabs */}
-        <div className="grid grid-cols-3 gap-2 mb-6 bg-[#12121a] p-1.5 rounded-2xl border border-white/5">
+        <div className="grid grid-cols-3 gap-1 mb-4 bg-[#12121a] p-1 rounded-xl border border-white/5">
           {([1, 2, 3] as const).map((level) => {
             const count = level === 1 ? data.counts.level1 : level === 2 ? data.counts.level2 : data.counts.level3;
             const isActive = activeLevel === level;
@@ -196,14 +192,14 @@ export default function TeamPage() {
               <button
                 key={level}
                 onClick={() => setActiveLevel(level)}
-                className={`py-3 rounded-xl text-xs font-bold transition flex flex-col items-center leading-tight ${
+                className={`py-2 rounded-lg text-xs font-bold transition flex flex-col items-center leading-tight ${
                   isActive
-                    ? 'bg-gradient-to-r from-violet-600/20 to-indigo-600/20 border border-violet-500/30 text-white shadow-[0_0_10px_rgba(139,92,246,0.1)]'
+                    ? 'bg-violet-600/20 text-white border border-violet-500/30'
                     : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
                 }`}
               >
-                <span className="uppercase tracking-wider">Level {level}</span>
-                <span className={`text-[10px] mt-1 font-black ${isActive ? 'text-cyan-400' : 'text-zinc-600'}`}>
+                <span className="uppercase tracking-wider text-[10px]">Level {level}</span>
+                <span className={`text-[10px] mt-0.5 font-black ${isActive ? 'text-cyan-400' : 'text-zinc-600'}`}>
                   ({count})
                 </span>
               </button>
@@ -211,32 +207,64 @@ export default function TeamPage() {
           })}
         </div>
 
-        {/* Member List */}
-        {currentLevelList.length > 0 ? (
-          <div className="space-y-3">
-            {currentLevelList.map((member) => (
-              <div key={member.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between hover:bg-white/10 transition">
-                <div>
-                  <p className="text-sm font-bold text-zinc-200 tracking-wide">{member.name}</p>
-                  <p className="text-[10px] text-zinc-500 font-medium mt-0.5">{member.phone}</p>
-                </div>
-                <span className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border ${
-                  member.isValid 
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' 
-                    : 'bg-zinc-800/50 text-zinc-500 border-zinc-700'
-                }`}>
-                  {member.isValid ? 'Active' : 'Pending'}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 bg-[#12121a] rounded-2xl border border-white/5">
-            <p className="text-xs text-zinc-500 font-medium">No members at Level {activeLevel} yet.</p>
-          </div>
-        )}
+        {/* 🚨 View Members Button (Instead of inline list) */}
+        <div className="bg-[#12121a] border border-white/5 rounded-2xl p-4 text-center">
+          <p className="text-xs text-zinc-400 mb-3">You have <span className="font-bold text-white">{currentLevelList.length}</span> members in Level {activeLevel}.</p>
+          <button
+            onClick={() => setShowMembersModal(true)}
+            className="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2"
+          >
+            View Member List
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
 
       </div>
+
+      {/* 🚨 MEMBERS MODAL */}
+      {showMembersModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowMembersModal(false)}>
+          <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-5 shadow-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-lg font-black text-white">Level {activeLevel} Members</h3>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Total: {currentLevelList.length}</p>
+              </div>
+              <button onClick={() => setShowMembersModal(false)} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
+            </div>
+
+            <div className="overflow-y-auto space-y-2 pr-1 pb-4">
+              {currentLevelList.length > 0 ? (
+                currentLevelList.map((member) => (
+                  <div key={member.id} className="bg-black/40 border border-white/5 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-zinc-200">{member.name}</p>
+                      <p className="text-[10px] text-zinc-500 mt-0.5">{member.phone}</p>
+                    </div>
+                    <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded border ${
+                      member.isValid 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                        : 'bg-zinc-800/50 text-zinc-500 border-zinc-700'
+                    }`}>
+                      {member.isValid ? 'Active' : 'Pending'}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-xs text-zinc-500 font-medium">No members at this level yet.</p>
+                </div>
+              )}
+            </div>
+
+            <button onClick={() => setShowMembersModal(false)} className="w-full bg-white/5 border border-white/10 text-white font-bold py-3 rounded-xl mt-2">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
