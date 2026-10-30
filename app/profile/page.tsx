@@ -26,6 +26,11 @@ export default function ProfilePage() {
   const [bindLoading, setBindLoading] = useState(false);
   const [bindMsg, setBindMsg] = useState('');
 
+  // Check-in State
+  const [canCheckIn, setCanCheckIn] = useState(false);
+  const [checkinLoading, setCheckinLoading] = useState(false);
+  const [checkinMsg, setCheckinMsg] = useState('');
+
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
     if (res.status === 401) {
@@ -39,9 +44,46 @@ export default function ProfilePage() {
     setLoading(false);
   }
 
+  async function loadCheckinStatus() {
+    try {
+      const res = await fetch('/api/checkin?t=' + Date.now(), { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setCanCheckIn(data.canCheckIn === true);
+      }
+    } catch {}
+  }
+
   useEffect(() => {
     loadMe();
+    loadCheckinStatus();
   }, [router]);
+
+  async function handleCheckIn() {
+    setCheckinLoading(true);
+    setCheckinMsg('');
+    try {
+      const res = await fetch('/api/checkin', { method: 'POST' });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setCheckinMsg(data.error || 'Check-in failed.');
+      } else {
+        setCheckinMsg(data.message || 'You earned your bonus!');
+        setCanCheckIn(false);
+        
+        setMe((prev) => {
+          if (!prev) return prev;
+          return { ...prev, balance: data.newBalance };
+        });
+      }
+    } catch {
+      setCheckinMsg('Something went wrong.');
+    } finally {
+      setCheckinLoading(false);
+      setTimeout(() => setCheckinMsg(''), 4000);
+    }
+  }
 
   async function handleBindAccount(e: React.FormEvent) {
     e.preventDefault();
@@ -106,7 +148,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Balance Card */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-violet-900/40 via-[#12121a] to-[#0a0a0f] border border-violet-500/20 rounded-3xl p-6 mb-8 shadow-2xl">
+      <div className="relative overflow-hidden bg-gradient-to-br from-violet-900/40 via-[#12121a] to-[#0a0a0f] border border-violet-500/20 rounded-3xl p-6 mb-6 shadow-2xl">
         <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 blur-3xl rounded-full"></div>
         
         <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-1">Total Balance</div>
@@ -131,33 +173,65 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Quick Actions (Now just History and Bind Account) */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        
-        {/* Transaction History */}
-        <button onClick={() => router.push('/history')} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-white/10 group">
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
+      {/* Daily Check-in Card (Moved from Home) */}
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 mb-4 flex items-center justify-between shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
-          <div className="text-xs font-bold text-zinc-200 uppercase tracking-wide">History</div>
+          <div>
+            <div className="text-xs font-bold text-white tracking-wide">Daily Check-in</div>
+            <div className="text-[10px] text-zinc-500 font-medium mt-0.5">Claim free rewards</div>
+          </div>
+        </div>
+        <button
+          onClick={handleCheckIn}
+          disabled={!canCheckIn || checkinLoading}
+          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${
+            canCheckIn
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+              : 'bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed'
+          }`}
+        >
+          {checkinLoading ? '...' : canCheckIn ? 'Check In' : 'Claimed'}
+        </button>
+      </div>
+      {checkinMsg && (
+        <div className="mb-4 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 text-center">
+          {checkinMsg}
+        </div>
+      )}
+
+      {/* Compact Quick Actions (History & Bind Account) */}
+      <div className="space-y-2 mb-6">
+        {/* Transaction History */}
+        <button onClick={() => router.push('/history')} className="w-full bg-[#12121a] border border-white/5 rounded-2xl p-3 flex items-center gap-3 active:scale-[0.99] transition hover:bg-white/5 group">
+          <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
+          </div>
+          <span className="text-xs font-bold text-zinc-300 tracking-wide uppercase">Transaction History</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto group-hover:text-white transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
 
         {/* Bind Account */}
-        <button onClick={() => setShowBindAccount(true)} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-white/10 group">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <button onClick={() => setShowBindAccount(true)} className="w-full bg-[#12121a] border border-white/5 rounded-2xl p-3 flex items-center gap-3 active:scale-[0.99] transition hover:bg-white/5 group">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           </div>
-          <div className="text-xs font-bold text-zinc-200 uppercase tracking-wide">Bind Account</div>
-          <div className="text-[9px] text-zinc-500 truncate w-full px-1">{me?.bound_phone ? me.bound_phone : 'Not bound'}</div>
+          <div className="text-left flex-1">
+             <div className="text-xs font-bold text-zinc-300 tracking-wide uppercase">Bind Account</div>
+             <div className="text-[9px] text-zinc-500">{me?.bound_phone ? me.bound_phone : 'Not bound'}</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto group-hover:text-white transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
 
-      {/* Log out (Full width) */}
-      <button onClick={logout} className="w-full bg-red-500/5 backdrop-blur-xl border border-red-500/10 rounded-3xl p-4 flex items-center justify-center gap-3 active:scale-[0.98] transition hover:bg-red-500/10 group">
-        <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 group-hover:scale-110 transition">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      {/* Log out */}
+      <button onClick={logout} className="w-full bg-red-500/5 border border-red-500/10 rounded-2xl p-4 flex items-center justify-center gap-2 active:scale-[0.98] transition hover:bg-red-500/10 group">
+        <div className="w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 group-hover:scale-110 transition">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
         </div>
-        <div className="text-xs font-bold text-red-400 uppercase tracking-wide">Log out</div>
+        <div className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Log out</div>
       </button>
 
       {/* Bind Account Modal */}
@@ -194,4 +268,4 @@ export default function ProfilePage() {
       )}
     </main>
   );
-          }
+      }
