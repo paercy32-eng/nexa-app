@@ -15,8 +15,9 @@ type Me = {
   bound_name?: string;
 };
 
-const TELEGRAM_LINK = 'https://t.me/'; 
-const CS_TELEGRAM_LINK = 'https://t.me/'; 
+// 🚨 UPDATED LINKS HERE
+const TELEGRAM_LINK = 'https://t.me/+oKe1TSwObNpiMzA0'; 
+const CS_TELEGRAM_LINK = 'https://t.me/aaaaa56590'; 
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -29,12 +30,10 @@ export default function ProfilePage() {
   const [bindLoading, setBindLoading] = useState(false);
   const [bindMsg, setBindMsg] = useState('');
 
-  // Check-in State
   const [canCheckIn, setCanCheckIn] = useState(false);
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [checkinMsg, setCheckinMsg] = useState('');
 
-  // Modals State
   const [showRecharge, setShowRecharge] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
 
@@ -153,7 +152,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Balance Card (Transferred from Home) */}
+      {/* Balance Card */}
       <div className="relative overflow-hidden bg-gradient-to-br from-violet-900/40 via-[#12121a] to-[#0a0a0f] border border-violet-500/20 rounded-3xl p-6 mb-6 shadow-2xl">
         <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 blur-3xl rounded-full"></div>
         
@@ -179,7 +178,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 4 Action Icons (Transferred from Home) */}
+      {/* 4 Action Icons */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         <button onClick={() => setShowRecharge(true)} className="flex flex-col items-center gap-2 group">
           <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 group-hover:bg-violet-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.1)]">
@@ -239,7 +238,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Compact Quick Actions (History & Bind Account) */}
+      {/* Compact Quick Actions */}
       <div className="space-y-2 mb-6">
         <button onClick={() => router.push('/history')} className="w-full bg-[#12121a] border border-white/5 rounded-2xl p-3 flex items-center gap-3 active:scale-[0.99] transition hover:bg-white/5 group">
           <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
@@ -329,10 +328,6 @@ export default function ProfilePage() {
     </main>
   );
 }
-
-// ==========================================
-// MODALS (Dark Theme)
-// ==========================================
 
 function RechargeModal({ currency, onClose, onSuccess }: any) {
   const [amount, setAmount] = useState('20000');
@@ -444,4 +439,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-  }
+}
