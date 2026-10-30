@@ -48,7 +48,7 @@ export default function WelcomeModal() {
   if (!isOpen) return null;
 
   // Calculate dynamic amounts based on user's currency
-  const minDeposit = convertFromUGX(2000, currency);
+  const minDeposit = convertFromUGX(20000, currency);
   const minWithdraw = convertFromUGX(4000, currency);
   const welcomeBonus = convertFromUGX(2000, currency);
 
