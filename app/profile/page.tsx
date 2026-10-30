@@ -268,10 +268,10 @@ export default function ProfilePage() {
         <div className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Log out</div>
       </button>
 
-      {/* Bind Account Modal */}
+      {/* Bind Account Modal (Centered) */}
       {showBindAccount && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={() => setShowBindAccount(false)}>
-          <div className="w-full max-w-md bg-[#12121a] border-t border-white/10 rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowBindAccount(false)}>
+          <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-6">
               <div>
                 <div className="text-xl font-black text-white">Bind Wallet</div>
@@ -301,7 +301,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Recharge Modal */}
+      {/* Recharge Modal (Centered) */}
       {showRecharge && (
         <RechargeModal
           currency={me?.currency || 'UGX'}
@@ -313,7 +313,7 @@ export default function ProfilePage() {
         />
       )}
 
-      {/* Withdraw Modal */}
+      {/* Withdraw Modal (Centered) */}
       {showWithdraw && (
         <WithdrawModal
           balance={me?.balance ?? 0}
@@ -330,18 +330,16 @@ export default function ProfilePage() {
 }
 
 // ==========================================
-// RECHARGE (DEPOSIT) MODAL - WITH POLLING
+// RECHARGE (DEPOSIT) MODAL
 // ==========================================
 function RechargeModal({ currency, onClose, onSuccess }: any) {
-  // 🚨 Set back to 2000 base for your test
-  const minDeposit = convertFromUGX(2000, currency);
+  const minDeposit = convertFromUGX(20000, currency);
   
   const [amount, setAmount] = useState(String(minDeposit));
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   
-  // Polling states
   const [sent, setSent] = useState(false);
   const [reference, setReference] = useState('');
   const [txId, setTxId] = useState('');
@@ -384,10 +382,9 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
       count++;
       setPollCount(count);
       
-      // Timeout after 60 seconds (20 attempts * 3s)
       if (count >= 20) {
         clearInterval(interval);
-        onClose(); // Close modal on timeout
+        onClose();
         return;
       }
 
@@ -402,7 +399,7 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         
         if (data.status === 'completed') {
           clearInterval(interval);
-          onSuccess(); // Triggers loadMe() and closes modal
+          onSuccess();
         } else if (data.status === 'failed') {
           clearInterval(interval);
           setMsg('Payment failed or expired. Please try again.');
@@ -415,8 +412,8 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border-t border-white/10 rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <div className="text-xl font-black text-white">Deposit Funds</div>
           <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
@@ -498,8 +495,8 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border-t border-white/10 rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <div>
             <div className="text-xl font-black text-white">Withdraw</div>
@@ -530,4 +527,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-                }
+              }
