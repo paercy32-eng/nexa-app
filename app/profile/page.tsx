@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { convertFromUGX } from '@/lib/currency'; // 🚨 Import the converter
 
 type Me = {
   id: string;
@@ -15,7 +16,6 @@ type Me = {
   bound_name?: string;
 };
 
-// Updated Links
 const TELEGRAM_LINK = 'https://t.me/+oKe1TSwObNpiMzA0'; 
 const CS_TELEGRAM_LINK = 'https://t.me/aaaaa56590'; 
 
@@ -30,12 +30,10 @@ export default function ProfilePage() {
   const [bindLoading, setBindLoading] = useState(false);
   const [bindMsg, setBindMsg] = useState('');
 
-  // Check-in State
   const [canCheckIn, setCanCheckIn] = useState(false);
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [checkinMsg, setCheckinMsg] = useState('');
 
-  // Modals State
   const [showRecharge, setShowRecharge] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
 
@@ -332,7 +330,10 @@ export default function ProfilePage() {
 }
 
 function RechargeModal({ currency, onClose, onSuccess }: any) {
-  const [amount, setAmount] = useState('20000');
+  // 🚨 Convert the 2000 UGX base minimum to the user's local currency
+  const minDeposit = convertFromUGX(2000, currency);
+  
+  const [amount, setAmount] = useState(String(minDeposit));
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
@@ -370,8 +371,20 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         {!sent ? (
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-violet-500 transition" required />
+              <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">
+                Amount ({currency})
+              </label>
+              <input 
+                type="number" 
+                value={amount} 
+                onChange={(e) => setAmount(e.target.value)} 
+                min={minDeposit} // 🚨 Set the dynamic minimum limit
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-violet-500 transition" 
+                required 
+              />
+              <div className="text-[10px] text-zinc-500 mt-2 font-medium">
+                Minimum deposit: {currency} {minDeposit.toLocaleString()}
+              </div>
             </div>
             <div>
               <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Phone Number</label>
@@ -397,12 +410,14 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
 }
 
 function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
-  const [amount, setAmount] = useState('');
+  // 🚨 Convert the 4000 UGX base minimum to local currency
+  const minWithdraw = convertFromUGX(4000, currency);
+  
+  const [amount, setAmount] = useState(String(minWithdraw));
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
   const numAmount = Number(amount) || 0;
-  // 🚨 FIXED: 13% fee (User gets 87%)
   const fee = Math.round(numAmount * 0.13);
   const net = Math.round(numAmount * 0.87);
 
@@ -435,8 +450,20 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
         </div>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-cyan-500 transition" required />
+            <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">
+              Amount ({currency})
+            </label>
+            <input 
+              type="number" 
+              value={amount} 
+              onChange={(e) => setAmount(e.target.value)} 
+              min={minWithdraw} // 🚨 Set the dynamic minimum limit
+              className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-cyan-500 transition" 
+              required 
+            />
+             <div className="text-[10px] text-zinc-500 mt-2 font-medium">
+                Minimum withdraw: {currency} {minWithdraw.toLocaleString()}
+              </div>
           </div>
 
           {numAmount > 0 && (
@@ -455,4 +482,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-                              }
+}
