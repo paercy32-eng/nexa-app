@@ -15,7 +15,7 @@ type Me = {
   bound_name?: string;
 };
 
-// 🚨 UPDATED LINKS HERE
+// Updated Links
 const TELEGRAM_LINK = 'https://t.me/+oKe1TSwObNpiMzA0'; 
 const CS_TELEGRAM_LINK = 'https://t.me/aaaaa56590'; 
 
@@ -30,10 +30,12 @@ export default function ProfilePage() {
   const [bindLoading, setBindLoading] = useState(false);
   const [bindMsg, setBindMsg] = useState('');
 
+  // Check-in State
   const [canCheckIn, setCanCheckIn] = useState(false);
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [checkinMsg, setCheckinMsg] = useState('');
 
+  // Modals State
   const [showRecharge, setShowRecharge] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
 
@@ -399,6 +401,11 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
+  const numAmount = Number(amount) || 0;
+  // 🚨 FIXED: 13% fee (User gets 87%)
+  const fee = Math.round(numAmount * 0.13);
+  const net = Math.round(numAmount * 0.87);
+
   async function submit(e: any) {
     e.preventDefault();
     setLoading(true);
@@ -431,6 +438,15 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
             <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
             <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-cyan-500 transition" required />
           </div>
+
+          {numAmount > 0 && (
+             <div className="bg-black/40 border border-white/5 rounded-2xl p-3 text-xs space-y-2">
+                <div className="flex justify-between text-zinc-400"><span>Request Amount</span><span className="font-semibold text-white">{currency} {numAmount.toLocaleString()}</span></div>
+                <div className="flex justify-between text-zinc-400"><span>Fee (13%)</span><span className="font-semibold text-red-400">-{currency} {fee.toLocaleString()}</span></div>
+                <div className="flex justify-between border-t border-white/10 pt-2 mt-2"><span className="text-white font-bold">You Receive</span><span className="font-black text-emerald-400">{currency} {net.toLocaleString()}</span></div>
+             </div>
+          )}
+
           {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
           <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(34,211,238,0.2)] disabled:opacity-50">
             {loading ? 'Submitting...' : 'Request Withdrawal'}
@@ -439,4 +455,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-}
+                              }
