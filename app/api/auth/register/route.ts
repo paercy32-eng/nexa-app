@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hashPassword, signSession, SESSION_COOKIE } from '@/lib/auth';
+import { convertFromUGX } from '@/lib/currency';
 
 function generateReferralCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'NEXA-'; // Updated for Nexa
+  let code = 'NEXA-';
   for (let i = 0; i < 5; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
 }
+
+// 🚨 Set the base welcome bonus to 2000 UGX
+const BASE_WELCOME_BONUS_UGX = 2000;
 
 export async function POST(req: NextRequest) {
   try {
@@ -74,6 +78,9 @@ export async function POST(req: NextRequest) {
     // --- Auto-generate name ---
     const defaultName = 'User ' + cleanPhone.slice(-4);
 
+    // 🚨 Convert the 2000 UGX welcome bonus to the user's local currency
+    const localWelcomeBonus = convertFromUGX(BASE_WELCOME_BONUS_UGX, currency || 'UGX');
+
     // --- Insert user ---
     const { data: newUser, error: insertErr } = await supabaseAdmin
       .from('users')
@@ -81,7 +88,7 @@ export async function POST(req: NextRequest) {
         name: defaultName,
         phone: cleanPhone,
         password_hash: passwordHash,
-        balance: 3000, // Welcome bonus
+        balance: localWelcomeBonus, // 🚨 Save the converted local amount
         referral_code: newCode,
         referred_by: referredBy,
         country: country || 'UG',
@@ -99,9 +106,9 @@ export async function POST(req: NextRequest) {
     await supabaseAdmin.from('transactions').insert({
       user_id: newUser.id,
       type: 'welcome_bonus',
-      amount: 3000,
+      amount: localWelcomeBonus, // 🚨 Log the converted local amount
       status: 'completed',
-      meta: { reason: 'Welcome bonus' },
+      meta: { reason: 'Welcome bonus', base_ugx: BASE_WELCOME_BONUS_UGX },
     });
 
     // --- Create session cookie ---
