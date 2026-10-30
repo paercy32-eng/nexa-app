@@ -26,7 +26,7 @@ async function checkEligibility(userId: string) {
   // 2. Check if already spun today
   const { data: user } = await supabaseAdmin
     .from('users')
-    .select('last_spin_at, currency')
+    .select('last_spin_at, currency, last_spin_prize')
     .eq('id', userId)
     .single();
 
@@ -44,16 +44,20 @@ async function checkEligibility(userId: string) {
   }
 
   // 3. Count Level 1 invites who became ACTIVE today
-  // Note: We look for user_modules created today where the user's referrer is this user.
-  const startOfDay = new Date(nowUTC);
-  startOfDay.setUTCHours(0, 0, 0, 0);
+  const startOfDayUTC = new Date(nowUTC);
+  startOfDayUTC.setUTCHours(0, 0, 0, 0); 
+  // Note: 00:00 EAT is 21:00 UTC of the previous day. 
+  // To keep it simple, we look for modules created in the last 24 hours, 
+  // OR we can strictly use EAT. Let's use EAT.
+  const startOfDayEAT = new Date(nowUTC.getTime() - 3 * 60 * 60 * 1000);
+  startOfDayEAT.setUTCHours(0, 0, 0, 0);
   
   const { count: invitesToday } = await supabaseAdmin
     .from('user_modules')
     .select('user_id, users!inner(referred_by)', { count: 'exact', head: true })
     .eq('users.referred_by', userId)
     .eq('status', 'active')
-    .gte('created_at', startOfDay.toISOString());
+    .gte('created_at', startOfDayEAT.toISOString());
 
   if (!invitesToday || invitesToday < 3) {
     return { 
@@ -63,7 +67,7 @@ async function checkEligibility(userId: string) {
     };
   }
 
-  return { canSpin: true, reason: '', invitesToday };
+  return { canSpin: true, reason: '', invitesToday, lastPrize: user.last_spin_prize, currency: user.currency };
 }
 
 export async function GET(req: NextRequest) {
@@ -92,25 +96,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: status.reason }, { status: 400 });
     }
 
-    // User is eligible. Let's spin!
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('currency, balance')
-      .eq('id', session.userId)
-      .single();
-
-    const userCurrency = user?.currency || 'UGX';
+    const userCurrency = status.currency || 'UGX';
     const nowUTC = new Date();
+    
+    // 🚨 PRIZE POOL & NO REPEAT LOGIC
+    // Define all possible prizes
+    const allPrizes = ['product', 'cash_5000', 'cash_10000', 'cash_20000'];
+    
+    // Remove the last won prize from the pool
+    const availablePrizes = allPrizes.filter(p => p !== status.lastPrize);
+    
+    // Pick a random prize from the remaining pool
+    const randomIndex = Math.floor(Math.random() * availablePrizes.length);
+    const selectedPrize = availablePrizes[randomIndex];
 
-    // Prize Pool (1 in 10 chance for product, rest are cash)
-    const random = Math.random();
     let prizeType = 'cash';
     let cashAmount = 0;
     let productWon = null;
 
-    if (random < 0.10) {
-      // Win the Product
+    // Handle Product Win
+    if (selectedPrize === 'product') {
       prizeType = 'product';
+      
+      // Fetch the Nexa Flow Node product to get its ID
       const { data: product } = await supabaseAdmin
         .from('products')
         .select('*')
@@ -119,42 +127,54 @@ export async function POST(req: NextRequest) {
       
       if (product) {
         productWon = product;
-        // Grant the product
         const startedAt = new Date();
-        const expiresAt = new Date(startedAt.getTime() + (product.cycle_days || 100) * 24 * 60 * 60 * 1000);
+        // Hardcode 60 days cycle for the prize if product isn't found, otherwise use product's cycle
+        const cycleDays = product.cycle_days || 60; 
+        // Hardcode 4000 daily return as requested (even if product base is different)
+        const prizeDailyReturn = 4000; 
+        const expiresAt = new Date(startedAt.getTime() + cycleDays * 24 * 60 * 60 * 1000);
         
         await supabaseAdmin.from('user_modules').insert({
           user_id: session.userId,
           product_id: product.id,
           product_name: product.name,
           price_paid: 0, // Won for free
-          cycle_days: product.cycle_days,
-          daily_return: 4000, // 🚨 Custom daily return for spin prize
-          total_creditable: (product.cycle_days || 100) * 4000,
+          cycle_days: cycleDays,
+          daily_return: prizeDailyReturn, 
+          total_creditable: cycleDays * prizeDailyReturn,
           days_credited: 0,
           total_credited: 0,
           started_at: startedAt.toISOString(),
           expires_at: expiresAt.toISOString(),
           status: 'active',
+          last_credited_at: startedAt.toISOString(),
         });
       }
-    } else {
-      // Win Cash (5000, 10000, or 20000 UGX converted to local currency)
-      const cashOptions = [5000, 10000, 20000];
-      const selectedUGX = cashOptions[Math.floor(Math.random() * cashOptions.length)];
-      cashAmount = convertFromUGX(selectedUGX, userCurrency);
+    } 
+    // Handle Cash Win
+    else {
+      prizeType = 'cash';
+      let cashUGX = 5000;
+      if (selectedPrize === 'cash_10000') cashUGX = 10000;
+      if (selectedPrize === 'cash_20000') cashUGX = 20000;
 
-      // Credit balance
+      cashAmount = convertFromUGX(cashUGX, userCurrency);
+
+      // Credit user balance
+      const { data: user } = await supabaseAdmin.from('users').select('balance').eq('id', session.userId).single();
       await supabaseAdmin
         .from('users')
         .update({ balance: Number(user?.balance || 0) + cashAmount })
         .eq('id', session.userId);
     }
 
-    // Mark as spun today
+    // Mark as spun today AND save the prize they won
     await supabaseAdmin
       .from('users')
-      .update({ last_spin_at: nowUTC.toISOString() })
+      .update({ 
+        last_spin_at: nowUTC.toISOString(),
+        last_spin_prize: selectedPrize
+      })
       .eq('id', session.userId);
 
     // Log the transaction
@@ -165,6 +185,7 @@ export async function POST(req: NextRequest) {
       status: 'completed',
       meta: { 
         prize_type: prizeType, 
+        prize_key: selectedPrize,
         product_name: productWon?.name || null,
         product_daily: 4000
       },
@@ -185,4 +206,4 @@ export async function POST(req: NextRequest) {
     console.error('Spin error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-          }
+}
