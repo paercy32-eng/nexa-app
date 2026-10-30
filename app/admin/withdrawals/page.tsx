@@ -119,8 +119,9 @@ export default function AdminWithdrawalsPage() {
           </div>
         ) : (
           withdrawals.map((wd) => {
-            const fee = Math.round(wd.amount * 0.16);
-            const net = Math.round(wd.amount * 0.84);
+            // 🚨 UPDATED: 13% Fee (87% Net)
+            const fee = Math.round(wd.amount * 0.13);
+            const net = Math.round(wd.amount * 0.87);
             const isPending = wd.status === 'pending';
 
             return (
@@ -144,7 +145,7 @@ export default function AdminWithdrawalsPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-white font-bold text-sm">{wd.currency} {wd.amount.toLocaleString()}</div>
-                    <div className="text-[10px] text-red-400 mt-1">Fee: {wd.currency} {fee.toLocaleString()}</div>
+                    <div className="text-[10px] text-red-400 mt-1">Fee (13%): {wd.currency} {fee.toLocaleString()}</div>
                     <div className="text-[10px] text-emerald-400 font-bold mt-0.5">Net: {wd.currency} {net.toLocaleString()}</div>
                   </div>
                 </div>
