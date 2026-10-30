@@ -40,20 +40,32 @@ export async function POST(req: NextRequest) {
 
     // 3. GRANT PRODUCT
     if (action === 'grant') {
-      const { data: product } = await supabaseAdmin.from('products').select('*').eq('id', productId).single();
-      if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      if (!productId) return NextResponse.json({ error: 'No product selected' }, { status: 400 });
+
+      // Fetch the product
+      const { data: product, error: prodErr } = await supabaseAdmin
+        .from('products')
+        .select('*')
+        .eq('id', productId)
+        .maybeSingle();
+
+      if (prodErr || !product) {
+        return NextResponse.json({ error: `Product not found: ${prodErr?.message || 'Unknown error'}` }, { status: 404 });
+      }
 
       const startedAt = new Date();
-      const expiresAt = new Date(startedAt.getTime() + product.cycle_days * 24 * 60 * 60 * 1000);
+      const cycleDays = product.cycle_days || 100;
+      const expiresAt = new Date(startedAt.getTime() + cycleDays * 24 * 60 * 60 * 1000);
 
-      await supabaseAdmin.from('user_modules').insert({
+      // Insert into user_modules
+      const { error: insertErr } = await supabaseAdmin.from('user_modules').insert({
         user_id: userId,
         product_id: product.id,
         product_name: product.name,
         price_paid: 0,
-        cycle_days: product.cycle_days,
+        cycle_days: cycleDays,
         daily_return: product.daily_return,
-        total_creditable: product.cycle_days * product.daily_return,
+        total_creditable: cycleDays * product.daily_return,
         days_credited: 0,
         total_credited: 0,
         started_at: startedAt.toISOString(),
@@ -61,11 +73,16 @@ export async function POST(req: NextRequest) {
         status: 'active',
       });
 
+      if (insertErr) {
+        console.error('Grant error:', insertErr);
+        return NextResponse.json({ error: `Database error: ${insertErr.message}` }, { status: 500 });
+      }
+
       return NextResponse.json({ success: true });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
-  } catch (err) {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: `Server error: ${err.message}` }, { status: 500 });
   }
 }
