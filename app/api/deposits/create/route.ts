@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 import { pesajet } from '@/lib/pesajet';
-import { convertFromUGX } from '@/lib/currency'; // 🚨 Import converter
+import { convertFromUGX } from '@/lib/currency';
 
-const BASE_MIN_DEPOSIT_UGX = 2000; // 🚨 Changed to 20,000
+const BASE_MIN_DEPOSIT_UGX = 2000; 
 
 const MARZPAY_FEES: Record<string, number> = {
   KES: 5, RWF: 100, ZMW: 2, XAF: 100,
@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
     const userCurrency = user.currency || 'UGX';
     const userCountry = user.country || 'UG';
     
-    // 🚨 Calculate dynamic minimum based on user's currency
     const minDeposit = convertFromUGX(BASE_MIN_DEPOSIT_UGX, userCurrency);
 
     if (numAmount < minDeposit) {
@@ -49,11 +48,12 @@ export async function POST(req: NextRequest) {
 
     const reference = crypto.randomUUID();
     const gateway = userCountry === 'UG' ? 'pesajet' : 'marzpay';
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nexa-app-flame.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nexa.vortexgain.com';
 
     const marzpayFee = gateway === 'marzpay' ? (MARZPAY_FEES[userCurrency] || 0) : 0;
     const totalToCharge = numAmount + marzpayFee;
 
+    // 1. Save pending deposit
     const { data: deposit, error: insErr } = await supabaseAdmin
       .from('deposits')
       .insert({
@@ -79,14 +79,17 @@ export async function POST(req: NextRequest) {
       meta: { reference: reference, deposit_id: deposit.id, fee: marzpayFee }
     });
 
-    // ROUTE A: UGANDA (PESAJET)
+    // ==========================================
+    // ROUTE A: UGANDA (PESAJET with Polling)
+    // ==========================================
     if (gateway === 'pesajet') {
       try {
         const formattedPhone = pesajet.utils.formatPhoneNumber(phone);
         let provider = pesajet.utils.detectProvider(phone);
         if (!provider) provider = 'mtn'; 
 
-        await pesajet.payments.create({
+        // Initiate PesaJet
+        const payment = await pesajet.payments.create({
           amount: numAmount,
           currency: 'UGX',
           phoneNumber: formattedPhone,
@@ -95,15 +98,41 @@ export async function POST(req: NextRequest) {
           description: `Nexa Deposit for ${user.name || user.phone}`,
         });
 
-        return NextResponse.json({ success: true, depositId: deposit.id, reference, amount: numAmount, message: 'A PIN prompt was sent to your phone.' });
+        // 🚨 THE FIX: Poll PesaJet directly for up to 60 seconds (24 attempts * 2.5s)
+        const finalTransaction = await pesajet.payments.pollUntilComplete(payment.transactionId, {
+          intervalMs: 2500,
+          maxAttempts: 24,
+        });
+
+        if (finalTransaction.status === 'COMPLETED') {
+          // The user entered their PIN! Update the database directly.
+          await supabaseAdmin.from('deposits').update({ status: 'completed' }).eq('id', deposit.id);
+          await supabaseAdmin.from('transactions').update({ status: 'completed' }).eq('meta->>reference', reference);
+          
+          const { data: freshUser } = await supabaseAdmin.from('users').select('balance').eq('id', user.id).single();
+          if (freshUser) {
+            await supabaseAdmin.from('users').update({ balance: Number(freshUser.balance || 0) + numAmount }).eq('id', user.id);
+          }
+
+          return NextResponse.json({ success: true, depositId: deposit.id, reference, amount: numAmount, message: 'Deposit successful!' });
+        } else {
+          // Failed or expired
+          await supabaseAdmin.from('deposits').update({ status: 'failed' }).eq('id', deposit.id);
+          await supabaseAdmin.from('transactions').update({ status: 'failed' }).eq('meta->>reference', reference);
+          return NextResponse.json({ error: 'Payment was not completed or failed.' }, { status: 400 });
+        }
+
       } catch (apiError: any) {
+        console.error('PesaJet API Error:', apiError);
         await supabaseAdmin.from('deposits').update({ status: 'failed' }).eq('id', deposit.id);
         await supabaseAdmin.from('transactions').update({ status: 'failed' }).eq('meta->>reference', reference);
         return NextResponse.json({ error: apiError.message || 'Payment gateway rejected the request' }, { status: 400 });
       }
     }
 
+    // ==========================================
     // ROUTE B: OTHER AFRICAN COUNTRIES (MARZPAY)
+    // ==========================================
     if (gateway === 'marzpay') {
       try {
         const marzpayKey = process.env.MARZPAY_API_KEY;
@@ -138,7 +167,8 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: marzpayData?.message || 'MarzPay request failed' }, { status: 400 });
         }
 
-        return NextResponse.json({ success: true, depositId: deposit.id, reference, amount: numAmount, message: `A PIN prompt for ${totalToCharge} ${userCurrency} (includes ${marzpayFee} fee) was sent to your phone.` });
+        // For MarzPay, we still rely on webhook for now as it's a different API structure
+        return NextResponse.json({ success: true, depositId: deposit.id, reference, amount: numAmount, message: `A PIN prompt for ${totalToCharge} ${userCurrency} was sent to your phone.` });
       } catch (apiError: any) {
         await supabaseAdmin.from('deposits').update({ status: 'failed' }).eq('id', deposit.id);
         await supabaseAdmin.from('transactions').update({ status: 'failed' }).eq('meta->>reference', reference);
