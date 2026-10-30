@@ -11,6 +11,8 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanPhone = phone.trim();
+    // 🚨 Trim the password to remove accidental spaces from mobile keyboards
+    const cleanPassword = password.trim();
 
     const { data: user, error: dbError } = await supabaseAdmin
       .from('users')
@@ -30,11 +32,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Your account has been suspended.' }, { status: 403 });
     }
 
-    const isValid = await comparePassword(password, user.password_hash);
+    // 🚨 Compare using the trimmed password
+    const isValid = await comparePassword(cleanPassword, user.password_hash);
     
     if (!isValid) {
       return NextResponse.json({ 
-        error: `Password mismatch. (Hash starts with: ${user.password_hash.substring(0, 10)}...)` 
+        error: `Password mismatch. (Make sure you typed exactly: password)` 
       }, { status: 401 });
     }
 
