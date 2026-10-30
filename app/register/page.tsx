@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 const COUNTRIES = [
-  { code: 'UG', name: 'Uganda', dial: '+256', currency: 'UGX', flag: '🇺🇬' },
-  { code: 'KE', name: 'Kenya', dial: '+254', currency: 'KES', flag: '🇰🇪' },
-  { code: 'RW', name: 'Rwanda', dial: '+250', currency: 'RWF', flag: '🇷🇼' },
-  { code: 'ZM', name: 'Zambia', dial: '+260', currency: 'ZMW', flag: '🇿🇲' },
-  { code: 'CM', name: 'Cameroon', dial: '+237', currency: 'XAF', flag: '🇨🇲' },
+  { code: 'UG', name: 'Uganda', dial: '+256', currency: 'UGX', flag: '🇺🇬', placeholder: '700123456' },
+  { code: 'KE', name: 'Kenya', dial: '+254', currency: 'KES', flag: '🇰🇪', placeholder: '712345678' },
+  { code: 'RW', name: 'Rwanda', dial: '+250', currency: 'RWF', flag: '🇷🇼', placeholder: '781234567' },
+  { code: 'ZM', name: 'Zambia', dial: '+260', currency: 'ZMW', flag: '🇿🇲', placeholder: '971234567' },
+  { code: 'CM', name: 'Cameroon', dial: '+237', currency: 'XAF', flag: '🇨🇲', placeholder: '671234567' },
 ];
 
 function RegisterForm() {
@@ -129,7 +129,7 @@ function RegisterForm() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').replace(/^0+/, ''))}
-                  placeholder="700123456"
+                  placeholder={selectedCountry.placeholder} // 🚨 Dynamic Placeholder Here
                   className="w-full bg-transparent px-3 py-3.5 text-white placeholder-gray-400 focus:outline-none text-sm"
                   required
                 />
@@ -219,4 +219,4 @@ export default function RegisterPage() {
       <RegisterForm />
     </Suspense>
   );
-                                                 }
+}
