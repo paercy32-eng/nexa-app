@@ -12,7 +12,7 @@ function generateReferralCode(): string {
   return code;
 }
 
-// 🚨 The base bonus is strictly 2000 UGX
+// 🚨 Base welcome bonus in UGX
 const BASE_WELCOME_BONUS_UGX = 2000;
 
 export async function POST(req: NextRequest) {
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     // --- Auto-generate name ---
     const defaultName = 'User ' + cleanPhone.slice(-4);
 
-    // 🚨 CONVERT 2000 UGX TO LOCAL CURRENCY
+    // 🚨 CONVERT 2000 UGX TO LOCAL CURRENCY (e.g. 680 RWF)
     const localWelcomeBonus = convertFromUGX(BASE_WELCOME_BONUS_UGX, currency || 'UGX');
 
     // --- Insert user ---
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
         name: defaultName,
         phone: cleanPhone,
         password_hash: passwordHash,
-        balance: localWelcomeBonus, // Saves the converted amount (e.g., 60 KES)
+        balance: localWelcomeBonus, // Saves 680 RWF instead of 3000
         referral_code: newCode,
         referred_by: referredBy,
         country: country || 'UG',
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     await supabaseAdmin.from('transactions').insert({
       user_id: newUser.id,
       type: 'welcome_bonus',
-      amount: localWelcomeBonus, // Logs the converted amount
+      amount: localWelcomeBonus,
       status: 'completed',
       meta: { reason: 'Welcome bonus', base_ugx: BASE_WELCOME_BONUS_UGX },
     });
@@ -141,4 +141,4 @@ export async function POST(req: NextRequest) {
     console.error('Register error:', err);
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
-}
+                                }
