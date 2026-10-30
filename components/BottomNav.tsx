@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 
 type IconProps = { active: boolean };
 
-// New Theme Colors
 const ACTIVE = '#a78bfa'; // Light Violet
 const INACTIVE = '#52525b'; // Zinc Gray
 
@@ -24,6 +23,18 @@ function OrderIcon({ active }: IconProps) {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path d="M21 8l-9-5-9 5v8l9 5 9-5V8z" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill={active ? '#2e1065' : 'none'} />
       <path d="M3 8l9 5 9-5M12 21v-8" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// 🚨 NEW: Tasks Icon
+function TasksIcon({ active }: IconProps) {
+  const color = active ? ACTIVE : INACTIVE;
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill={active ? '#2e1065' : 'none'} />
+      <rect x="9" y="3" width="6" height="4" rx="1" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill={active ? '#2e1065' : 'none'} />
+      <path d="M9 14l2 2 4-4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -52,6 +63,7 @@ function ProfileIcon({ active }: IconProps) {
 const tabs = [
   { href: '/', label: 'Home', Icon: HomeIcon },
   { href: '/my-portfolio', label: 'Portfolio', Icon: OrderIcon },
+  { href: '/tasks', label: 'Tasks', Icon: TasksIcon }, // 🚨 New Tasks Tab
   { href: '/team', label: 'Team', Icon: TeamIcon },
   { href: '/profile', label: 'Profile', Icon: ProfileIcon },
 ];
@@ -65,14 +77,14 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0a0f]/90 backdrop-blur-xl border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-      <div className="mx-auto max-w-md grid grid-cols-4">
+      <div className="mx-auto max-w-md grid grid-cols-5"> {/* 🚨 Changed to 5 columns */}
         {tabs.map((t) => {
           const active = pathname === t.href;
           const Icon = t.Icon;
           return (
-            <Link key={t.href} href={t.href} className="flex flex-col items-center justify-center py-3 gap-1.5 transition">
+            <Link key={t.href} href={t.href} className="flex flex-col items-center justify-center py-3 gap-1 transition">
               <Icon active={active} />
-              <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: active ? ACTIVE : INACTIVE }}>
+              <span className="text-[9px] font-bold tracking-wider uppercase" style={{ color: active ? ACTIVE : INACTIVE }}>
                 {t.label}
               </span>
             </Link>
