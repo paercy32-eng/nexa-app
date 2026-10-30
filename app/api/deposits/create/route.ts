@@ -8,6 +8,15 @@ const MIN_DEPOSITS: Record<string, number> = {
   UGX: 2000, KES: 100, RWF: 1000, ZMW: 50, XAF: 1000,
 };
 
+// 🚨 Define your MarzPay fees here (e.g., 1.5% or flat fees)
+// You can adjust these numbers based on what MarzPay actually charges you.
+const MARZPAY_FEES: Record<string, number> = {
+  KES: 5,   // Flat 5 KES fee
+  RWF: 100, // Flat 100 RWF fee
+  ZMW: 2,   // Flat 2 ZMW fee
+  XAF: 100, // Flat 100 XAF fee
+};
+
 export async function POST(req: NextRequest) {
   try {
     const token = req.cookies.get(SESSION_COOKIE)?.value;
@@ -26,7 +35,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
     }
 
-    // 1. Load user to get their country and currency
     const { data: user } = await supabaseAdmin
       .from('users')
       .select('id, name, phone, country, currency')
@@ -47,12 +55,15 @@ export async function POST(req: NextRequest) {
     const gateway = userCountry === 'UG' ? 'pesajet' : 'marzpay';
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nexa-app-flame.vercel.app';
 
-    // 2. Save pending deposit in database
+    // 🚨 Calculate Fee for MarzPay
+    const marzpayFee = gateway === 'marzpay' ? (MARZPAY_FEES[userCurrency] || 0) : 0;
+    const totalToCharge = numAmount + marzpayFee;
+
     const { data: deposit, error: insErr } = await supabaseAdmin
       .from('deposits')
       .insert({
         user_id: user.id,
-        amount: numAmount,
+        amount: numAmount, // Save the original amount (e.g., 500)
         currency: userCurrency,
         gateway: gateway,
         status: 'pending',
@@ -66,13 +77,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create deposit record' }, { status: 500 });
     }
 
-    // Log the pending transaction so it shows in History immediately
     await supabaseAdmin.from('transactions').insert({
       user_id: user.id,
       amount: numAmount,
       type: 'deposit',
       status: 'pending',
-      meta: { reference: reference, deposit_id: deposit.id }
+      meta: { reference: reference, deposit_id: deposit.id, fee: marzpayFee }
     });
 
     // ==========================================
@@ -118,18 +128,14 @@ export async function POST(req: NextRequest) {
         const marzpaySecret = process.env.MARZPAY_API_SECRET;
         const marzpayBaseUrl = 'https://wallet.wearemarz.com/api/v1';
 
-        if (!marzpayKey || !marzpaySecret) {
-          throw new Error('MarzPay credentials are not configured in Vercel');
-        }
+        if (!marzpayKey || !marzpaySecret) throw new Error('MarzPay credentials missing');
 
         const authToken = Buffer.from(`${marzpayKey}:${marzpaySecret}`).toString('base64');
 
-        // Format phone to E.164 (e.g. +254712345678)
         let formattedPhone = phone.trim();
-        if (!formattedPhone.startsWith('+')) {
-          formattedPhone = `+${formattedPhone}`;
-        }
+        if (!formattedPhone.startsWith('+')) formattedPhone = `+${formattedPhone}`;
 
+        // 🚨 Send the TOTAL amount (500 + 5 fee = 505) to MarzPay
         const marzpayRes = await fetch(`${marzpayBaseUrl}/collect-money`, {
           method: 'POST',
           headers: {
@@ -138,15 +144,16 @@ export async function POST(req: NextRequest) {
             Accept: 'application/json',
           },
           body: JSON.stringify({
-            amount: numAmount,
+            amount: totalToCharge, // 505
             phone_number: formattedPhone,
             reference: reference,
-            country: userCountry, // 'KE', 'RW', 'ZM', 'CM'
+            country: userCountry,
             description: `Nexa Deposit for ${user.name || user.phone}`,
             callback_url: `${appUrl}/api/webhooks/marzpay`,
             metadata: [
               { depositId: deposit.id },
-              { userId: user.id }
+              { userId: user.id },
+              { requestedAmount: numAmount }
             ]
           }),
         });
@@ -165,7 +172,7 @@ export async function POST(req: NextRequest) {
           depositId: deposit.id,
           reference,
           amount: numAmount,
-          message: 'A PIN prompt was sent to your phone.',
+          message: `A PIN prompt for ${totalToCharge} ${userCurrency} (includes ${marzpayFee} fee) was sent to your phone.`,
         });
 
       } catch (apiError: any) {
@@ -176,10 +183,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ error: 'Unsupported country configuration' }, { status: 400 });
+    return NextResponse.json({ error: 'Unsupported country' }, { status: 400 });
 
   } catch (err: any) {
     console.error('Server error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-          }
+    }
