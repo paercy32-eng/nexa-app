@@ -4,30 +4,40 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+type Stats = {
+  totalUsers: number;
+  totalDeposited: number;
+  totalWithdrawn: number;
+  totalInvested: number;
+};
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Stats | null>(null);
 
-  // For security, you can add a check here to verify the admin session
-  // If the user is not logged in, redirect to /admin/login
   useEffect(() => {
-    async function checkAuth() {
+    async function checkAuthAndLoadStats() {
       try {
-        const res = await fetch('/api/admin/users'); // We use this endpoint as a quick auth check
+        // Fetch stats to verify auth and get data
+        const res = await fetch('/api/admin/stats');
         if (res.status === 401) {
           router.replace('/admin/login');
-        } else {
-          setLoading(false);
+          return;
         }
-      } catch {
-        router.replace('/admin/login');
+        
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
     }
-    checkAuth();
+    checkAuthAndLoadStats();
   }, [router]);
 
   async function logout() {
-    // Clear the admin cookie
     document.cookie = 'nexa_admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     router.replace('/admin/login');
   }
@@ -58,8 +68,47 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="p-4">
+        
+        {/* 🚨 Platform Overview Stats */}
+        <h2 className="text-white font-bold mb-3 px-1 text-sm uppercase tracking-wider">Platform Overview</h2>
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-12 h-12 bg-blue-500/10 rounded-full blur-xl"></div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Users</div>
+            <div className="text-2xl font-black text-blue-400">
+              {stats?.totalUsers.toLocaleString() || 0}
+            </div>
+          </div>
+
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-12 h-12 bg-emerald-500/10 rounded-full blur-xl"></div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Deposited</div>
+            <div className="text-lg font-black text-emerald-400 truncate">
+              {stats?.totalDeposited.toLocaleString() || 0}
+            </div>
+          </div>
+
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-12 h-12 bg-violet-500/10 rounded-full blur-xl"></div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Invested</div>
+            <div className="text-lg font-black text-violet-400 truncate">
+              {stats?.totalInvested.toLocaleString() || 0}
+            </div>
+          </div>
+
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-12 h-12 bg-orange-500/10 rounded-full blur-xl"></div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Withdrawn</div>
+            <div className="text-lg font-black text-orange-400 truncate">
+              {stats?.totalWithdrawn.toLocaleString() || 0}
+            </div>
+          </div>
+
+        </div>
+
         {/* Quick Links Grid */}
-        <h2 className="text-white font-bold mb-3 px-1 text-sm">Management Menu</h2>
+        <h2 className="text-white font-bold mb-3 px-1 text-sm uppercase tracking-wider">Management Menu</h2>
         <div className="grid grid-cols-2 gap-3 mb-6">
           
           {/* Users */}
@@ -91,7 +140,7 @@ export default function AdminDashboardPage() {
 
           {/* Products */}
           <Link href="/admin/products" className="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-slate-750">
-            <div className="w-12 h-12 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center mb-1">
+            <div className="w-12 h-12 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center mb-1">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             </div>
             <div className="text-white font-bold text-sm">Assets</div>
