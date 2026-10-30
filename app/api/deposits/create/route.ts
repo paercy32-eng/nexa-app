@@ -7,8 +7,8 @@ import { convertFromUGX } from '@/lib/currency';
 
 const BASE_MIN_DEPOSIT_UGX = 2000; 
 
-// 🚨 Set your PesaJet fee here (e.g., 500 UGX)
-const PESAJET_FEE_UGX = 500; 
+// 🚨 PesaJet charges 2.5%
+const PESAJET_FEE_RATE = 0.025; 
 
 const MARZPAY_FEES: Record<string, number> = {
   KES: 5, RWF: 100, ZMW: 2, XAF: 100,
@@ -53,22 +53,24 @@ export async function POST(req: NextRequest) {
     const gateway = userCountry === 'UG' ? 'pesajet' : 'marzpay';
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nexa.vortexgain.com';
 
-    // 🚨 Calculate the total to charge (Amount + Fee)
-    let fee = 0;
-    if (gateway === 'pesajet') {
-       fee = PESAJET_FEE_UGX;
-    } else {
-       fee = MARZPAY_FEES[userCurrency] || 0;
-    }
-    
-    const totalToCharge = numAmount + fee;
+    let amountToPrompt = numAmount;
 
-    // 1. Save pending deposit (Note: We save the original numAmount to be credited later)
+    // 🚨 GROSS-UP CALCULATION: Add the PesaJet fee on top
+    if (gateway === 'pesajet') {
+      // Math: Amount / (1 - Fee) ensures the business receives the exact amount after the fee is deducted.
+      amountToPrompt = Math.ceil(numAmount / (1 - PESAJET_FEE_RATE));
+    } else {
+      // MarzPay uses flat fees
+      const marzpayFee = MARZPAY_FEES[userCurrency] || 0;
+      amountToPrompt = numAmount + marzpayFee;
+    }
+
+    // 1. Save pending deposit (We save 'numAmount' so the user gets credited exactly what they asked for)
     const { data: deposit, error: insErr } = await supabaseAdmin
       .from('deposits')
       .insert({
         user_id: user.id,
-        amount: numAmount, // Only this amount is credited
+        amount: numAmount, // Credited amount
         currency: userCurrency,
         gateway: gateway,
         status: 'pending',
@@ -86,7 +88,7 @@ export async function POST(req: NextRequest) {
       amount: numAmount,
       type: 'deposit',
       status: 'pending',
-      meta: { reference: reference, deposit_id: deposit.id, fee: fee }
+      meta: { reference: reference, deposit_id: deposit.id, fee_charged: amountToPrompt - numAmount }
     });
 
     // ==========================================
@@ -98,9 +100,9 @@ export async function POST(req: NextRequest) {
         let provider = pesajet.utils.detectProvider(phone);
         if (!provider) provider = 'mtn'; 
 
-        // 🚨 Send the TOTAL amount (Amount + Fee) to PesaJet
+        // 🚨 Send the TOTAL amount (numAmount + PesaJet fee) to PesaJet
         const payment = await pesajet.payments.create({
-          amount: totalToCharge, 
+          amount: amountToPrompt, 
           currency: 'UGX',
           phoneNumber: formattedPhone,
           provider: provider,
@@ -108,14 +110,13 @@ export async function POST(req: NextRequest) {
           description: `Nexa Deposit`,
         });
 
-        // 🚨 WE DO NOT WAIT HERE ANYMORE. We return instantly so Vercel doesn't timeout.
         return NextResponse.json({ 
           success: true, 
           depositId: deposit.id, 
           reference, 
           amount: numAmount, 
-          transactionId: payment.transactionId, // Send this to frontend for polling
-          message: `A PIN prompt for ${totalToCharge.toLocaleString()} UGX was sent to your phone.` 
+          transactionId: payment.transactionId,
+          message: `A PIN prompt for ${amountToPrompt.toLocaleString()} UGX was sent to your phone.` 
         });
 
       } catch (apiError: any) {
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
           method: 'POST',
           headers: { 'Authorization': `Basic ${authToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
-            amount: totalToCharge, // Total + Fee
+            amount: amountToPrompt, // Total + Fee for MarzPay
             phone_number: formattedPhone,
             reference: reference,
             country: userCountry,
@@ -163,7 +164,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: marzpayData?.message || 'MarzPay request failed' }, { status: 400 });
         }
 
-        return NextResponse.json({ success: true, depositId: deposit.id, reference, amount: numAmount, message: `A PIN prompt for ${totalToCharge} ${userCurrency} (includes ${fee} fee) was sent to your phone.` });
+        return NextResponse.json({ success: true, depositId: deposit.id, reference, amount: numAmount, message: `A PIN prompt for ${amountToPrompt} ${userCurrency} was sent to your phone.` });
       } catch (apiError: any) {
         await supabaseAdmin.from('deposits').update({ status: 'failed' }).eq('id', deposit.id);
         await supabaseAdmin.from('transactions').update({ status: 'failed' }).eq('meta->>reference', reference);
@@ -175,4 +176,4 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+          }
