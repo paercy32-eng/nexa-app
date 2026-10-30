@@ -5,7 +5,7 @@ import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 import { pesajet } from '@/lib/pesajet';
 import { convertFromUGX } from '@/lib/currency'; // 🚨 Import converter
 
-const BASE_MIN_DEPOSIT_UGX = 20000; // 🚨 Changed to 20,000
+const BASE_MIN_DEPOSIT_UGX = 2000; // 🚨 Changed to 20,000
 
 const MARZPAY_FEES: Record<string, number> = {
   KES: 5, RWF: 100, ZMW: 2, XAF: 100,
