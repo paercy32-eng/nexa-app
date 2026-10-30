@@ -79,10 +79,6 @@ export default function MyPortfolioPage() {
             const progress =
               ((r.duration_days - r.days_remaining) / r.duration_days) * 100;
 
-            const nextPayout = new Date(
-              new Date(r.last_credit_at).getTime() + 24 * 60 * 60 * 1000
-            );
-
             return (
               <div key={r.id} className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl group">
                 
@@ -100,7 +96,7 @@ export default function MyPortfolioPage() {
                     {r.status === 'active' && (
                       <div className="text-[10px] text-violet-400 mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        Next: {nextPayout.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        Next Payout: 00:00 (Midnight)
                       </div>
                     )}
                   </div>
