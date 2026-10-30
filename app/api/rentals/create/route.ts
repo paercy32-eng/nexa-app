@@ -39,12 +39,12 @@ export async function POST(req: NextRequest) {
 
     const userCurrency = user.currency || 'UGX';
     
-    // 🚨 CONVERT PRICES: The user pays in their local currency
+    // Convert prices to user's local currency
     const localPrice = convertFromUGX(Number(product.price), userCurrency);
     const localDailyReturn = convertFromUGX(Number(product.daily_return), userCurrency);
     const cycleDays = product.cycle_days || 100;
 
-    // 3. Check existing modules
+    // 3. Check existing modules to see if it's their FIRST purchase
     const { count: moduleCount } = await supabaseAdmin
       .from('user_modules')
       .select('id', { count: 'exact', head: true })
@@ -52,19 +52,35 @@ export async function POST(req: NextRequest) {
 
     const isFirstPurchase = (moduleCount ?? 0) === 0;
 
-    // 4. First purchase rules (Must be fully funded by approved deposits)
+    // 4. FIRST PURCHASE RULES: Must be fully funded by approved deposits
     if (isFirstPurchase) {
-      // Note: To keep things simple, we check if they have enough deposit balance
-      // You can add the strict deposit checking logic here if you want to block welcome bonuses
-      if (Number(user.balance) < localPrice) {
-         return NextResponse.json({ error: `Insufficient balance. You need ${localPrice.toLocaleString()} more.` }, { status: 400 });
+      const { data: deposits } = await supabaseAdmin
+        .from('deposits') 
+        .select('amount')
+        .eq('user_id', session.userId)
+        .in('status', ['completed', 'approved']); 
+
+      const approvedTotal = (deposits ?? []).reduce(
+        (sum, d) => sum + Number(d.amount),
+        0
+      );
+
+      if (approvedTotal < localPrice) {
+        const missing = localPrice - approvedTotal;
+        return NextResponse.json(
+          {
+            error: `First purchase must be fully funded by approved deposits. You have ${userCurrency} ${approvedTotal.toLocaleString()} in deposits but need ${userCurrency} ${localPrice.toLocaleString()}. Please deposit ${userCurrency} ${missing.toLocaleString()} more.`,
+            reason: 'first_purchase_deposit_required',
+          },
+          { status: 400 }
+        );
       }
     }
 
-    // 5. Check balance
+    // 5. Check balance (Must be enough to deduct)
     if (Number(user.balance) < localPrice) {
       return NextResponse.json(
-        { error: `Insufficient balance. You need ${(localPrice - Number(user.balance)).toLocaleString()} ${userCurrency} more.` },
+        { error: `Insufficient balance. You need ${userCurrency} ${(localPrice - Number(user.balance)).toLocaleString()} more.` },
         { status: 400 }
       );
     }
@@ -85,15 +101,16 @@ export async function POST(req: NextRequest) {
         user_id: session.userId,
         product_id: product.id,
         product_name: product.name,
-        price_paid: localPrice, // Saved in local currency
+        price_paid: localPrice, 
         cycle_days: cycleDays,
-        daily_return: localDailyReturn, // Saved in local currency
+        daily_return: localDailyReturn, 
         total_creditable: cycleDays * localDailyReturn,
         days_credited: 0,
         total_credited: 0,
         started_at: startedAt.toISOString(),
         expires_at: expiresAt.toISOString(),
         status: 'active',
+        last_credited_at: startedAt.toISOString(), // Required for midnight payouts
       })
       .select('id')
       .single();
@@ -101,7 +118,7 @@ export async function POST(req: NextRequest) {
     if (moduleErr || !newModule) {
       // Refund if insert fails
       await supabaseAdmin.from('users').update({ balance: Number(user.balance) }).eq('id', session.userId);
-      return NextResponse.json({ error: `Module creation failed` }, { status: 500 });
+      return NextResponse.json({ error: `Module creation failed: ${moduleErr?.message}` }, { status: 500 });
     }
 
     // 8. Update total_invested
@@ -119,18 +136,18 @@ export async function POST(req: NextRequest) {
       meta: { product_id: product.id, product_name: product.name, module_id: newModule.id, currency: userCurrency },
     });
 
-    // 10. Pay referral commissions (Only on first purchase)
+    // 10. Pay referral commissions (ONLY ON FIRST PURCHASE)
     if (isFirstPurchase && user.referred_by) {
       
-      // Helper to pay commission
+      // Base commission is calculated in UGX to ensure fairness across borders, 
+      // then converted to the referrer's local currency.
+      const baseUGXPrice = Number(product.price);
+
       const payCommission = async (referrerId: string, amountInUGX: number, level: number) => {
-        // Fetch referrer to know their currency
         const { data: ref } = await supabaseAdmin.from('users').select('balance, currency').eq('id', referrerId).single();
         if (!ref) return;
 
         const refCurrency = ref.currency || 'UGX';
-        
-        // Convert the commission from UGX to the referrer's local currency
         const localCommission = convertFromUGX(amountInUGX, refCurrency);
 
         await supabaseAdmin
@@ -146,9 +163,6 @@ export async function POST(req: NextRequest) {
           meta: { referred_user_id: session.userId, level: level, currency: refCurrency },
         });
       };
-
-      // Base commission amounts are calculated in UGX to ensure fairness across borders
-      const baseUGXPrice = Number(product.price);
 
       // Level 1 (25%)
       await payCommission(user.referred_by, Math.round(baseUGXPrice * 0.25), 1);
@@ -174,4 +188,4 @@ export async function POST(req: NextRequest) {
     console.error('Rental create error:', err);
     return NextResponse.json({ error: `Server error` }, { status: 500 });
   }
-      }
+}
