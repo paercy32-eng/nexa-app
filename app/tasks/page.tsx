@@ -22,7 +22,7 @@ export default function TasksPage() {
 
   // Spin State
   const [canSpin, setCanSpin] = useState(false);
-  const [spinReason, setSpinReason] = useState('Loading...');
+  const [spinReason, setSpinReason] = useState('');
   const [invitesToday, setInvitesToday] = useState(0);
   const [loadingSpin, setLoadingSpin] = useState(true);
   const [spinning, setSpinning] = useState(false);
@@ -130,25 +130,23 @@ export default function TasksPage() {
       </div>
 
       {/* ========================================= */}
-      {/* SPIN TAB */}
+      {/* SPIN TAB (Cleaned up) */}
       {/* ========================================= */}
       {activeTab === 'spin' && (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in flex flex-col items-center">
           {loadingSpin ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-4">
+            <div className="flex flex-col items-center justify-center py-6 w-full max-w-sm">
               
               {/* Spin Wheel Area */}
               <div className="relative w-64 h-64 mb-8 flex items-center justify-center">
-                {/* Glowing Rings */}
                 <div className={`absolute inset-0 rounded-full border-4 border-dashed border-violet-500/30 ${spinning ? 'animate-spin-slow' : ''}`}></div>
                 <div className={`absolute inset-4 rounded-full border-2 border-cyan-500/20 ${spinning ? 'animate-reverse-spin' : ''}`}></div>
                 <div className="absolute inset-8 rounded-full bg-gradient-to-br from-violet-900/40 to-[#12121a] border border-white/10 shadow-[0_0_50px_rgba(139,92,246,0.2)]"></div>
                 
-                {/* Center Spin Button */}
                 <button
                   onClick={handleSpin}
                   disabled={!canSpin || spinning}
@@ -173,44 +171,30 @@ export default function TasksPage() {
                 </button>
               </div>
 
-              {/* Status / Rules */}
-              <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-3xl p-5 text-center">
-                {canSpin ? (
-                  <div className="text-emerald-400 font-bold text-sm">
-                    You are eligible! Tap the wheel to spin.
-                  </div>
-                ) : (
-                  <div className="text-zinc-400 font-medium text-sm leading-relaxed">
-                    <span className="text-red-400 block mb-1 font-bold">Cannot Spin</span>
-                    {spinReason}
-                  </div>
-                )}
-                
-                {/* Daily Invite Progress */}
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2">Daily Active Invites</div>
-                  <div className="flex items-center justify-center gap-2">
-                    {[1, 2, 3].map((num) => (
-                      <div key={num} className={`w-8 h-8 rounded-full flex items-center justify-center border font-bold text-xs ${
+              {/* 🚨 Cleaned up 1,2,3 Indicators */}
+              <div className="flex flex-col items-center gap-3 w-full bg-[#12121a] border border-white/5 rounded-3xl p-6">
+                <div className="flex items-center justify-center gap-4">
+                  {[1, 2, 3].map((num) => (
+                    <div 
+                      key={num} 
+                      className={`w-12 h-12 rounded-full flex items-center justify-center border-2 font-black text-lg transition-all duration-300 ${
                         invitesToday >= num 
-                          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' 
-                          : 'bg-black/50 border-white/10 text-zinc-600'
-                      }`}>
-                        {num}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-[10px] text-zinc-500 mt-2">Invite 3 active users today to unlock</div>
+                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
+                          : 'bg-zinc-900 border-zinc-700 text-zinc-600'
+                      }`}
+                    >
+                      {num}
+                    </div>
+                  ))}
                 </div>
-              </div>
 
-              {/* Rules Card */}
-              <div className="w-full max-w-sm mt-4 bg-[#12121a] border border-white/5 rounded-3xl p-5">
-                 <div className="text-[10px] text-violet-400 font-bold uppercase tracking-wider mb-3">Prize Pool</div>
-                 <ul className="text-xs text-zinc-400 space-y-2">
-                   <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-violet-500 rounded-full"></span> Win a free Nexa Flow Node (Worth 20k, 4k daily)</li>
-                   <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span> Win instant cash prizes (5k, 10k, 20k UGX value)</li>
-                 </ul>
+                {!canSpin && (
+                   <div className="text-center mt-2 px-2">
+                     <p className="text-[10px] text-zinc-500 font-medium leading-relaxed">
+                       {spinReason}
+                     </p>
+                   </div>
+                )}
               </div>
 
             </div>
@@ -343,7 +327,7 @@ export default function TasksPage() {
 
       {/* 🚨 Spin Result Modal */}
       {spinResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setSpinResult(null)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setSpinResult(null)}>
           <div className="w-full max-w-sm bg-[#12121a] border border-violet-500/30 rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(139,92,246,0.3)] animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="w-20 h-20 bg-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(139,92,246,0.5)]">
               <span className="text-4xl">🎉</span>
@@ -375,4 +359,4 @@ export default function TasksPage() {
 
     </main>
   );
-          }
+                }
