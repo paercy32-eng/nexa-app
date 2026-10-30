@@ -74,11 +74,12 @@ export async function POST(req: NextRequest) {
     // APPROVE
     // ==============================
     if (action === 'approve') {
-      const userNet = Math.round(Number(wd.amount) * 0.84); // 16% fee
+      // 🚨 CHANGED: 13% fee (User gets 87%)
+      const userNet = Math.round(Number(wd.amount) * 0.87); 
       const reference = crypto.randomUUID();
 
       try {
-        // 🚨 ROUTING: PesaJet for UG, MarzPay for others
+        // ROUTING: PesaJet for UG, MarzPay for others
         if (wd.gateway === 'pesajet' || userCountry === 'UG') {
            const formattedPhone = pesajet.utils.formatPhoneNumber(wd.recipient_phone);
            let provider = pesajet.utils.detectProvider(wd.recipient_phone);
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
            console.log('PesaJet Payout initiated');
 
         } else {
-           // 🚨 MARZPAY PAYOUT FOR KE, RW, ZM, CM
+           // MARZPAY PAYOUT FOR KE, RW, ZM, CM
            const marzpayKey = process.env.MARZPAY_API_KEY;
            const marzpaySecret = process.env.MARZPAY_API_SECRET;
            const marzpayBaseUrl = 'https://wallet.wearemarz.com/api/v1';
@@ -108,7 +109,6 @@ export async function POST(req: NextRequest) {
 
            const authToken = Buffer.from(`${marzpayKey}:${marzpaySecret}`).toString('base64');
 
-           // Ensure phone is formatted with +
            let formattedPhone = wd.recipient_phone.trim();
            if (!formattedPhone.startsWith('+')) formattedPhone = `+${formattedPhone}`;
 
@@ -120,10 +120,10 @@ export async function POST(req: NextRequest) {
                Accept: 'application/json',
              },
              body: JSON.stringify({
-               amount: userNet, // Amount user receives
+               amount: userNet,
                phone_number: formattedPhone,
                reference: reference,
-               country: userCountry, // 'KE', 'RW', 'ZM', 'CM'
+               country: userCountry, 
                description: `Nexa Withdrawal for ${wd.recipient_name}`,
                callback_url: `${appUrl}/api/webhooks/marzpay`,
                metadata: [{ withdrawalId: wd.id }]
@@ -180,4 +180,4 @@ export async function POST(req: NextRequest) {
     console.error('Admin withdrawal action error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-            }
+      }
