@@ -20,9 +20,6 @@ type Product = {
   daily_return: number;
 };
 
-const TELEGRAM_LINK = 'https://t.me/'; 
-const CS_TELEGRAM_LINK = 'https://t.me/'; 
-
 export default function HomePage() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
@@ -30,9 +27,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Product | null>(null);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
-
-  const [showRecharge, setShowRecharge] = useState(false);
-  const [showWithdraw, setShowWithdraw] = useState(false);
 
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
@@ -105,7 +99,7 @@ export default function HomePage() {
     <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-violet-500/30">
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 px-1">
+      <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
           <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-800 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.5)] overflow-hidden">
             <span className="text-white font-black text-xl">N</span>
@@ -119,54 +113,6 @@ export default function HomePage() {
           <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Welcome</div>
           <div className="text-sm font-bold text-zinc-200">{me?.name}</div>
         </div>
-      </div>
-
-      {/* Balance Card */}
-      <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 mb-6 shadow-2xl">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-violet-600/30 blur-3xl rounded-full"></div>
-        <div className="relative z-10">
-          <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-            Available Balance
-          </div>
-          <div className="text-5xl font-black text-white tracking-tight mb-1">
-            <span className="text-xl text-violet-400 mr-1">{me?.currency || 'UGX'}</span>
-            {Number(me?.balance || 0).toLocaleString()}
-          </div>
-        </div>
-      </div>
-
-      {/* 4 Circular Action Icons */}
-      <div className="grid grid-cols-4 gap-3 mb-8">
-        
-        <button onClick={() => setShowRecharge(true)} className="flex flex-col items-center gap-2 group">
-          <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 group-hover:bg-violet-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.1)]">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-violet-400 transition">Deposit</span>
-        </button>
-
-        <button onClick={() => setShowWithdraw(true)} className="flex flex-col items-center gap-2 group">
-          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(34,211,238,0.1)]">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-cyan-400 transition">Withdraw</span>
-        </button>
-
-        <a href={CS_TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
-          <div className="w-14 h-14 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 group-hover:bg-fuchsia-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(217,70,239,0.1)]">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-fuchsia-400 transition">Service</span>
-        </a>
-
-        <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(99,102,241,0.1)]">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" /></svg>
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-indigo-400 transition">Group</span>
-        </a>
-
       </div>
 
       {/* Products List */}
@@ -185,31 +131,6 @@ export default function HomePage() {
           />
         ))}
       </div>
-
-      {/* Recharge Modal */}
-      {showRecharge && (
-        <RechargeModal
-          currency={me?.currency || 'UGX'}
-          onClose={() => setShowRecharge(false)}
-          onSuccess={async () => {
-            await loadMe();
-            setShowRecharge(false);
-          }}
-        />
-      )}
-
-      {/* Withdraw Modal */}
-      {showWithdraw && (
-        <WithdrawModal
-          balance={me?.balance ?? 0}
-          currency={me?.currency || 'UGX'}
-          onClose={() => setShowWithdraw(false)}
-          onSuccess={async () => {
-            await loadMe();
-            setShowWithdraw(false);
-          }}
-        />
-      )}
 
       {/* Purchase Modal */}
       {selected && (
@@ -230,9 +151,8 @@ export default function HomePage() {
 }
 
 // ==========================================
-// MODALS (Dark Theme)
+// RENT MODAL (For purchasing assets)
 // ==========================================
-
 function RentModal({ product, balance, currency, feedback, onClose, onConfirm }: any) {
   const [loading, setLoading] = useState(false);
   const price = Number(product.price);
@@ -282,115 +202,3 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
     </div>
   );
 }
-
-function RechargeModal({ currency, onClose, onSuccess }: any) {
-  const [amount, setAmount] = useState('20000');
-  const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [sent, setSent] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/me').then(res => res.json()).then(data => { if (data?.user?.phone) setPhone(data.user.phone); });
-  }, []);
-
-  async function submit(e: any) {
-    e.preventDefault();
-    setLoading(true);
-    setMsg('');
-    try {
-      const res = await fetch('/api/deposits/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Number(amount), phone }),
-      });
-      const data = await res.json();
-      if (!res.ok) setMsg(data.error);
-      else { setSent(true); setTimeout(onSuccess, 3000); }
-    } catch { setMsg('Something went wrong.'); }
-    finally { setLoading(false); }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border-t border-white/10 rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-xl font-black text-white">Deposit Funds</div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
-        </div>
-        
-        {!sent ? (
-          <form onSubmit={submit} className="space-y-4">
-            <div>
-              <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-violet-500 transition" required />
-            </div>
-            <div>
-              <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Phone Number</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-violet-500 transition" required />
-            </div>
-            {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
-            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50">
-              {loading ? 'Sending Request...' : 'Initiate Deposit'}
-            </button>
-          </form>
-        ) : (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-            </div>
-            <div className="text-lg font-bold text-white mb-2">Check your phone</div>
-            <div className="text-sm text-zinc-400">Enter your PIN to complete the deposit.</div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
-  const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState('');
-
-  async function submit(e: any) {
-    e.preventDefault();
-    setLoading(true);
-    setMsg('');
-    try {
-      const res = await fetch('/api/withdrawals/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Number(amount) }),
-      });
-      const data = await res.json();
-      if (!res.ok) setMsg(data.error);
-      else onSuccess();
-    } catch { setMsg('Something went wrong.'); }
-    finally { setLoading(false); }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border-t border-white/10 rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <div className="text-xl font-black text-white">Withdraw</div>
-            <div className="text-[10px] text-zinc-500 font-bold mt-1 uppercase tracking-wider">Available: {currency} {Number(balance).toLocaleString()}</div>
-          </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
-        </div>
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-cyan-500 transition" required />
-          </div>
-          {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
-          <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(34,211,238,0.2)] disabled:opacity-50">
-            {loading ? 'Submitting...' : 'Request Withdrawal'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-            }
