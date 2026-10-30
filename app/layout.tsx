@@ -2,20 +2,21 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
-import WelcomeModal from "@/components/WelcomeModal"; // 🚨 Imported here
+import WelcomeModal from "@/components/WelcomeModal";
+import Script from "next/script"; // 🚨 Imported Script
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Nexa Capital",
   description: "Invest in high-yield industrial assets.",
-  manifest: "/manifest.json",
+  manifest: "/manifest.json", // 🚨 Linked Manifest here
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Nexa Capital",
   },
-  // If you have icons uploaded, link them here later
+  // Once you generate your icons, uncomment and update these paths:
   // icons: {
   //   icon: "/icon-192x192.png",
   //   apple: "/icon-192x192.png",
@@ -40,8 +41,20 @@ export default function RootLayout({
         <div className="max-w-md mx-auto min-h-screen relative">
           {children}
           <BottomNav />
-          <WelcomeModal /> {/* 🚨 Placed here */}
+          <WelcomeModal />
         </div>
+        
+        {/* 🚨 Register Service Worker */}
+        <Script id="register-sw" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.register('/sw.js')
+                .catch(function(err) {
+                  console.log('Service Worker registration failed: ', err);
+                });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
