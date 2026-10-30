@@ -4,7 +4,6 @@ import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// 🚨 NEW: Updated Reward Tiers
 const REWARD_TIERS = [
   { target: 300000, reward: 10000 },
   { target: 500000, reward: 20000 },
@@ -23,11 +22,10 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Fetch Level 1 IDs
+    // 1. Fetch Team
     const { data: l1Data } = await supabaseAdmin.from('users').select('id').eq('referred_by', userId);
     const l1Ids = (l1Data ?? []).map(u => u.id);
 
-    // 2. Fetch Level 2 IDs
     let level2: any[] = [];
     if (l1Ids.length > 0) {
       const { data: l2Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l1Ids);
@@ -35,18 +33,16 @@ export async function GET(req: NextRequest) {
     }
     const l2Ids = level2.map(u => u.id);
 
-    // 3. Fetch Level 3 IDs
     let level3: any[] = [];
     if (l2Ids.length > 0) {
       const { data: l3Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l2Ids);
       level3 = l3Data ?? [];
     }
 
-    // 4. Combine all IDs and calculate size
     const allTeamIds = [...l1Ids, ...l2Ids, ...level3.map(u => u.id)];
     const teamSize = allTeamIds.length;
 
-    // 5. Calculate Team Investment
+    // 2. Calculate Team Investment
     let teamInvestment = 0;
     if (allTeamIds.length > 0) {
       const { data: modules } = await supabaseAdmin
@@ -59,11 +55,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 6. Check and Pay Out Unlocked Rewards Automatically
-    const { data: user } = await supabaseAdmin.from('users').select('balance, currency').eq('id', userId).single();
-    let currentBalance = Number(user?.balance || 0);
-
-    // Find which tiers have already been paid out to avoid double-paying
+    // 3. Check claimed tiers
     const { data: existingRewards } = await supabaseAdmin
       .from('transactions')
       .select('meta')
@@ -72,44 +64,15 @@ export async function GET(req: NextRequest) {
 
     const claimedTargets = new Set((existingRewards ?? []).map(r => Number(r.meta?.tier_target)));
 
-    const tiers = [];
-    let newRewardsPaid = 0;
-
-    for (const tier of REWARD_TIERS) {
-      const isUnlocked = teamInvestment >= tier.target;
-      
-      if (isUnlocked && !claimedTargets.has(tier.target)) {
-        // Add money to balance
-        currentBalance += tier.reward;
-        await supabaseAdmin.from('users').update({ balance: currentBalance }).eq('id', userId);
-
-        // Log the transaction so they see it in History
-        await supabaseAdmin.from('transactions').insert({
-          user_id: userId,
-          type: 'team_reward',
-          amount: tier.reward,
-          status: 'completed',
-          meta: { tier_target: tier.target, description: `Team Reward Unlocked (${tier.target.toLocaleString()} target)` },
-        });
-
-        claimedTargets.add(tier.target);
-        newRewardsPaid += tier.reward;
-      }
-
-      tiers.push({
-        target: tier.target,
-        reward: tier.reward,
-        isClaimed: claimedTargets.has(tier.target),
-      });
-    }
+    const tiers = REWARD_TIERS.map((tier) => ({
+      target: tier.target,
+      reward: tier.reward,
+      isTargetHit: teamInvestment >= tier.target,
+      isClaimed: claimedTargets.has(tier.target),
+    }));
 
     return NextResponse.json(
-      {
-        teamInvestment,
-        teamSize,
-        tiers,
-        newlyPaid: newRewardsPaid 
-      },
+      { teamInvestment, teamSize, tiers },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
     );
   } catch (err) {
