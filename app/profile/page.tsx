@@ -20,7 +20,6 @@ export default function ProfilePage() {
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Bind Account State
   const [showBindAccount, setShowBindAccount] = useState(false);
   const [bindPhone, setBindPhone] = useState('');
   const [bindName, setBindName] = useState('');
@@ -132,8 +131,8 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Quick Actions 2x2 Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      {/* Quick Actions (Now just History and Bind Account) */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
         
         {/* Transaction History */}
         <button onClick={() => router.push('/history')} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-white/10 group">
@@ -151,23 +150,15 @@ export default function ProfilePage() {
           <div className="text-xs font-bold text-zinc-200 uppercase tracking-wide">Bind Account</div>
           <div className="text-[9px] text-zinc-500 truncate w-full px-1">{me?.bound_phone ? me.bound_phone : 'Not bound'}</div>
         </button>
-
-        {/* Rewards */}
-        <button onClick={() => router.push('/rewards')} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-white/10 group">
-          <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 group-hover:scale-110 transition">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10l1 7H6L7 4z"></path><path d="M5 11h14"></path></svg>
-          </div>
-          <div className="text-xs font-bold text-zinc-200 uppercase tracking-wide">Rewards</div>
-        </button>
-
-        {/* Log out */}
-        <button onClick={logout} className="bg-red-500/5 backdrop-blur-xl border border-red-500/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-red-500/10 group">
-          <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 group-hover:scale-110 transition">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-          </div>
-          <div className="text-xs font-bold text-red-400 uppercase tracking-wide">Log out</div>
-        </button>
       </div>
+
+      {/* Log out (Full width) */}
+      <button onClick={logout} className="w-full bg-red-500/5 backdrop-blur-xl border border-red-500/10 rounded-3xl p-4 flex items-center justify-center gap-3 active:scale-[0.98] transition hover:bg-red-500/10 group">
+        <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 group-hover:scale-110 transition">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </div>
+        <div className="text-xs font-bold text-red-400 uppercase tracking-wide">Log out</div>
+      </button>
 
       {/* Bind Account Modal */}
       {showBindAccount && (
@@ -203,4 +194,4 @@ export default function ProfilePage() {
       )}
     </main>
   );
-        }
+          }
