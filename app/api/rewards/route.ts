@@ -4,14 +4,14 @@ import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// The fixed tiers for Nexa
+// 🚨 NEW: Updated Reward Tiers
 const REWARD_TIERS = [
-  { target: 100000, reward: 5000 },
   { target: 300000, reward: 10000 },
   { target: 500000, reward: 20000 },
-  { target: 1000000, reward: 30000 },
-  { target: 1500000, reward: 40000 },
+  { target: 1000000, reward: 45000 },
   { target: 2000000, reward: 100000 },
+  { target: 3000000, reward: 160000 },
+  { target: 5000000, reward: 300000 },
 ];
 
 export async function GET(req: NextRequest) {
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 6. Check and Pay Out Unlocked Rewards Automatically
-    const { data: user } = await supabaseAdmin.from('users').select('balance').eq('id', userId).single();
+    const { data: user } = await supabaseAdmin.from('users').select('balance, currency').eq('id', userId).single();
     let currentBalance = Number(user?.balance || 0);
 
     // Find which tiers have already been paid out to avoid double-paying
@@ -116,4 +116,4 @@ export async function GET(req: NextRequest) {
     console.error('Rewards API error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-                                                               }
+}
