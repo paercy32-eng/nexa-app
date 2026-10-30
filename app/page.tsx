@@ -34,11 +34,6 @@ export default function HomePage() {
   const [showRecharge, setShowRecharge] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
 
-  // Check-in States
-  const [canCheckIn, setCanCheckIn] = useState(false);
-  const [checkinLoading, setCheckinLoading] = useState(false);
-  const [checkinMsg, setCheckinMsg] = useState('');
-
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
     if (res.status === 401) {
@@ -48,16 +43,6 @@ export default function HomePage() {
     const data = await res.json();
     setMe(data.user);
     setLoading(false);
-  }
-
-  async function loadCheckinStatus() {
-    try {
-      const res = await fetch('/api/checkin?t=' + Date.now(), { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        setCanCheckIn(data.canCheckIn === true);
-      }
-    } catch {}
   }
 
   useEffect(() => {
@@ -74,38 +59,10 @@ export default function HomePage() {
       const prodData = await prodRes.json();
       setProducts(prodData.products ?? []);
 
-      await loadCheckinStatus();
       setLoading(false);
     }
     load();
   }, [router]);
-
-  async function handleCheckIn() {
-    setCheckinLoading(true);
-    setCheckinMsg('');
-    try {
-      const res = await fetch('/api/checkin', { method: 'POST' });
-      const data = await res.json();
-      
-      if (!res.ok) {
-        setCheckinMsg(data.error || 'Check-in failed.');
-      } else {
-        setCheckinMsg(data.message || 'You earned your bonus!');
-        setCanCheckIn(false);
-        
-        // Instantly update balance on screen
-        setMe((prev) => {
-          if (!prev) return prev;
-          return { ...prev, balance: data.newBalance };
-        });
-      }
-    } catch {
-      setCheckinMsg('Something went wrong.');
-    } finally {
-      setCheckinLoading(false);
-      setTimeout(() => setCheckinMsg(''), 4000);
-    }
-  }
 
   function handleRent(product: Product) {
     setFeedback(null);
@@ -165,7 +122,7 @@ export default function HomePage() {
       </div>
 
       {/* Balance Card */}
-      <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 mb-4 shadow-2xl">
+      <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 mb-6 shadow-2xl">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-violet-600/30 blur-3xl rounded-full"></div>
         <div className="relative z-10">
           <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
@@ -178,35 +135,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
-      {/* Daily Check-in Card */}
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-4 mb-6 shadow-lg flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <div>
-            <div className="text-xs font-bold text-white tracking-wide">Daily Check-in</div>
-            <div className="text-[10px] text-zinc-500 font-medium mt-0.5">Claim free rewards</div>
-          </div>
-        </div>
-        <button
-          onClick={handleCheckIn}
-          disabled={!canCheckIn || checkinLoading}
-          className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition ${
-            canCheckIn
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-              : 'bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed'
-          }`}
-        >
-          {checkinLoading ? '...' : canCheckIn ? 'Check In' : 'Claimed'}
-        </button>
-      </div>
-      {checkinMsg && (
-        <div className="mb-4 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 text-center">
-          {checkinMsg}
-        </div>
-      )}
 
       {/* 4 Circular Action Icons */}
       <div className="grid grid-cols-4 gap-3 mb-8">
@@ -465,4 +393,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-                                                                                      }
+            }
