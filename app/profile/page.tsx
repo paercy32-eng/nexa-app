@@ -333,7 +333,7 @@ export default function ProfilePage() {
 // RECHARGE (DEPOSIT) MODAL
 // ==========================================
 function RechargeModal({ currency, onClose, onSuccess }: any) {
-  const minDeposit = convertFromUGX(2000, currency);
+  const minDeposit = convertFromUGX(20000, currency);
   
   const [amount, setAmount] = useState(String(minDeposit));
   const [phone, setPhone] = useState('');
