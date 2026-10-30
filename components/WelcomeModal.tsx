@@ -15,16 +15,20 @@ export default function WelcomeModal() {
     
     // Check if the user has already seen the popup
     const hasSeen = localStorage.getItem('hasSeenNexaWelcome');
+    
     if (!hasSeen) {
-      // Fetch user currency to show correct limits
-      fetch('/api/me').then(res => res.json()).then(data => {
-        if (data?.user?.currency) setCurrency(data.user.currency);
-      }).catch(() => {});
-
-      // Add a small delay to ensure auth redirects finish
-      setTimeout(() => {
-        setIsOpen(true);
-      }, 500);
+      // 🚨 Wait for the user's currency to load before showing the popup
+      fetch('/api/me')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.user?.currency) {
+            setCurrency(data.user.currency);
+          }
+          setIsOpen(true); // Only open after we have the data
+        })
+        .catch(() => {
+          setIsOpen(true); // Fallback to open if API fails
+        });
     }
   }, []);
 
@@ -43,10 +47,10 @@ export default function WelcomeModal() {
 
   if (!isOpen) return null;
 
-  // 🚨 Calculate dynamic amounts based on user's currency
-  const minDeposit = convertFromUGX(2000, currency); // Assuming 2000 base min
-  const minWithdraw = convertFromUGX(4000, currency); // 4000 base min
-  const welcomeBonus = convertFromUGX(2000, currency); // 2000 base bonus
+  // Calculate dynamic amounts based on user's currency
+  const minDeposit = convertFromUGX(2000, currency);
+  const minWithdraw = convertFromUGX(4000, currency);
+  const welcomeBonus = convertFromUGX(2000, currency);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
