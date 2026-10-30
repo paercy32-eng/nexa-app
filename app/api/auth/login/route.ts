@@ -12,14 +12,18 @@ export async function POST(req: NextRequest) {
 
     const cleanPhone = phone.trim();
 
-    const { data: user } = await supabaseAdmin
+    const { data: user, error: dbError } = await supabaseAdmin
       .from('users')
       .select('id, name, phone, password_hash, is_banned')
       .eq('phone', cleanPhone)
       .maybeSingle();
 
+    if (dbError) {
+      return NextResponse.json({ error: `DB Error: ${dbError.message}` }, { status: 500 });
+    }
+
     if (!user) {
-      return NextResponse.json({ error: 'Invalid phone number or password.' }, { status: 401 });
+      return NextResponse.json({ error: `User not found for phone: ${cleanPhone}` }, { status: 401 });
     }
 
     if (user.is_banned) {
@@ -27,8 +31,11 @@ export async function POST(req: NextRequest) {
     }
 
     const isValid = await comparePassword(password, user.password_hash);
+    
     if (!isValid) {
-      return NextResponse.json({ error: 'Invalid phone number or password.' }, { status: 401 });
+      return NextResponse.json({ 
+        error: `Password mismatch. (Hash starts with: ${user.password_hash.substring(0, 10)}...)` 
+      }, { status: 401 });
     }
 
     const token = await signSession({
@@ -54,8 +61,8 @@ export async function POST(req: NextRequest) {
     });
 
     return res;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Login error:', err);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: `Server error: ${err.message}` }, { status: 500 });
   }
-  }
+}
