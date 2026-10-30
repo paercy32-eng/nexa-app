@@ -2,13 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import toast from 'react-hot-toast';
+
+interface ReferralEntry {
+  id: string;
+  referred_id: string;
+  name: string;
+  phone: string;
+  earnings: number;
+  joined_at: string;
+  isValid: boolean;
+}
 
 interface ReferralsResponse {
   referralCode: string;
+  currency: string;
   totalEarnings: number;
   counts: { level1: number; level2: number; level3: number };
+  levels: {
+    level1: ReferralEntry[];
+    level2: ReferralEntry[];
+    level3: ReferralEntry[];
+  };
 }
 
 export default function TeamPage() {
@@ -40,8 +55,11 @@ export default function TeamPage() {
 
   useEffect(() => {
     loadReferrals();
+    
+    // 🚨 Use the Vercel Env Variable first, fallback to window if not set
     if (typeof window !== 'undefined') {
-      setBaseUrl(window.location.origin);
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      setBaseUrl(appUrl);
     }
   }, []);
 
@@ -52,6 +70,7 @@ export default function TeamPage() {
         toast.success(type === 'code' ? 'Code copied!' : 'Link copied!');
         return;
       }
+      
       const textArea = document.createElement('textarea');
       textArea.value = text;
       textArea.style.position = 'fixed';
@@ -59,8 +78,10 @@ export default function TeamPage() {
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
+      
       const successful = document.execCommand('copy');
       document.body.removeChild(textArea);
+      
       if (successful) {
         toast.success(type === 'code' ? 'Code copied!' : 'Link copied!');
       } else {
@@ -87,10 +108,10 @@ export default function TeamPage() {
     );
   }
 
-  const currentCount = 
-    activeLevel === 1 ? data.counts.level1 : 
-    activeLevel === 2 ? data.counts.level2 : 
-    data.counts.level3;
+  const currentLevelList = 
+    activeLevel === 1 ? data.levels.level1 : 
+    activeLevel === 2 ? data.levels.level2 : 
+    data.levels.level3;
 
   const referralLink = `${baseUrl}/register?ref=${data.referralCode}`;
 
@@ -111,7 +132,7 @@ export default function TeamPage() {
             <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/20 blur-2xl rounded-full"></div>
             <div className="text-[9px] text-violet-300 font-bold uppercase tracking-widest mb-1.5 relative z-10">Total Commission</div>
             <div className="text-xl font-black text-white relative z-10">
-              <span className="text-xs text-violet-400 mr-1">UGX</span>
+              <span className="text-xs text-violet-400 mr-1">{data.currency || 'UGX'}</span>
               {data.totalEarnings.toLocaleString()}
             </div>
           </div>
@@ -190,28 +211,30 @@ export default function TeamPage() {
           })}
         </div>
 
-        {/* Level Stats Card */}
-        <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-lg mb-6">
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-violet-500/5 blur-3xl rounded-full"></div>
-           
-          <div className="relative z-10 flex items-center justify-between mb-4 pb-4 border-b border-white/5">
-            <div>
-              <p className="text-white font-black text-lg tracking-wide">Level {activeLevel} Network</p>
-              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">Direct sub-referrals</p>
-            </div>
-            <p className="text-cyan-400 font-black text-3xl drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">{currentCount}</p>
+        {/* Member List */}
+        {currentLevelList.length > 0 ? (
+          <div className="space-y-3">
+            {currentLevelList.map((member) => (
+              <div key={member.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between hover:bg-white/10 transition">
+                <div>
+                  <p className="text-sm font-bold text-zinc-200 tracking-wide">{member.name}</p>
+                  <p className="text-[10px] text-zinc-500 font-medium mt-0.5">{member.phone}</p>
+                </div>
+                <span className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border ${
+                  member.isValid 
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' 
+                    : 'bg-zinc-800/50 text-zinc-500 border-zinc-700'
+                }`}>
+                  {member.isValid ? 'Active' : 'Pending'}
+                </span>
+              </div>
+            ))}
           </div>
-
-          {/* 🚨 New Button to View Members */}
-          <Link 
-            href={`/team/members?level=${activeLevel}`}
-            className="relative z-10 w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-3.5 rounded-xl transition active:scale-[0.98]"
-          >
-            View Member List
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </Link>
-
-        </div>
+        ) : (
+          <div className="text-center py-8 bg-[#12121a] rounded-2xl border border-white/5">
+            <p className="text-xs text-zinc-500 font-medium">No members at Level {activeLevel} yet.</p>
+          </div>
+        )}
 
       </div>
     </div>
