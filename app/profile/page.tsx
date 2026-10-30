@@ -268,10 +268,10 @@ export default function ProfilePage() {
         <div className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Log out</div>
       </button>
 
-      {/* Bind Account Modal (Centered) */}
+      {/* Bind Account Modal (Z-index increased, scrolling enabled) */}
       {showBindAccount && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowBindAccount(false)}>
-          <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto" onClick={() => setShowBindAccount(false)}>
+          <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl my-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-6">
               <div>
                 <div className="text-xl font-black text-white">Bind Wallet</div>
@@ -301,7 +301,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Recharge Modal (Centered) */}
+      {/* Recharge Modal (Fixed layout) */}
       {showRecharge && (
         <RechargeModal
           currency={me?.currency || 'UGX'}
@@ -313,7 +313,7 @@ export default function ProfilePage() {
         />
       )}
 
-      {/* Withdraw Modal (Centered) */}
+      {/* Withdraw Modal (Fixed layout) */}
       {showWithdraw && (
         <WithdrawModal
           balance={me?.balance ?? 0}
@@ -333,7 +333,7 @@ export default function ProfilePage() {
 // RECHARGE (DEPOSIT) MODAL
 // ==========================================
 function RechargeModal({ currency, onClose, onSuccess }: any) {
-  const minDeposit = convertFromUGX(20000, currency);
+  const minDeposit = convertFromUGX(2000, currency);
   
   const [amount, setAmount] = useState(String(minDeposit));
   const [phone, setPhone] = useState('');
@@ -405,15 +405,15 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
           setMsg('Payment failed or expired. Please try again.');
           setSent(false);
         }
-      } catch (e) {
-        // Ignore network errors during polling, keep trying
-      }
+      } catch (e) {}
     }, 3000);
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    /* 🚨 Z-INDEX 100 & OVERFLOW-Y AUTO */
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      {/* 🚨 MAX-H & PB-SAFE */}
+      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl my-auto pb-8" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <div className="text-xl font-black text-white">Deposit Funds</div>
           <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
@@ -442,8 +442,10 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-violet-500 transition" required />
             </div>
             {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
-            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50">
-              {loading ? 'Sending Request...' : 'Initiate Deposit'}
+            
+            {/* 🚨 HIGH CONTRAST SUBMIT BUTTON */}
+            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-50">
+              {loading ? 'Sending Request...' : 'Deposit Now'}
             </button>
           </form>
         ) : (
@@ -495,8 +497,10 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    /* 🚨 Z-INDEX 100 & OVERFLOW-Y AUTO */
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      {/* 🚨 MAX-H & PB-SAFE */}
+      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl my-auto pb-8" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <div>
             <div className="text-xl font-black text-white">Withdraw</div>
@@ -520,11 +524,13 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
           )}
 
           {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
-          <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(34,211,238,0.2)] disabled:opacity-50">
-            {loading ? 'Submitting...' : 'Request Withdrawal'}
+          
+          {/* 🚨 HIGH CONTRAST SUBMIT BUTTON */}
+          <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(34,211,238,0.3)] disabled:opacity-50">
+            {loading ? 'Submitting...' : 'Confirm Withdrawal'}
           </button>
         </form>
       </div>
     </div>
   );
-              }
+      }
