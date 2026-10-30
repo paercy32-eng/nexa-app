@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 type Tier = {
   target: number;
   reward: number;
+  isTargetHit: boolean;
   isClaimed: boolean;
 };
 
@@ -19,6 +20,7 @@ export default function TasksPage() {
   const [teamSize, setTeamSize] = useState(0);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [loadingRewards, setLoadingRewards] = useState(true);
+  const [claimingId, setClaimingId] = useState<number | null>(null);
 
   // Spin State
   const [canSpin, setCanSpin] = useState(false);
@@ -28,39 +30,39 @@ export default function TasksPage() {
   const [spinning, setSpinning] = useState(false);
   const [spinResult, setSpinResult] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        // Load Rewards
-        const rewardsRes = await fetch('/api/rewards');
-        if (rewardsRes.status === 401) {
-          router.replace('/login');
-          return;
-        }
-        if (rewardsRes.ok) {
-          const rewardsData = await rewardsRes.json();
-          setTeamInvestment(rewardsData.teamInvestment || 0);
-          setTeamSize(rewardsData.teamSize || 0);
-          setTiers(rewardsData.tiers || []);
-        }
-        setLoadingRewards(false);
-
-        // Load Spin Status
-        const spinRes = await fetch('/api/spin');
-        if (spinRes.ok) {
-          const spinData = await spinRes.json();
-          setCanSpin(spinData.canSpin);
-          setSpinReason(spinData.reason || '');
-          setInvitesToday(spinData.invitesToday || 0);
-        }
-        setLoadingSpin(false);
-
-      } catch (err) {
-        console.error(err);
-        setLoadingRewards(false);
-        setLoadingSpin(false);
+  async function loadData() {
+    try {
+      // Load Rewards
+      const rewardsRes = await fetch('/api/rewards?t=' + Date.now());
+      if (rewardsRes.status === 401) {
+        router.replace('/login');
+        return;
       }
+      if (rewardsRes.ok) {
+        const rewardsData = await rewardsRes.json();
+        setTeamInvestment(rewardsData.teamInvestment || 0);
+        setTeamSize(rewardsData.teamSize || 0);
+        setTiers(rewardsData.tiers || []);
+      }
+      setLoadingRewards(false);
+
+      // Load Spin Status
+      const spinRes = await fetch('/api/spin?t=' + Date.now());
+      if (spinRes.ok) {
+        const spinData = await spinRes.json();
+        setCanSpin(spinData.canSpin);
+        setSpinReason(spinData.reason || '');
+        setInvitesToday(spinData.invitesToday || 0);
+      }
+      setLoadingSpin(false);
+    } catch (err) {
+      console.error(err);
+      setLoadingRewards(false);
+      setLoadingSpin(false);
     }
+  }
+
+  useEffect(() => {
     loadData();
   }, [router]);
 
@@ -91,6 +93,34 @@ export default function TasksPage() {
       toast.error('Network error');
     } finally {
       setSpinning(false);
+    }
+  }
+
+  async function handleClaim(target: number) {
+    setClaimingId(target);
+    try {
+      const res = await fetch('/api/rewards/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to claim');
+      } else {
+        toast.success('Reward claimed successfully!');
+        // Reload tiers to update the UI
+        const rewardsRes = await fetch('/api/rewards?t=' + Date.now());
+        if (rewardsRes.ok) {
+          const rewardsData = await rewardsRes.json();
+          setTiers(rewardsData.tiers || []);
+        }
+      }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setClaimingId(null);
     }
   }
 
@@ -130,7 +160,7 @@ export default function TasksPage() {
       </div>
 
       {/* ========================================= */}
-      {/* SPIN TAB (Cleaned up) */}
+      {/* SPIN TAB */}
       {/* ========================================= */}
       {activeTab === 'spin' && (
         <div className="animate-fade-in flex flex-col items-center">
@@ -171,7 +201,7 @@ export default function TasksPage() {
                 </button>
               </div>
 
-              {/* 🚨 Cleaned up 1,2,3 Indicators */}
+              {/* 1,2,3 Indicators */}
               <div className="flex flex-col items-center gap-3 w-full bg-[#12121a] border border-white/5 rounded-3xl p-6">
                 <div className="flex items-center justify-center gap-4">
                   {[1, 2, 3].map((num) => (
@@ -203,7 +233,7 @@ export default function TasksPage() {
       )}
 
       {/* ========================================= */}
-      {/* REWARDS TAB */}
+      {/* REWARDS TAB (Minimized) */}
       {/* ========================================= */}
       {activeTab === 'rewards' && (
         <div className="animate-fade-in">
@@ -213,109 +243,80 @@ export default function TasksPage() {
              </div>
           ) : (
             <>
-              {/* Summary Card */}
-              <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 mb-8 shadow-2xl">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 blur-3xl rounded-full"></div>
-                
-                <div className="relative z-10 flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-violet-500/10 rounded-2xl text-violet-400 border border-violet-500/20 shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 12 20 22 4 22 4 12"></polyline>
-                      <rect x="2" y="7" width="20" height="5"></rect>
-                      <line x1="12" y1="22" x2="12" y2="7"></line>
-                      <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
-                      <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-black text-white tracking-wide uppercase">Team Rewards</h1>
-                    <p className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase mt-1">Unlock tiers as your team grows</p>
-                  </div>
+              {/* Compact Summary Card */}
+              <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-2xl p-4 mb-6 shadow-xl flex items-center justify-between">
+                <div>
+                  <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Investment</div>
+                  <div className="text-lg font-black text-violet-400">UGX {teamInvestment.toLocaleString()}</div>
                 </div>
-                
-                <div className="relative z-10 grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-black/40 border border-white/5 rounded-2xl p-4 text-center">
-                    <div className="text-[9px] text-zinc-500 font-bold tracking-wider mb-1 uppercase">Team Investment</div>
-                    <div className="text-lg font-black text-violet-400">UGX {teamInvestment.toLocaleString()}</div>
-                  </div>
-                  <div className="bg-black/40 border border-white/5 rounded-2xl p-4 text-center">
-                    <div className="text-[9px] text-zinc-500 font-bold tracking-wider mb-1 uppercase">Team Size</div>
-                    <div className="text-lg font-black text-cyan-400">{teamSize}</div>
-                  </div>
-                </div>
-
-                <div className="relative z-10 flex items-center justify-center gap-2 text-[10px] text-zinc-400 font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 py-2.5 rounded-xl">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  Automatic claim once reached!
+                <div className="w-px h-8 bg-white/10 mx-2"></div>
+                <div className="text-right">
+                  <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Size</div>
+                  <div className="text-lg font-black text-cyan-400">{teamSize}</div>
                 </div>
               </div>
 
-              {/* Reward Tiers Header */}
-              <div className="flex items-center justify-between mb-4 px-1">
-                <h2 className="text-sm font-bold text-zinc-200 tracking-wide uppercase">Reward Tiers</h2>
-                <div className="h-px bg-gradient-to-r from-violet-500/50 to-transparent flex-1 ml-4"></div>
-              </div>
-
-              {/* Tiers List */}
-              <div className="space-y-4">
+              {/* Tiers List (Minimized) */}
+              <div className="space-y-3">
                 {tiers.map((tier, index) => {
                   const progress = Math.min((teamInvestment / tier.target) * 100, 100);
-                  const isCompleted = teamInvestment >= tier.target;
                   const remaining = Math.max(tier.target - teamInvestment, 0);
 
                   return (
-                    <div key={index} className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-3xl p-5 shadow-lg group">
-                      <div className="relative z-10 flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
-                            isCompleted 
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
-                              : 'bg-black/50 text-zinc-500 border-white/5'
-                          }`}>
-                            {isCompleted ? (
-                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            ) : (
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-black text-white text-base tracking-wide">UGX {tier.target.toLocaleString()}</div>
-                            <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Team Investment Goal</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className={`font-black text-sm ${isCompleted ? 'text-cyan-400' : 'text-violet-400'}`}>
-                            +UGX {tier.reward.toLocaleString()}
-                          </div>
-                          <div className={`text-[9px] font-black px-2 py-1 rounded-md mt-1 inline-block border tracking-wider ${
-                            isCompleted 
+                    <div key={index} className="bg-[#12121a] border border-white/10 rounded-2xl p-3 shadow-md">
+                      
+                      {/* Header: Icon, Target, Reward */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                            tier.isClaimed 
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                               : 'bg-black/50 text-zinc-500 border-white/5'
                           }`}>
-                            {isCompleted ? 'UNLOCKED' : 'LOCKED'}
+                            {tier.isClaimed ? (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            ) : (
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            )}
                           </div>
+                          <div>
+                            <div className="font-bold text-white text-xs">UGX {tier.target.toLocaleString()}</div>
+                          </div>
+                        </div>
+                        <div className={`font-black text-xs ${tier.isClaimed ? 'text-zinc-500 line-through' : 'text-violet-400'}`}>
+                          +{tier.reward.toLocaleString()}
                         </div>
                       </div>
 
-                      <div className="relative z-10 w-full h-2.5 bg-black/50 border border-white/5 rounded-full overflow-hidden mb-3">
+                      {/* Progress Bar */}
+                      <div className="w-full h-1.5 bg-black/50 border border-white/5 rounded-full overflow-hidden mb-2">
                         <div
                           className={`h-full rounded-full transition-all duration-1000 ${
-                            isCompleted 
-                              ? 'bg-gradient-to-r from-emerald-500 to-cyan-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
+                            tier.isClaimed 
+                              ? 'bg-emerald-500' 
                               : 'bg-gradient-to-r from-violet-600 to-indigo-500'
                           }`}
                           style={{ width: `${progress}%` }}
                         />
                       </div>
 
-                      <div className="relative z-10 flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                        <span className="text-zinc-500">UGX {teamInvestment.toLocaleString()} / {tier.target.toLocaleString()}</span>
-                        {!isCompleted && (
-                          <span className="text-violet-400">+UGX {remaining.toLocaleString()} to go</span>
+                      {/* Footer: Progress text OR Claim Button */}
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="text-[9px] font-bold text-zinc-500">
+                          {tier.isClaimed ? 'Completed' : `UGX ${remaining.toLocaleString()} to go`}
+                        </div>
+                        
+                        {tier.isTargetHit && !tier.isClaimed && (
+                          <button
+                            onClick={() => handleClaim(tier.target)}
+                            disabled={claimingId === tier.target}
+                            className="bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase px-4 py-1.5 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.4)] animate-pulse disabled:opacity-50"
+                          >
+                            {claimingId === tier.target ? '...' : 'Claim'}
+                          </button>
                         )}
                       </div>
+
                     </div>
                   );
                 })}
@@ -325,7 +326,7 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* 🚨 Spin Result Modal */}
+      {/* Spin Result Modal */}
       {spinResult && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setSpinResult(null)}>
           <div className="w-full max-w-sm bg-[#12121a] border border-violet-500/30 rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(139,92,246,0.3)] animate-scale-in" onClick={(e) => e.stopPropagation()}>
@@ -359,4 +360,4 @@ export default function TasksPage() {
 
     </main>
   );
-                }
+      }
