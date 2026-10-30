@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { convertFromUGX } from '@/lib/currency'; // 🚨 Import the converter
+import { convertFromUGX } from '@/lib/currency';
 
 type Me = {
   id: string;
@@ -329,15 +329,23 @@ export default function ProfilePage() {
   );
 }
 
+// ==========================================
+// RECHARGE (DEPOSIT) MODAL - WITH POLLING
+// ==========================================
 function RechargeModal({ currency, onClose, onSuccess }: any) {
-  // 🚨 Convert the 2,000 UGX base minimum to the user's local currency
+  // 🚨 Set back to 2000 base for your test
   const minDeposit = convertFromUGX(2000, currency);
   
   const [amount, setAmount] = useState(String(minDeposit));
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  
+  // Polling states
   const [sent, setSent] = useState(false);
+  const [reference, setReference] = useState('');
+  const [txId, setTxId] = useState('');
+  const [pollCount, setPollCount] = useState(0);
 
   useEffect(() => {
     fetch('/api/me').then(res => res.json()).then(data => { if (data?.user?.phone) setPhone(data.user.phone); });
@@ -354,10 +362,56 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         body: JSON.stringify({ amount: Number(amount), phone }),
       });
       const data = await res.json();
-      if (!res.ok) setMsg(data.error);
-      else { setSent(true); setTimeout(onSuccess, 3000); }
-    } catch { setMsg('Something went wrong.'); }
-    finally { setLoading(false); }
+      
+      if (!res.ok) {
+        setMsg(data.error);
+      } else {
+        setSent(true);
+        setReference(data.reference);
+        setTxId(data.transactionId);
+        startPolling(data.reference, data.transactionId);
+      }
+    } catch { 
+      setMsg('Something went wrong.'); 
+    } finally { 
+      setLoading(false); 
+    }
+  }
+
+  function startPolling(ref: string, transactionId: string) {
+    let count = 0;
+    const interval = setInterval(async () => {
+      count++;
+      setPollCount(count);
+      
+      // Timeout after 60 seconds (20 attempts * 3s)
+      if (count >= 20) {
+        clearInterval(interval);
+        onClose(); // Close modal on timeout
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/deposits/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reference: ref, transactionId }),
+        });
+        
+        const data = await res.json();
+        
+        if (data.status === 'completed') {
+          clearInterval(interval);
+          onSuccess(); // Triggers loadMe() and closes modal
+        } else if (data.status === 'failed') {
+          clearInterval(interval);
+          setMsg('Payment failed or expired. Please try again.');
+          setSent(false);
+        }
+      } catch (e) {
+        // Ignore network errors during polling, keep trying
+      }
+    }, 3000);
   }
 
   return (
@@ -378,7 +432,7 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
                 type="number" 
                 value={amount} 
                 onChange={(e) => setAmount(e.target.value)} 
-                min={minDeposit} // 🚨 Set the dynamic minimum limit
+                min={minDeposit}
                 className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-violet-500 transition" 
                 required 
               />
@@ -401,7 +455,10 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
             </div>
             <div className="text-lg font-bold text-white mb-2">Check your phone</div>
-            <div className="text-sm text-zinc-400">Enter your PIN to complete the deposit.</div>
+            <div className="text-sm text-zinc-400 mb-4">Enter your PIN to complete the deposit.</div>
+            <div className="text-xs text-violet-400 font-bold animate-pulse">
+              Verifying payment... ({60 - pollCount * 3}s)
+            </div>
           </div>
         )}
       </div>
@@ -409,8 +466,10 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
   );
 }
 
+// ==========================================
+// WITHDRAW MODAL
+// ==========================================
 function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
-  // 🚨 Convert the 4000 UGX base minimum to local currency
   const minWithdraw = convertFromUGX(4000, currency);
   
   const [amount, setAmount] = useState(String(minWithdraw));
@@ -450,20 +509,9 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
         </div>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">
-              Amount ({currency})
-            </label>
-            <input 
-              type="number" 
-              value={amount} 
-              onChange={(e) => setAmount(e.target.value)} 
-              min={minWithdraw} // 🚨 Set the dynamic minimum limit
-              className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-cyan-500 transition" 
-              required 
-            />
-             <div className="text-[10px] text-zinc-500 mt-2 font-medium">
-                Minimum withdraw: {currency} {minWithdraw.toLocaleString()}
-              </div>
+            <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
+            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min={minWithdraw} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-cyan-500 transition" required />
+            <div className="text-[10px] text-zinc-500 mt-2 font-medium">Minimum withdraw: {currency} {minWithdraw.toLocaleString()}</div>
           </div>
 
           {numAmount > 0 && (
@@ -482,4 +530,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-}
+                }
