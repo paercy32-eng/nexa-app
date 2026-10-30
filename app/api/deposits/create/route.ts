@@ -5,7 +5,7 @@ import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 import { pesajet } from '@/lib/pesajet';
 import { convertFromUGX } from '@/lib/currency';
 
-const BASE_MIN_DEPOSIT_UGX = 2000; 
+const BASE_MIN_DEPOSIT_UGX = 20000; 
 
 // 🚨 PesaJet charges 2.5%
 const PESAJET_FEE_RATE = 0.025; 
