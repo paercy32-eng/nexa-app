@@ -4,13 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 import { pesajet } from '@/lib/pesajet';
 
-// Basic minimums per currency (You can adjust these later)
 const MIN_DEPOSITS: Record<string, number> = {
-  UGX: 2000,
-  KES: 100,
-  RWF: 1000,
-  ZMW: 50,
-  XAF: 1000,
+  UGX: 2000, KES: 100, RWF: 1000, ZMW: 50, XAF: 1000,
 };
 
 export async function POST(req: NextRequest) {
@@ -41,6 +36,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     const userCurrency = user.currency || 'UGX';
+    const userCountry = user.country || 'UG';
     const minDeposit = MIN_DEPOSITS[userCurrency] || 2000;
 
     if (numAmount < minDeposit) {
@@ -48,7 +44,8 @@ export async function POST(req: NextRequest) {
     }
 
     const reference = crypto.randomUUID();
-    const gateway = user.country === 'UG' ? 'pesajet' : 'marzpay';
+    const gateway = userCountry === 'UG' ? 'pesajet' : 'marzpay';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nexa-app-flame.vercel.app';
 
     // 2. Save pending deposit in database
     const { data: deposit, error: insErr } = await supabaseAdmin
@@ -120,7 +117,6 @@ export async function POST(req: NextRequest) {
         const marzpayKey = process.env.MARZPAY_API_KEY;
         const marzpaySecret = process.env.MARZPAY_API_SECRET;
         const marzpayBaseUrl = 'https://wallet.wearemarz.com/api/v1';
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://your-nexa-domain.com';
 
         if (!marzpayKey || !marzpaySecret) {
           throw new Error('MarzPay credentials are not configured in Vercel');
@@ -128,7 +124,12 @@ export async function POST(req: NextRequest) {
 
         const authToken = Buffer.from(`${marzpayKey}:${marzpaySecret}`).toString('base64');
 
-        // Note: You may need to adjust the 'country' parameter depending on how MarzPay expects it (e.g., 'KE', 'RW')
+        // Format phone to E.164 (e.g. +254712345678)
+        let formattedPhone = phone.trim();
+        if (!formattedPhone.startsWith('+')) {
+          formattedPhone = `+${formattedPhone}`;
+        }
+
         const marzpayRes = await fetch(`${marzpayBaseUrl}/collect-money`, {
           method: 'POST',
           headers: {
@@ -138,12 +139,15 @@ export async function POST(req: NextRequest) {
           },
           body: JSON.stringify({
             amount: numAmount,
-            phone_number: phone, // You may need to normalize this to +254..., +250... etc.
-            country: user.country, // 'KE', 'RW', 'ZM', 'CM'
+            phone_number: formattedPhone,
             reference: reference,
-            callback_url: `${appUrl}/api/webhooks/marzpay`,
+            country: userCountry, // 'KE', 'RW', 'ZM', 'CM'
             description: `Nexa Deposit for ${user.name || user.phone}`,
-            metadata: [{ depositId: deposit.id }],
+            callback_url: `${appUrl}/api/webhooks/marzpay`,
+            metadata: [
+              { depositId: deposit.id },
+              { userId: user.id }
+            ]
           }),
         });
 
@@ -178,4 +182,4 @@ export async function POST(req: NextRequest) {
     console.error('Server error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+          }
