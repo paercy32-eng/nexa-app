@@ -34,6 +34,11 @@ export default function HomePage() {
   const [showRecharge, setShowRecharge] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
 
+  // Check-in States
+  const [canCheckIn, setCanCheckIn] = useState(false);
+  const [checkinLoading, setCheckinLoading] = useState(false);
+  const [checkinMsg, setCheckinMsg] = useState('');
+
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
     if (res.status === 401) {
@@ -43,6 +48,16 @@ export default function HomePage() {
     const data = await res.json();
     setMe(data.user);
     setLoading(false);
+  }
+
+  async function loadCheckinStatus() {
+    try {
+      const res = await fetch('/api/checkin?t=' + Date.now(), { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setCanCheckIn(data.canCheckIn === true);
+      }
+    } catch {}
   }
 
   useEffect(() => {
@@ -59,10 +74,38 @@ export default function HomePage() {
       const prodData = await prodRes.json();
       setProducts(prodData.products ?? []);
 
+      await loadCheckinStatus();
       setLoading(false);
     }
     load();
   }, [router]);
+
+  async function handleCheckIn() {
+    setCheckinLoading(true);
+    setCheckinMsg('');
+    try {
+      const res = await fetch('/api/checkin', { method: 'POST' });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setCheckinMsg(data.error || 'Check-in failed.');
+      } else {
+        setCheckinMsg(data.message || 'You earned your bonus!');
+        setCanCheckIn(false);
+        
+        // Instantly update balance on screen
+        setMe((prev) => {
+          if (!prev) return prev;
+          return { ...prev, balance: data.newBalance };
+        });
+      }
+    } catch {
+      setCheckinMsg('Something went wrong.');
+    } finally {
+      setCheckinLoading(false);
+      setTimeout(() => setCheckinMsg(''), 4000);
+    }
+  }
 
   function handleRent(product: Product) {
     setFeedback(null);
@@ -121,11 +164,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Balance Card (Glassmorphism) */}
-      <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 mb-6 shadow-2xl">
-        {/* Glow effect behind the card */}
+      {/* Balance Card */}
+      <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 mb-4 shadow-2xl">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-violet-600/30 blur-3xl rounded-full"></div>
-        
         <div className="relative z-10">
           <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
@@ -138,10 +179,38 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Daily Check-in Card */}
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-4 mb-6 shadow-lg flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <div className="text-xs font-bold text-white tracking-wide">Daily Check-in</div>
+            <div className="text-[10px] text-zinc-500 font-medium mt-0.5">Claim free rewards</div>
+          </div>
+        </div>
+        <button
+          onClick={handleCheckIn}
+          disabled={!canCheckIn || checkinLoading}
+          className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition ${
+            canCheckIn
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+              : 'bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed'
+          }`}
+        >
+          {checkinLoading ? '...' : canCheckIn ? 'Check In' : 'Claimed'}
+        </button>
+      </div>
+      {checkinMsg && (
+        <div className="mb-4 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 text-center">
+          {checkinMsg}
+        </div>
+      )}
+
       {/* 4 Circular Action Icons */}
       <div className="grid grid-cols-4 gap-3 mb-8">
         
-        {/* Deposit */}
         <button onClick={() => setShowRecharge(true)} className="flex flex-col items-center gap-2 group">
           <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 group-hover:bg-violet-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.1)]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
@@ -149,7 +218,6 @@ export default function HomePage() {
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-violet-400 transition">Deposit</span>
         </button>
 
-        {/* Withdraw */}
         <button onClick={() => setShowWithdraw(true)} className="flex flex-col items-center gap-2 group">
           <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(34,211,238,0.1)]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -157,7 +225,6 @@ export default function HomePage() {
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-cyan-400 transition">Withdraw</span>
         </button>
 
-        {/* Service */}
         <a href={CS_TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
           <div className="w-14 h-14 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 group-hover:bg-fuchsia-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(217,70,239,0.1)]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -165,7 +232,6 @@ export default function HomePage() {
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-fuchsia-400 transition">Service</span>
         </a>
 
-        {/* Group */}
         <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
           <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(99,102,241,0.1)]">
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" /></svg>
@@ -399,4 +465,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-      }
+                                                                                      }
