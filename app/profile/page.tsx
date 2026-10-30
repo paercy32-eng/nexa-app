@@ -331,7 +331,7 @@ export default function ProfilePage() {
 
 function RechargeModal({ currency, onClose, onSuccess }: any) {
   // 🚨 Convert the 2,000 UGX base minimum to the user's local currency
-  const minDeposit = convertFromUGX(20000, currency);
+  const minDeposit = convertFromUGX(2000, currency);
   
   const [amount, setAmount] = useState(String(minDeposit));
   const [phone, setPhone] = useState('');
