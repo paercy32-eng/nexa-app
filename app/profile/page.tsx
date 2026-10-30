@@ -15,6 +15,9 @@ type Me = {
   bound_name?: string;
 };
 
+const TELEGRAM_LINK = 'https://t.me/'; 
+const CS_TELEGRAM_LINK = 'https://t.me/'; 
+
 export default function ProfilePage() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
@@ -30,6 +33,10 @@ export default function ProfilePage() {
   const [canCheckIn, setCanCheckIn] = useState(false);
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [checkinMsg, setCheckinMsg] = useState('');
+
+  // Modals State
+  const [showRecharge, setShowRecharge] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
 
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
@@ -71,7 +78,6 @@ export default function ProfilePage() {
       } else {
         setCheckinMsg(data.message || 'You earned your bonus!');
         setCanCheckIn(false);
-        
         setMe((prev) => {
           if (!prev) return prev;
           return { ...prev, balance: data.newBalance };
@@ -147,11 +153,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Balance Card */}
+      {/* Balance Card (Transferred from Home) */}
       <div className="relative overflow-hidden bg-gradient-to-br from-violet-900/40 via-[#12121a] to-[#0a0a0f] border border-violet-500/20 rounded-3xl p-6 mb-6 shadow-2xl">
         <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 blur-3xl rounded-full"></div>
         
-        <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-1">Total Balance</div>
+        <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-1">Available Balance</div>
         <div className="text-4xl font-black text-white mb-6">
           <span className="text-lg text-violet-400 mr-1">{me?.currency}</span>
           {Number(me?.balance || 0).toLocaleString()}
@@ -173,7 +179,38 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Daily Check-in Card (Moved from Home) */}
+      {/* 4 Action Icons (Transferred from Home) */}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        <button onClick={() => setShowRecharge(true)} className="flex flex-col items-center gap-2 group">
+          <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 group-hover:bg-violet-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.1)]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+          </div>
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-violet-400 transition">Deposit</span>
+        </button>
+
+        <button onClick={() => setShowWithdraw(true)} className="flex flex-col items-center gap-2 group">
+          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(34,211,238,0.1)]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </div>
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-cyan-400 transition">Withdraw</span>
+        </button>
+
+        <a href={CS_TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+          <div className="w-14 h-14 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 group-hover:bg-fuchsia-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(217,70,239,0.1)]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </div>
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-fuchsia-400 transition">Service</span>
+        </a>
+
+        <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(99,102,241,0.1)]">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" /></svg>
+          </div>
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-indigo-400 transition">Group</span>
+        </a>
+      </div>
+
+      {/* Daily Check-in */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 mb-4 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -204,7 +241,6 @@ export default function ProfilePage() {
 
       {/* Compact Quick Actions (History & Bind Account) */}
       <div className="space-y-2 mb-6">
-        {/* Transaction History */}
         <button onClick={() => router.push('/history')} className="w-full bg-[#12121a] border border-white/5 rounded-2xl p-3 flex items-center gap-3 active:scale-[0.99] transition hover:bg-white/5 group">
           <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
@@ -213,7 +249,6 @@ export default function ProfilePage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto group-hover:text-white transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
 
-        {/* Bind Account */}
         <button onClick={() => setShowBindAccount(true)} className="w-full bg-[#12121a] border border-white/5 rounded-2xl p-3 flex items-center gap-3 active:scale-[0.99] transition hover:bg-white/5 group">
           <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -266,6 +301,147 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Recharge Modal */}
+      {showRecharge && (
+        <RechargeModal
+          currency={me?.currency || 'UGX'}
+          onClose={() => setShowRecharge(false)}
+          onSuccess={async () => {
+            await loadMe();
+            setShowRecharge(false);
+          }}
+        />
+      )}
+
+      {/* Withdraw Modal */}
+      {showWithdraw && (
+        <WithdrawModal
+          balance={me?.balance ?? 0}
+          currency={me?.currency || 'UGX'}
+          onClose={() => setShowWithdraw(false)}
+          onSuccess={async () => {
+            await loadMe();
+            setShowWithdraw(false);
+          }}
+        />
+      )}
     </main>
   );
-      }
+}
+
+// ==========================================
+// MODALS (Dark Theme)
+// ==========================================
+
+function RechargeModal({ currency, onClose, onSuccess }: any) {
+  const [amount, setAmount] = useState('20000');
+  const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/me').then(res => res.json()).then(data => { if (data?.user?.phone) setPhone(data.user.phone); });
+  }, []);
+
+  async function submit(e: any) {
+    e.preventDefault();
+    setLoading(true);
+    setMsg('');
+    try {
+      const res = await fetch('/api/deposits/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Number(amount), phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) setMsg(data.error);
+      else { setSent(true); setTimeout(onSuccess, 3000); }
+    } catch { setMsg('Something went wrong.'); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md bg-[#12121a] border-t border-white/10 rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-xl font-black text-white">Deposit Funds</div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
+        </div>
+        
+        {!sent ? (
+          <form onSubmit={submit} className="space-y-4">
+            <div>
+              <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
+              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-violet-500 transition" required />
+            </div>
+            <div>
+              <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Phone Number</label>
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-violet-500 transition" required />
+            </div>
+            {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
+            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50">
+              {loading ? 'Sending Request...' : 'Initiate Deposit'}
+            </button>
+          </form>
+        ) : (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            </div>
+            <div className="text-lg font-bold text-white mb-2">Check your phone</div>
+            <div className="text-sm text-zinc-400">Enter your PIN to complete the deposit.</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function submit(e: any) {
+    e.preventDefault();
+    setLoading(true);
+    setMsg('');
+    try {
+      const res = await fetch('/api/withdrawals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Number(amount) }),
+      });
+      const data = await res.json();
+      if (!res.ok) setMsg(data.error);
+      else onSuccess();
+    } catch { setMsg('Something went wrong.'); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md bg-[#12121a] border-t border-white/10 rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <div className="text-xl font-black text-white">Withdraw</div>
+            <div className="text-[10px] text-zinc-500 font-bold mt-1 uppercase tracking-wider">Available: {currency} {Number(balance).toLocaleString()}</div>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
+        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
+            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white font-bold focus:outline-none focus:border-cyan-500 transition" required />
+          </div>
+          {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
+          <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(34,211,238,0.2)] disabled:opacity-50">
+            {loading ? 'Submitting...' : 'Request Withdrawal'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+  }
