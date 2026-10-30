@@ -2,40 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
-
-interface ReferralEntry {
-  id: string;
-  referred_id: string;
-  name: string;
-  phone: string;
-  earnings: number;
-  joined_at: string;
-  isValid: boolean;
-}
 
 interface ReferralsResponse {
   referralCode: string;
   totalEarnings: number;
   counts: { level1: number; level2: number; level3: number };
-  levels: {
-    level1: ReferralEntry[];
-    level2: ReferralEntry[];
-    level3: ReferralEntry[];
-  };
 }
-
-const LEVEL_RATES: Record<number, string> = {
-  1: '25%',
-  2: '3%',
-  3: '1%',
-};
 
 export default function TeamPage() {
   const router = useRouter();
   const [data, setData] = useState<ReferralsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(1);
   const [baseUrl, setBaseUrl] = useState('');
 
   async function loadReferrals() {
@@ -110,17 +89,6 @@ export default function TeamPage() {
     );
   }
 
-  const currentLevel =
-    activeLevel === 1 ? data.levels.level1 :
-    activeLevel === 2 ? data.levels.level2 :
-    data.levels.level3;
-
-  const currentCount =
-    activeLevel === 1 ? data.counts.level1 :
-    activeLevel === 2 ? data.counts.level2 :
-    data.counts.level3;
-
-  const currentEarnings = currentLevel.reduce((sum, r) => sum + Number(r.earnings || 0), 0);
   const referralLink = `${baseUrl}/register?ref=${data.referralCode}`;
 
   return (
@@ -134,7 +102,7 @@ export default function TeamPage() {
 
       <div className="px-4">
         
-        {/* Top Totals (Glassmorphism) */}
+        {/* Top Totals */}
         <div className="grid grid-cols-2 gap-3 mb-8">
           <div className="relative overflow-hidden bg-gradient-to-br from-violet-900/40 to-[#12121a] border border-violet-500/20 rounded-3xl p-5 shadow-2xl">
             <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/20 blur-2xl rounded-full"></div>
@@ -194,87 +162,48 @@ export default function TeamPage() {
           </div>
         </div>
 
-        {/* Level Tabs (Horizontal Pill Design) */}
-        <div className="grid grid-cols-3 gap-2 mb-6 bg-[#12121a] p-1.5 rounded-2xl border border-white/5">
-          {([1, 2, 3] as const).map((level) => {
-            const count = level === 1 ? data.counts.level1 : level === 2 ? data.counts.level2 : data.counts.level3;
-            const isActive = activeLevel === level;
-
-            return (
-              <button
-                key={level}
-                onClick={() => setActiveLevel(level)}
-                className={`py-3 rounded-xl text-xs font-bold transition flex flex-col items-center leading-tight ${
-                  isActive
-                    ? 'bg-gradient-to-r from-violet-600/20 to-indigo-600/20 border border-violet-500/30 text-white shadow-[0_0_10px_rgba(139,92,246,0.1)]'
-                    : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
-                }`}
-              >
-                <span className="uppercase tracking-wider">Level {level}</span>
-                <span className={`text-[10px] mt-1 font-black ${isActive ? 'text-cyan-400' : 'text-zinc-600'}`}>
-                  {LEVEL_RATES[level]} ({count})
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Level Stats Card */}
-        <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-lg mb-6">
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-violet-500/5 blur-3xl rounded-full"></div>
-           
-          <div className="relative z-10 flex items-center justify-between mb-4 pb-4 border-b border-white/5">
-            <div>
-              <p className="text-white font-black text-lg tracking-wide">Level {activeLevel} Network</p>
-              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">Direct sub-referrals</p>
-            </div>
-            <p className="text-cyan-400 font-black text-3xl drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">{currentCount}</p>
-          </div>
-
-          <div className="relative z-10 flex items-center justify-between pt-2">
-            <div>
-              <p className="text-white font-bold text-sm tracking-wide">Commission Generated</p>
-              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">From Level {activeLevel}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-violet-400 font-black text-xl drop-shadow-[0_0_10px_rgba(139,92,246,0.3)]">
-                UGX {currentEarnings.toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Members List */}
+        {/* Navigation Tabs (Now Links to new pages) */}
         <div className="flex items-center justify-between mb-4 px-1">
-          <h2 className="text-sm font-bold text-zinc-200 tracking-wide uppercase">Member List</h2>
+          <h2 className="text-sm font-bold text-zinc-200 tracking-wide uppercase">View Network</h2>
           <div className="h-px bg-gradient-to-r from-violet-500/50 to-transparent flex-1 ml-4"></div>
         </div>
 
-        {currentLevel.length > 0 ? (
-          <div className="space-y-3">
-            {currentLevel.map((member) => (
-              <div key={member.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between hover:bg-white/10 transition">
-                <div>
-                  <p className="text-sm font-bold text-zinc-200 tracking-wide">{member.name}</p>
-                  <p className="text-[10px] text-zinc-500 font-medium mt-0.5">{member.phone}</p>
-                </div>
-                <span className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border ${
-                  member.isValid 
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' 
-                    : 'bg-zinc-800/50 text-zinc-500 border-zinc-700'
-                }`}>
-                  {member.isValid ? 'Active' : 'Pending'}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 bg-[#12121a] rounded-2xl border border-white/5">
-            <p className="text-xs text-zinc-500 font-medium">No members at Level {activeLevel} yet.</p>
-          </div>
-        )}
+        <div className="space-y-3">
+          <Link href="/team/level-1" className="flex items-center justify-between w-full bg-[#12121a] border border-violet-500/30 rounded-2xl p-5 active:scale-[0.99] transition hover:bg-violet-900/20 group shadow-[0_0_15px_rgba(139,92,246,0.1)]">
+             <div className="flex flex-col">
+               <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-violet-300 transition">Level 1 Network</span>
+               <span className="text-[10px] text-zinc-500 font-bold mt-1">25% Commission Rate</span>
+             </div>
+             <div className="flex items-center gap-3">
+               <span className="text-xl font-black text-violet-400">{data.counts.level1}</span>
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 group-hover:text-violet-400 transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
+             </div>
+          </Link>
+
+          <Link href="/team/level-2" className="flex items-center justify-between w-full bg-[#12121a] border border-cyan-500/30 rounded-2xl p-5 active:scale-[0.99] transition hover:bg-cyan-900/20 group shadow-[0_0_15px_rgba(34,211,238,0.1)]">
+             <div className="flex flex-col">
+               <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-cyan-300 transition">Level 2 Network</span>
+               <span className="text-[10px] text-zinc-500 font-bold mt-1">3% Commission Rate</span>
+             </div>
+             <div className="flex items-center gap-3">
+               <span className="text-xl font-black text-cyan-400">{data.counts.level2}</span>
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 group-hover:text-cyan-400 transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
+             </div>
+          </Link>
+
+          <Link href="/team/level-3" className="flex items-center justify-between w-full bg-[#12121a] border border-fuchsia-500/30 rounded-2xl p-5 active:scale-[0.99] transition hover:bg-fuchsia-900/20 group shadow-[0_0_15px_rgba(217,70,239,0.1)]">
+             <div className="flex flex-col">
+               <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-fuchsia-300 transition">Level 3 Network</span>
+               <span className="text-[10px] text-zinc-500 font-bold mt-1">1% Commission Rate</span>
+             </div>
+             <div className="flex items-center gap-3">
+               <span className="text-xl font-black text-fuchsia-400">{data.counts.level3}</span>
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-600 group-hover:text-fuchsia-400 transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
+             </div>
+          </Link>
+        </div>
 
       </div>
     </div>
   );
-                }
+      }
