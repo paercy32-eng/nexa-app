@@ -81,35 +81,34 @@ function RegisterForm() {
   }
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center px-4 py-8 overflow-hidden bg-black">
+    <main className="min-h-screen relative flex items-center justify-center px-4 py-8 overflow-hidden bg-[#0a0a0f]">
       
-      {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
-        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80" alt="Nexa" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/80 z-10 backdrop-blur-sm"></div>
+        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80" alt="Nexa" className="w-full h-full object-cover opacity-40" />
       </div>
 
-      <div className="w-full max-w-md relative z-20">
-        <div className="mb-6 px-2 text-center">
+      <div className="w-full max-w-sm relative z-20">
+        <div className="mb-6 text-center">
           <div className="flex justify-center mb-3">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-800 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.4)]">
               <span className="text-white font-black text-2xl">N</span>
             </div>
           </div>
-          <h1 className="text-3xl font-extrabold text-white mb-1 tracking-tight drop-shadow-md">Join Nexa</h1>
-          <p className="text-gray-200 text-sm drop-shadow-md">Invest in high-yield industrial assets.</p>
+          <h1 className="text-2xl font-black text-white tracking-tight">Join Nexa</h1>
+          <p className="text-zinc-400 text-xs mt-1">Invest in high-yield assets.</p>
         </div>
 
-        <div className="bg-black/50 backdrop-blur-md border border-white/20 rounded-3xl p-6 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Minimized Form Container */}
+        <div className="bg-[#12121a]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl">
+          <form onSubmit={handleSubmit} className="space-y-3">
             
-            {/* Country Selector */}
             <div>
-              <label className="block text-[10px] text-gray-300 font-bold mb-1.5 tracking-wider uppercase">Country</label>
+              <label className="block text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Country</label>
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
-                className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-emerald-400 transition text-sm appearance-none cursor-pointer"
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-violet-500 transition text-sm appearance-none cursor-pointer"
               >
                 {COUNTRIES.map((c) => (
                   <option key={c.code} value={c.code} className="text-black bg-white">
@@ -120,37 +119,37 @@ function RegisterForm() {
             </div>
 
             <div>
-              <label className="block text-[10px] text-gray-300 font-bold mb-1.5 tracking-wider uppercase">Phone Number</label>
-              <div className="flex items-center bg-black/50 border border-white/20 rounded-xl focus-within:border-emerald-400 transition overflow-hidden">
-                <span className="pl-4 pr-2 text-white text-sm font-bold select-none border-r border-white/20">
+              <label className="block text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Phone Number</label>
+              <div className="flex items-center bg-black/50 border border-white/10 rounded-xl focus-within:border-violet-500 transition overflow-hidden">
+                <span className="pl-3 pr-2 text-zinc-300 text-sm font-bold select-none border-r border-white/10">
                   {selectedCountry.dial}
                 </span>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').replace(/^0+/, ''))}
-                  placeholder={selectedCountry.placeholder} // 🚨 Dynamic Placeholder Here
-                  className="w-full bg-transparent px-3 py-3.5 text-white placeholder-gray-400 focus:outline-none text-sm"
+                  placeholder={selectedCountry.placeholder}
+                  className="w-full bg-transparent px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none text-sm"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] text-gray-300 font-bold mb-1.5 tracking-wider uppercase">Password</label>
+              <label className="block text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3.5 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 transition pr-12 text-sm"
+                  placeholder="Min 6 characters"
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 transition pr-12 text-sm"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 text-[10px] font-semibold hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-[9px] font-bold hover:text-white uppercase tracking-wider"
                 >
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
@@ -158,32 +157,32 @@ function RegisterForm() {
             </div>
 
             <div>
-              <label className="block text-[10px] text-gray-300 font-bold mb-1.5 tracking-wider uppercase">Confirm Password</label>
+              <label className="block text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Confirm Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repeat your password"
-                className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3.5 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 transition text-sm"
+                placeholder="Repeat password"
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 transition text-sm"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[10px] text-gray-300 font-bold mb-1.5 tracking-wider uppercase">
-                Referral Code <span className="text-gray-400 lowercase font-normal">(optional)</span>
+              <label className="block text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">
+                Referral Code <span className="text-zinc-600 lowercase font-normal">(optional)</span>
               </label>
               <input
                 type="text"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
                 placeholder="NEXA-XXXXX"
-                className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3.5 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 transition text-sm"
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 transition text-sm"
               />
             </div>
 
             {error && (
-              <div className="text-xs text-red-300 bg-red-900/50 rounded-xl px-4 py-3 border border-red-500/50">
+              <div className="text-[10px] text-red-400 bg-red-500/10 rounded-lg px-3 py-2 border border-red-500/20 text-center font-medium">
                 {error}
               </div>
             )}
@@ -191,15 +190,15 @@ function RegisterForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl active:scale-[0.98] transition text-sm mt-2 shadow-lg shadow-emerald-500/30"
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3 rounded-xl active:scale-[0.98] transition text-sm mt-2 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
             >
               {loading ? 'Creating account…' : 'Create Account'}
             </button>
           </form>
 
-          <div className="mt-5 text-center text-xs text-gray-200">
+          <div className="mt-4 text-center text-[10px] text-zinc-500 font-medium">
             Already have an account?{' '}
-            <Link href="/login" className="text-emerald-400 font-bold hover:underline">
+            <Link href="/login" className="text-violet-400 font-bold hover:text-violet-300 transition">
               Sign in
             </Link>
           </div>
@@ -212,11 +211,11 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
+        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
       </div>
     }>
       <RegisterForm />
     </Suspense>
   );
-}
+              }
