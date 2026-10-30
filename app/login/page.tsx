@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const COUNTRIES = [
-  { code: 'UG', name: 'Uganda', dial: '+256', flag: '🇺🇬' },
-  { code: 'KE', name: 'Kenya', dial: '+254', flag: '🇰🇪' },
-  { code: 'RW', name: 'Rwanda', dial: '+250', flag: '🇷🇼' },
-  { code: 'ZM', name: 'Zambia', dial: '+260', flag: '🇿🇲' },
-  { code: 'CM', name: 'Cameroon', dial: '+237', flag: '🇨🇲' },
+  { code: 'UG', name: 'Uganda', dial: '+256', flag: '🇺🇬', placeholder: '700123456' },
+  { code: 'KE', name: 'Kenya', dial: '+254', flag: '🇰🇪', placeholder: '712345678' },
+  { code: 'RW', name: 'Rwanda', dial: '+250', flag: '🇷🇼', placeholder: '781234567' },
+  { code: 'ZM', name: 'Zambia', dial: '+260', flag: '🇿🇲', placeholder: '971234567' },
+  { code: 'CM', name: 'Cameroon', dial: '+237', flag: '🇨🇲', placeholder: '671234567' },
 ];
 
 function LoginForm() {
@@ -38,16 +38,20 @@ function LoginForm() {
         }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Login failed. Please try again.');
-      } else {
-        router.replace('/');
-        router.refresh();
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        if (!res.ok) {
+          setError(data.error || 'Login failed');
+        } else {
+          router.replace('/');
+          router.refresh();
+        }
+      } catch (parseError) {
+        setError(`Server error (Status ${res.status}). Please try again.`);
       }
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Network error.');
     } finally {
       setLoading(false);
     }
@@ -105,7 +109,7 @@ function LoginForm() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').replace(/^0+/, ''))}
-                  placeholder="700123456"
+                  placeholder={selectedCountry.placeholder} // 🚨 Dynamic Placeholder Here
                   className="w-full bg-transparent px-3 py-3.5 text-white placeholder-gray-400 focus:outline-none text-sm"
                   required
                 />
@@ -170,4 +174,4 @@ export default function LoginPage() {
       <LoginForm />
     </Suspense>
   );
-            }
+}
