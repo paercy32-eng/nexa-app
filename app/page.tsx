@@ -120,8 +120,8 @@ export default function HomePage() {
   return (
     <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-violet-500/30">
       
-      {/* 🚨 ON-SCREEN DEBUGGER */}
-      <div className="fixed top-0 left-0 right-0 z-[200] bg-red-600 text-white p-3 text-xs font-mono font-bold break-words shadow-2xl">
+      {/* ON-SCREEN DEBUGGER */}
+      <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white p-3 text-xs font-mono font-bold break-words shadow-2xl">
         DEBUG: {debugMsg}
       </div>
 
@@ -192,8 +192,9 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl my-auto pb-8" onClick={(e) => e.stopPropagation()}>
+    /* 🚨 Z-INDEX INCREASED TO 9999 */
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={onClose}>
+      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl my-auto pb-8 relative z-[10000]" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start mb-6">
           <div>
             <div className="text-xl font-black text-white">Confirm Investment</div>
