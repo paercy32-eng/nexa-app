@@ -27,6 +27,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Product | null>(null);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
+  
+  // 🚨 DEBUG STATE
+  const [debugMsg, setDebugMsg] = useState<string>('Waiting for action...');
 
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
@@ -64,9 +67,7 @@ export default function HomePage() {
   }
 
   async function confirmRent(product: Product) {
-    // 🚨 DEBUG ALERTS START HERE
-    alert(`1. Starting purchase for: ${product.name} (ID: ${product.id})`);
-    
+    setDebugMsg('1. Button clicked. Sending request to server...');
     try {
       const res = await fetch('/api/rentals/create', {
         method: 'POST',
@@ -74,27 +75,28 @@ export default function HomePage() {
         body: JSON.stringify({ productId: product.id }),
       });
       
-      alert(`2. Server responded with Status: ${res.status}`);
+      setDebugMsg(`2. Server responded with Status: ${res.status}. Reading data...`);
 
-      // Read raw text to see if it's HTML (crash) or JSON
       const text = await res.text();
-      alert(`3. Raw Response from Server: ${text.substring(0, 150)}...`);
+      
+      // Print the first 100 characters of the response
+      setDebugMsg(`3. Response: ${text.substring(0, 100)}`);
 
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
-        alert("4. ERROR: The server returned HTML instead of JSON. This means the API crashed.");
+        setDebugMsg(`❌ ERROR: Server crashed and returned HTML instead of JSON.`);
         throw new Error(`Server crash (Status ${res.status}).`);
       }
 
       if (!res.ok) {
-        alert(`4. Backend Error: ${data.error || 'Failed to invest.'}`);
+        setDebugMsg(`❌ Backend Error: ${data.error || 'Failed to invest.'}`);
         setFeedback({ ok: false, msg: data.error || 'Failed to invest.' });
         return;
       }
 
-      alert("4. Success! Purchase completed.");
+      setDebugMsg(`✅ Success! Purchase completed.`);
       setFeedback({
         ok: true,
         msg: `🎉 You invested in ${product.name}!`,
@@ -103,9 +105,10 @@ export default function HomePage() {
       setTimeout(() => {
         setSelected(null);
         setFeedback(null);
+        setDebugMsg('Ready');
       }, 2500);
     } catch (err: any) {
-      alert(`Catch Block Error: ${err.message}`);
+      setDebugMsg(`❌ Catch Error: ${err.message}`);
       setFeedback({ ok: false, msg: err.message || 'Network error.' });
     }
   }
@@ -121,8 +124,13 @@ export default function HomePage() {
   return (
     <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-violet-500/30">
       
+      {/* 🚨 ON-SCREEN DEBUGGER */}
+      <div className="fixed top-0 left-0 right-0 z-[200] bg-red-600 text-white p-3 text-xs font-mono font-bold break-words shadow-2xl">
+        DEBUG: {debugMsg}
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 px-1">
+      <div className="flex items-center justify-between mb-8 mt-12 px-1">
         <div className="flex items-center gap-3">
           <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-800 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.5)] overflow-hidden">
             <span className="text-white font-black text-xl">N</span>
