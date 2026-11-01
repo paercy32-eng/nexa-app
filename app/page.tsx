@@ -64,6 +64,9 @@ export default function HomePage() {
   }
 
   async function confirmRent(product: Product) {
+    // 🚨 DEBUG ALERTS START HERE
+    alert(`1. Starting purchase for: ${product.name} (ID: ${product.id})`);
+    
     try {
       const res = await fetch('/api/rentals/create', {
         method: 'POST',
@@ -71,23 +74,30 @@ export default function HomePage() {
         body: JSON.stringify({ productId: product.id }),
       });
       
-      // 🚨 Read as text first to catch HTML crash pages from Vercel
+      alert(`2. Server responded with Status: ${res.status}`);
+
+      // Read raw text to see if it's HTML (crash) or JSON
       const text = await res.text();
+      alert(`3. Raw Response from Server: ${text.substring(0, 150)}...`);
+
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
-        throw new Error(`Server error (Status: ${res.status}). Check Vercel logs.`);
+        alert("4. ERROR: The server returned HTML instead of JSON. This means the API crashed.");
+        throw new Error(`Server crash (Status ${res.status}).`);
       }
 
       if (!res.ok) {
+        alert(`4. Backend Error: ${data.error || 'Failed to invest.'}`);
         setFeedback({ ok: false, msg: data.error || 'Failed to invest.' });
         return;
       }
 
+      alert("4. Success! Purchase completed.");
       setFeedback({
         ok: true,
-        msg: `🎉 You invested in ${product.name}! Daily return: ${me?.currency} ${Number(product.daily_return).toLocaleString()}`,
+        msg: `🎉 You invested in ${product.name}!`,
       });
       await loadMe();
       setTimeout(() => {
@@ -95,8 +105,8 @@ export default function HomePage() {
         setFeedback(null);
       }, 2500);
     } catch (err: any) {
-      console.error("Invest error:", err);
-      setFeedback({ ok: false, msg: err.message || 'Network error. Please try again.' });
+      alert(`Catch Block Error: ${err.message}`);
+      setFeedback({ ok: false, msg: err.message || 'Network error.' });
     }
   }
 
@@ -211,4 +221,4 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
       </div>
     </div>
   );
-                   }
+}
