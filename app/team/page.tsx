@@ -26,6 +26,13 @@ interface ReferralsResponse {
   };
 }
 
+// 🚨 Added the rates here
+const LEVEL_RATES: Record<number, string> = {
+  1: '25%',
+  2: '3%',
+  3: '2%',
+};
+
 export default function TeamPage() {
   const router = useRouter();
   const [data, setData] = useState<ReferralsResponse | null>(null);
@@ -33,7 +40,6 @@ export default function TeamPage() {
   const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(1);
   const [baseUrl, setBaseUrl] = useState('');
   
-  // 🚨 State for the modal
   const [showMembersModal, setShowMembersModal] = useState(false);
 
   async function loadReferrals() {
@@ -127,7 +133,7 @@ export default function TeamPage() {
 
       <div className="px-4">
         
-        {/* MINIMIZED Top Totals */}
+        {/* Top Totals */}
         <div className="flex gap-2 mb-6">
           <div className="flex-1 bg-[#12121a] border border-violet-500/20 rounded-2xl p-3 text-center">
             <div className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Commission</div>
@@ -143,7 +149,7 @@ export default function TeamPage() {
           </div>
         </div>
 
-        {/* MINIMIZED Referral Link Section */}
+        {/* Referral Link Section */}
         <div className="bg-[#12121a] border border-white/5 rounded-2xl p-3 shadow-lg mb-6">
           <div className="flex gap-2 mb-3">
             <div className="flex-1">
@@ -182,7 +188,7 @@ export default function TeamPage() {
           </div>
         </div>
 
-        {/* Level Tabs */}
+        {/* 🚨 Level Tabs (Now showing percentages) */}
         <div className="grid grid-cols-3 gap-1 mb-4 bg-[#12121a] p-1 rounded-xl border border-white/5">
           {([1, 2, 3] as const).map((level) => {
             const count = level === 1 ? data.counts.level1 : level === 2 ? data.counts.level2 : data.counts.level3;
@@ -199,15 +205,16 @@ export default function TeamPage() {
                 }`}
               >
                 <span className="uppercase tracking-wider text-[10px]">Level {level}</span>
-                <span className={`text-[10px] mt-0.5 font-black ${isActive ? 'text-cyan-400' : 'text-zinc-600'}`}>
-                  ({count})
+                {/* 🚨 This shows the % */}
+                <span className={`text-[10px] mt-0.5 font-black ${isActive ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                  {LEVEL_RATES[level]} ({count})
                 </span>
               </button>
             );
           })}
         </div>
 
-        {/* 🚨 View Members Button (Instead of inline list) */}
+        {/* View Members Button */}
         <div className="bg-[#12121a] border border-white/5 rounded-2xl p-4 text-center">
           <p className="text-xs text-zinc-400 mb-3">You have <span className="font-bold text-white">{currentLevelList.length}</span> members in Level {activeLevel}.</p>
           <button
@@ -221,7 +228,7 @@ export default function TeamPage() {
 
       </div>
 
-      {/* 🚨 MEMBERS MODAL */}
+      {/* MEMBERS MODAL */}
       {showMembersModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowMembersModal(false)}>
           <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-5 shadow-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
@@ -267,4 +274,4 @@ export default function TeamPage() {
 
     </div>
   );
-}
+      }
