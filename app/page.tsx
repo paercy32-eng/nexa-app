@@ -25,7 +25,7 @@ export default function HomePage() {
   const [me, setMe] = useState<Me | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Product | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
 
   async function loadMe() {
@@ -36,7 +36,6 @@ export default function HomePage() {
     }
     const data = await res.json();
     setMe(data.user);
-    setLoading(false);
   }
 
   useEffect(() => {
@@ -58,43 +57,52 @@ export default function HomePage() {
     load();
   }, [router]);
 
-  function handleRent(product: Product) {
-    setFeedback(null);
-    setSelected(product);
-  }
+  // 🔥 One button: tap Invest → invest immediately
+  async function handleRent(product: Product) {
+    if (pendingId) return; // ignore double taps
 
-  async function confirmRent(product: Product) {
+    const balance = me?.balance ?? 0;
+    const price = Number(product.price);
+    const currency = me?.currency || 'UGX';
+
+    // Client-side check first (server should still enforce this too)
+    if (balance < price) {
+      setFeedback({
+        ok: false,
+        msg: `Insufficient balance. You need ${currency} ${(price - balance).toLocaleString()} more.`,
+      });
+      return;
+    }
+
+    setPendingId(product.id);
+    setFeedback(null);
+
     try {
       const res = await fetch('/api/rentals/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: product.id }),
       });
-      
+
       const text = await res.text();
-      let data;
+      let data: any = null;
       try {
-        data = JSON.parse(text);
-      } catch (e) {
+        data = text ? JSON.parse(text) : null;
+      } catch {
         throw new Error(`Server error (Status: ${res.status}). Please try again.`);
       }
 
       if (!res.ok) {
-        setFeedback({ ok: false, msg: data.error || 'Failed to invest.' });
+        setFeedback({ ok: false, msg: data?.error || 'Failed to invest.' });
         return;
       }
 
-      setFeedback({
-        ok: true,
-        msg: `🎉 You invested in ${product.name}!`,
-      });
-      await loadMe();
-      setTimeout(() => {
-        setSelected(null);
-        setFeedback(null);
-      }, 2500);
+      setFeedback({ ok: true, msg: `🎉 You invested in ${product.name}!` });
+      await loadMe(); // refresh balance
     } catch (err: any) {
       setFeedback({ ok: false, msg: err.message || 'Network error.' });
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -108,7 +116,21 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-violet-500/30">
-      
+
+      {/* Toast */}
+      {feedback && (
+        <div
+          onClick={() => setFeedback(null)}
+          className={`fixed top-3 left-3 right-3 z-[999999] p-3 rounded-xl text-xs font-semibold text-center border backdrop-blur-md cursor-pointer ${
+            feedback.ok
+              ? 'bg-violet-600/20 border-violet-500/40 text-violet-200'
+              : 'bg-red-600/20 border-red-500/40 text-red-200'
+          }`}
+        >
+          {feedback.msg}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
@@ -121,8 +143,10 @@ export default function HomePage() {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Welcome</div>
-          <div className="text-sm font-bold text-zinc-200">{me?.name}</div>
+          <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Balance</div>
+          <div className="text-sm font-bold text-zinc-200">
+            {me?.currency || 'UGX'} {(me?.balance ?? 0).toLocaleString()}
+          </div>
         </div>
       </div>
 
@@ -134,104 +158,15 @@ export default function HomePage() {
 
       <div className="space-y-4">
         {products.map((p) => (
-          <ProductCard 
-            key={p.id} 
-            product={p} 
-            currency={me?.currency || 'UGX'} 
-            onRent={handleRent} 
+          <ProductCard
+            key={p.id}
+            product={p}
+            currency={me?.currency || 'UGX'}
+            onRent={handleRent}
+            loading={pendingId === p.id}
           />
         ))}
       </div>
-
-      {/* Purchase Modal */}
-      {selected && (
-        <RentModal
-          product={selected}
-          balance={me?.balance ?? 0}
-          currency={me?.currency || 'UGX'}
-          feedback={feedback}
-          onClose={() => {
-            setSelected(null);
-            setFeedback(null);
-          }}
-          onConfirm={confirmRent}
-        />
-      )}
     </main>
-  );
-}
-
-function RentModal({ product, balance, currency, feedback, onClose, onConfirm }: any) {
-  const [loading, setLoading] = useState(false);
-  const price = Number(product.price);
-  const shortfall = price - balance;
-
-  // 🚨 LOCK BODY SCROLL WHEN MODAL IS OPEN
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
-
-  async function go() {
-    setLoading(true);
-    await onConfirm(product);
-    setLoading(false);
-  }
-
-  return (
-    /* 🚨 MODAL WRAPPER: Fixed, inset, high z-index, flex center */
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      
-      {/* 🚨 MODAL CONTENT: Centered, max height with internal scroll if needed */}
-      <div 
-        className="w-full max-w-sm bg-[#12121a] border border-white/10 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh]" 
-        onClick={(e) => e.stopPropagation()}
-      >
-        
-        <div className="flex justify-between items-start mb-4 shrink-0">
-          <div>
-            <div className="text-lg font-black text-white">Confirm Investment</div>
-            <div className="text-[10px] text-violet-400 font-bold mt-1 uppercase tracking-wider">{product.name}</div>
-          </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-xl leading-none">×</button>
-        </div>
-
-        {/* Scrollable content area if the screen is super small */}
-        <div className="overflow-y-auto shrink">
-          <div className="bg-black/40 border border-white/5 rounded-xl p-3 text-[11px] mb-4 space-y-2">
-            <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Asset Price</span><span className="font-bold text-white">{currency} {price.toLocaleString()}</span></div>
-            <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Daily Yield</span><span className="font-bold text-cyan-400">{currency} {Number(product.daily_return).toLocaleString()}</span></div>
-            <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Your Balance</span><span className="font-bold text-zinc-300">{currency} {balance.toLocaleString()}</span></div>
-          </div>
-
-          {shortfall > 0 && !feedback && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] p-2.5 rounded-lg mb-3 text-center">
-              You need {currency} {shortfall.toLocaleString()} more to invest.
-            </div>
-          )}
-
-          {feedback && (
-            <div className={`p-3 rounded-lg text-xs mb-3 text-center font-medium border ${feedback.ok ? 'bg-violet-500/10 border-violet-500/20 text-violet-300' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-              {feedback.msg}
-            </div>
-          )}
-        </div>
-
-        {/* Button stays pinned at the bottom of the modal */}
-        {!feedback?.ok && (
-          <div className="shrink-0 mt-2">
-            <button 
-              onClick={go} 
-              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-50" 
-              disabled={loading}
-            >
-              {loading ? 'Processing…' : `Invest ${currency} ${price.toLocaleString()}`}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
