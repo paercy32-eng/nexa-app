@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     // Convert prices to user's local currency
     const localPrice = convertFromUGX(Number(product.price), userCurrency);
     const localDailyReturn = convertFromUGX(Number(product.daily_return), userCurrency);
-    const cycleDays = product.cycle_days || 100;
+    const cycleDays = product.cycle_days || 60;
 
     // 3. Check existing modules to see if it's their FIRST purchase
     const { count: moduleCount } = await supabaseAdmin
@@ -172,10 +172,10 @@ export async function POST(req: NextRequest) {
       if (l1User?.referred_by) {
         await payCommission(l1User.referred_by, Math.round(baseUGXPrice * 0.03), 2);
 
-        // Level 3 (1%)
+        // 🚨 UPDATED: Level 3 (2%)
         const { data: l2User } = await supabaseAdmin.from('users').select('referred_by').eq('id', l1User.referred_by).single();
         if (l2User?.referred_by) {
-          await payCommission(l2User.referred_by, Math.round(baseUGXPrice * 0.01), 3);
+          await payCommission(l2User.referred_by, Math.round(baseUGXPrice * 0.02), 3);
         }
       }
     }
