@@ -166,6 +166,14 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
   const price = Number(product.price);
   const shortfall = price - balance;
 
+  // 🚨 LOCK BODY SCROLL WHEN MODAL IS OPEN
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   async function go() {
     setLoading(true);
     await onConfirm(product);
@@ -173,13 +181,16 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
   }
 
   return (
-    /* 🚨 FIXED: Centered without forced scrolling */
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+    /* 🚨 MODAL WRAPPER: Fixed, inset, high z-index, flex center */
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
       
-      {/* 🚨 FIXED: Reduced padding, rounded corners, no pb-8 */}
-      <div className="w-full max-w-sm bg-[#12121a] border border-white/10 rounded-3xl p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      {/* 🚨 MODAL CONTENT: Centered, max height with internal scroll if needed */}
+      <div 
+        className="w-full max-w-sm bg-[#12121a] border border-white/10 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh]" 
+        onClick={(e) => e.stopPropagation()}
+      >
         
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-4 shrink-0">
           <div>
             <div className="text-lg font-black text-white">Confirm Investment</div>
             <div className="text-[10px] text-violet-400 font-bold mt-1 uppercase tracking-wider">{product.name}</div>
@@ -187,28 +198,38 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
           <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-xl leading-none">×</button>
         </div>
 
-        <div className="bg-black/40 border border-white/5 rounded-xl p-3 text-[11px] mb-4 space-y-2">
-          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Asset Price</span><span className="font-bold text-white">{currency} {price.toLocaleString()}</span></div>
-          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Daily Yield</span><span className="font-bold text-cyan-400">{currency} {Number(product.daily_return).toLocaleString()}</span></div>
-          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Your Balance</span><span className="font-bold text-zinc-300">{currency} {balance.toLocaleString()}</span></div>
+        {/* Scrollable content area if the screen is super small */}
+        <div className="overflow-y-auto shrink">
+          <div className="bg-black/40 border border-white/5 rounded-xl p-3 text-[11px] mb-4 space-y-2">
+            <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Asset Price</span><span className="font-bold text-white">{currency} {price.toLocaleString()}</span></div>
+            <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Daily Yield</span><span className="font-bold text-cyan-400">{currency} {Number(product.daily_return).toLocaleString()}</span></div>
+            <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Your Balance</span><span className="font-bold text-zinc-300">{currency} {balance.toLocaleString()}</span></div>
+          </div>
+
+          {shortfall > 0 && !feedback && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] p-2.5 rounded-lg mb-3 text-center">
+              You need {currency} {shortfall.toLocaleString()} more to invest.
+            </div>
+          )}
+
+          {feedback && (
+            <div className={`p-3 rounded-lg text-xs mb-3 text-center font-medium border ${feedback.ok ? 'bg-violet-500/10 border-violet-500/20 text-violet-300' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+              {feedback.msg}
+            </div>
+          )}
         </div>
 
-        {shortfall > 0 && !feedback && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] p-2.5 rounded-lg mb-3 text-center">
-            You need {currency} {shortfall.toLocaleString()} more to invest.
-          </div>
-        )}
-
-        {feedback && (
-          <div className={`p-3 rounded-lg text-xs mb-3 text-center font-medium border ${feedback.ok ? 'bg-violet-500/10 border-violet-500/20 text-violet-300' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-            {feedback.msg}
-          </div>
-        )}
-
+        {/* Button stays pinned at the bottom of the modal */}
         {!feedback?.ok && (
-          <button onClick={go} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-50" disabled={loading}>
-            {loading ? 'Processing…' : `Invest ${currency} ${price.toLocaleString()}`}
-          </button>
+          <div className="shrink-0 mt-2">
+            <button 
+              onClick={go} 
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-50" 
+              disabled={loading}
+            >
+              {loading ? 'Processing…' : `Invest ${currency} ${price.toLocaleString()}`}
+            </button>
+          </div>
         )}
       </div>
     </div>
