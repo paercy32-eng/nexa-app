@@ -27,8 +27,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Product | null>(null);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
-  
-  // 🚨 DEBUG STATE
   const [debugMsg, setDebugMsg] = useState<string>('Waiting for action...');
 
   async function loadMe() {
@@ -67,7 +65,7 @@ export default function HomePage() {
   }
 
   async function confirmRent(product: Product) {
-    setDebugMsg('1. Button clicked. Sending request to server...');
+    setDebugMsg('1. Sending request to server...');
     try {
       const res = await fetch('/api/rentals/create', {
         method: 'POST',
@@ -78,15 +76,13 @@ export default function HomePage() {
       setDebugMsg(`2. Server responded with Status: ${res.status}. Reading data...`);
 
       const text = await res.text();
-      
-      // Print the first 100 characters of the response
       setDebugMsg(`3. Response: ${text.substring(0, 100)}`);
 
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
-        setDebugMsg(`❌ ERROR: Server crashed and returned HTML instead of JSON.`);
+        setDebugMsg(`❌ ERROR: Server crashed and returned HTML.`);
         throw new Error(`Server crash (Status ${res.status}).`);
       }
 
@@ -187,6 +183,9 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
   const shortfall = price - balance;
 
   async function go() {
+    // 🚨 AGGRESSIVE DEBUG ALERT
+    alert("Button was clicked! Connecting to server...");
+    
     setLoading(true);
     await onConfirm(product);
     setLoading(false);
