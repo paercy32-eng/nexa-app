@@ -44,16 +44,17 @@ export async function POST(req: NextRequest) {
     const localDailyReturn = convertFromUGX(Number(product.daily_return), userCurrency);
     const cycleDays = product.cycle_days || 60;
 
-    // 3. Check existing modules to see if it's their FIRST purchase
+    // 3. 🚨 Check existing modules. 
+    // Any module (bought OR granted by admin) counts here.
     const { count: moduleCount } = await supabaseAdmin
       .from('user_modules')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', session.userId);
 
-    const isFirstPurchase = (moduleCount ?? 0) === 0;
+    const hasNoPreviousPurchases = (moduleCount ?? 0) === 0;
 
-    // 4. FIRST PURCHASE RULES: Must be fully funded by approved deposits
-    if (isFirstPurchase) {
+    // 4. FIRST PURCHASE RULES (Skipped if they have a granted product)
+    if (hasNoPreviousPurchases) {
       const { data: deposits } = await supabaseAdmin
         .from('deposits') 
         .select('amount')
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
     // 5. Check balance (Must be enough to deduct)
     if (Number(user.balance) < localPrice) {
       return NextResponse.json(
-        { error: `Insufficient balance. You need ${userCurrency} ${(localPrice - Number(user.balance)).toLocaleString()} more.` },
+        { error: `Insufficient balance. You need ${userCurrency} ${(localPrice - Number(user.balance)).toLocaleString()} more to buy this.` },
         { status: 400 }
       );
     }
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
         started_at: startedAt.toISOString(),
         expires_at: expiresAt.toISOString(),
         status: 'active',
-        last_credited_at: startedAt.toISOString(), // Required for midnight payouts
+        last_credited_at: startedAt.toISOString(), 
       })
       .select('id')
       .single();
@@ -136,11 +137,9 @@ export async function POST(req: NextRequest) {
       meta: { product_id: product.id, product_name: product.name, module_id: newModule.id, currency: userCurrency },
     });
 
-    // 10. Pay referral commissions (ONLY ON FIRST PURCHASE)
-    if (isFirstPurchase && user.referred_by) {
+    // 10. Pay referral commissions (ONLY ON VERY FIRST PURCHASE)
+    if (hasNoPreviousPurchases && user.referred_by) {
       
-      // Base commission is calculated in UGX to ensure fairness across borders, 
-      // then converted to the referrer's local currency.
       const baseUGXPrice = Number(product.price);
 
       const payCommission = async (referrerId: string, amountInUGX: number, level: number) => {
@@ -172,7 +171,7 @@ export async function POST(req: NextRequest) {
       if (l1User?.referred_by) {
         await payCommission(l1User.referred_by, Math.round(baseUGXPrice * 0.03), 2);
 
-        // 🚨 UPDATED: Level 3 (2%)
+        // Level 3 (2%)
         const { data: l2User } = await supabaseAdmin.from('users').select('referred_by').eq('id', l1User.referred_by).single();
         if (l2User?.referred_by) {
           await payCommission(l2User.referred_by, Math.round(baseUGXPrice * 0.02), 3);
