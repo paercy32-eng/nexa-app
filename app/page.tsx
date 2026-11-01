@@ -64,27 +64,40 @@ export default function HomePage() {
   }
 
   async function confirmRent(product: Product) {
-    const res = await fetch('/api/rentals/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId: product.id }),
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch('/api/rentals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+      
+      // 🚨 Read as text first to catch HTML crash pages from Vercel
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Server error (Status: ${res.status}). Check Vercel logs.`);
+      }
 
-    if (!res.ok) {
-      setFeedback({ ok: false, msg: data.error || 'Failed to invest.' });
-      return;
+      if (!res.ok) {
+        setFeedback({ ok: false, msg: data.error || 'Failed to invest.' });
+        return;
+      }
+
+      setFeedback({
+        ok: true,
+        msg: `🎉 You invested in ${product.name}! Daily return: ${me?.currency} ${Number(product.daily_return).toLocaleString()}`,
+      });
+      await loadMe();
+      setTimeout(() => {
+        setSelected(null);
+        setFeedback(null);
+      }, 2500);
+    } catch (err: any) {
+      console.error("Invest error:", err);
+      setFeedback({ ok: false, msg: err.message || 'Network error. Please try again.' });
     }
-
-    setFeedback({
-      ok: true,
-      msg: `🎉 You invested in ${product.name}! Daily return: ${me?.currency} ${Number(product.daily_return).toLocaleString()}`,
-    });
-    await loadMe();
-    setTimeout(() => {
-      setSelected(null);
-      setFeedback(null);
-    }, 2500);
   }
 
   if (loading) {
@@ -150,9 +163,6 @@ export default function HomePage() {
   );
 }
 
-// ==========================================
-// RENT MODAL (For purchasing assets)
-// ==========================================
 function RentModal({ product, balance, currency, feedback, onClose, onConfirm }: any) {
   const [loading, setLoading] = useState(false);
   const price = Number(product.price);
@@ -165,8 +175,8 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl my-auto pb-8" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start mb-6">
           <div>
             <div className="text-xl font-black text-white">Confirm Investment</div>
@@ -201,4 +211,4 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
       </div>
     </div>
   );
-}
+                   }
