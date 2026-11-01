@@ -13,10 +13,12 @@ export default function ProductCard({
   product,
   currency,
   onRent,
+  loading = false,
 }: {
   product: Product;
   currency: string;
   onRent: (p: Product) => void;
+  loading?: boolean;
 }) {
   const totalReturn = Number(product.daily_return) * product.cycle_days;
 
@@ -71,10 +73,19 @@ export default function ProductCard({
             {currency} {Number(product.price).toLocaleString()}
           </div>
           <button
+            type="button"
             onClick={() => onRent(product)}
-            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[10px] font-bold py-2.5 rounded-xl active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[10px] font-bold py-2.5 rounded-xl active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-1.5"
           >
-            Invest Now
+            {loading ? (
+              <>
+                <span className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                Processing…
+              </>
+            ) : (
+              'Invest Now'
+            )}
           </button>
         </div>
       </div>
