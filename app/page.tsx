@@ -27,7 +27,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Product | null>(null);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [debugMsg, setDebugMsg] = useState<string>('Waiting for action...');
 
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
@@ -65,7 +64,6 @@ export default function HomePage() {
   }
 
   async function confirmRent(product: Product) {
-    setDebugMsg('1. Sending request to server...');
     try {
       const res = await fetch('/api/rentals/create', {
         method: 'POST',
@@ -73,26 +71,19 @@ export default function HomePage() {
         body: JSON.stringify({ productId: product.id }),
       });
       
-      setDebugMsg(`2. Server responded with Status: ${res.status}. Reading data...`);
-
       const text = await res.text();
-      setDebugMsg(`3. Response: ${text.substring(0, 100)}`);
-
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
-        setDebugMsg(`❌ ERROR: Server crashed and returned HTML.`);
-        throw new Error(`Server crash (Status ${res.status}).`);
+        throw new Error(`Server error (Status: ${res.status}). Please try again.`);
       }
 
       if (!res.ok) {
-        setDebugMsg(`❌ Backend Error: ${data.error || 'Failed to invest.'}`);
         setFeedback({ ok: false, msg: data.error || 'Failed to invest.' });
         return;
       }
 
-      setDebugMsg(`✅ Success! Purchase completed.`);
       setFeedback({
         ok: true,
         msg: `🎉 You invested in ${product.name}!`,
@@ -101,10 +92,8 @@ export default function HomePage() {
       setTimeout(() => {
         setSelected(null);
         setFeedback(null);
-        setDebugMsg('Ready');
       }, 2500);
     } catch (err: any) {
-      setDebugMsg(`❌ Catch Error: ${err.message}`);
       setFeedback({ ok: false, msg: err.message || 'Network error.' });
     }
   }
@@ -120,13 +109,8 @@ export default function HomePage() {
   return (
     <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-violet-500/30">
       
-      {/* ON-SCREEN DEBUGGER */}
-      <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white p-3 text-xs font-mono font-bold break-words shadow-2xl">
-        DEBUG: {debugMsg}
-      </div>
-
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 mt-12 px-1">
+      <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
           <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-800 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.5)] overflow-hidden">
             <span className="text-white font-black text-xl">N</span>
@@ -183,46 +167,46 @@ function RentModal({ product, balance, currency, feedback, onClose, onConfirm }:
   const shortfall = price - balance;
 
   async function go() {
-    // 🚨 AGGRESSIVE DEBUG ALERT
-    alert("Button was clicked! Connecting to server...");
-    
     setLoading(true);
     await onConfirm(product);
     setLoading(false);
   }
 
   return (
-    /* 🚨 Z-INDEX INCREASED TO 9999 */
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#12121a] border border-white/10 rounded-3xl p-6 shadow-2xl my-auto pb-8 relative z-[10000]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-start mb-6">
+    /* 🚨 FIXED: Centered without forced scrolling */
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      
+      {/* 🚨 FIXED: Reduced padding, rounded corners, no pb-8 */}
+      <div className="w-full max-w-sm bg-[#12121a] border border-white/10 rounded-3xl p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        
+        <div className="flex justify-between items-start mb-4">
           <div>
-            <div className="text-xl font-black text-white">Confirm Investment</div>
-            <div className="text-xs text-violet-400 font-bold mt-1 uppercase tracking-wider">{product.name}</div>
+            <div className="text-lg font-black text-white">Confirm Investment</div>
+            <div className="text-[10px] text-violet-400 font-bold mt-1 uppercase tracking-wider">{product.name}</div>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-xl leading-none">×</button>
         </div>
 
-        <div className="bg-black/40 border border-white/5 rounded-2xl p-4 text-xs mb-6 space-y-3">
-          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Asset Price</span><span className="font-bold text-white text-sm">{currency} {price.toLocaleString()}</span></div>
-          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Daily Yield</span><span className="font-bold text-cyan-400 text-sm">{currency} {Number(product.daily_return).toLocaleString()}</span></div>
-          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Your Balance</span><span className="font-bold text-zinc-300 text-sm">{currency} {balance.toLocaleString()}</span></div>
+        <div className="bg-black/40 border border-white/5 rounded-xl p-3 text-[11px] mb-4 space-y-2">
+          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Asset Price</span><span className="font-bold text-white">{currency} {price.toLocaleString()}</span></div>
+          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Daily Yield</span><span className="font-bold text-cyan-400">{currency} {Number(product.daily_return).toLocaleString()}</span></div>
+          <div className="flex justify-between items-center"><span className="text-zinc-500 font-medium">Your Balance</span><span className="font-bold text-zinc-300">{currency} {balance.toLocaleString()}</span></div>
         </div>
 
         {shortfall > 0 && !feedback && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-4 text-center">
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] p-2.5 rounded-lg mb-3 text-center">
             You need {currency} {shortfall.toLocaleString()} more to invest.
           </div>
         )}
 
         {feedback && (
-          <div className={`p-4 rounded-xl text-sm mb-4 text-center font-medium border ${feedback.ok ? 'bg-violet-500/10 border-violet-500/20 text-violet-300' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+          <div className={`p-3 rounded-lg text-xs mb-3 text-center font-medium border ${feedback.ok ? 'bg-violet-500/10 border-violet-500/20 text-violet-300' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
             {feedback.msg}
           </div>
         )}
 
         {!feedback?.ok && (
-          <button onClick={go} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl transition shadow-[0_0_20px_rgba(139,92,246,0.3)] disabled:opacity-50" disabled={loading}>
+          <button onClick={go} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-50" disabled={loading}>
             {loading ? 'Processing…' : `Invest ${currency} ${price.toLocaleString()}`}
           </button>
         )}
