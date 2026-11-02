@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+type CurrencyStat = {
+  deposited: number;
+  withdrawn: number;
+  invested: number;
+};
+
 type Stats = {
   totalUsers: number;
-  totalDeposited: number;
-  totalWithdrawn: number;
-  totalInvested: number;
+  byCurrency: Record<string, CurrencyStat>;
 };
 
 export default function AdminDashboardPage() {
@@ -19,7 +23,6 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function checkAuthAndLoadStats() {
       try {
-        // Fetch stats to verify auth and get data
         const res = await fetch('/api/admin/stats');
         if (res.status === 401) {
           router.replace('/admin/login');
@@ -50,6 +53,9 @@ export default function AdminDashboardPage() {
     );
   }
 
+  // Get all currencies present in the stats, or fallback to the main 3
+  const currencies = Object.keys(stats?.byCurrency || { UGX: 1, RWF: 1, ZMW: 1 });
+
   return (
     <main className="min-h-screen bg-slate-900 pb-24">
       
@@ -69,39 +75,66 @@ export default function AdminDashboardPage() {
 
       <div className="p-4">
         
-        {/* 🚨 Platform Overview Stats */}
+        {/* Platform Overview Stats */}
         <h2 className="text-white font-bold mb-3 px-1 text-sm uppercase tracking-wider">Platform Overview</h2>
-        <div className="grid grid-cols-2 gap-3 mb-8">
+        
+        {/* Total Users */}
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden mb-4">
+          <div className="absolute -right-4 -top-4 w-12 h-12 bg-blue-500/10 rounded-full blur-xl"></div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Users</div>
+          <div className="text-3xl font-black text-blue-400">
+            {stats?.totalUsers.toLocaleString() || 0}
+          </div>
+        </div>
+
+        {/* Financials Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
           
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 w-12 h-12 bg-blue-500/10 rounded-full blur-xl"></div>
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Users</div>
-            <div className="text-2xl font-black text-blue-400">
-              {stats?.totalUsers.toLocaleString() || 0}
-            </div>
-          </div>
-
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+          {/* Deposits Card */}
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 relative overflow-hidden">
             <div className="absolute -right-4 -top-4 w-12 h-12 bg-emerald-500/10 rounded-full blur-xl"></div>
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Deposited</div>
-            <div className="text-lg font-black text-emerald-400 truncate">
-              {stats?.totalDeposited.toLocaleString() || 0}
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-3">Total Deposited</div>
+            <div className="space-y-2">
+              {currencies.map(c => (
+                <div key={`dep-${c}`} className="flex justify-between items-center border-b border-slate-700/50 pb-1 last:border-0">
+                  <span className="text-xs font-bold text-slate-300">{c}</span>
+                  <span className="text-sm font-black text-emerald-400">
+                    {(stats?.byCurrency[c]?.deposited || 0).toLocaleString()}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+          {/* Invested Card */}
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 relative overflow-hidden">
             <div className="absolute -right-4 -top-4 w-12 h-12 bg-violet-500/10 rounded-full blur-xl"></div>
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Invested</div>
-            <div className="text-lg font-black text-violet-400 truncate">
-              {stats?.totalInvested.toLocaleString() || 0}
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-3">Total Invested</div>
+            <div className="space-y-2">
+              {currencies.map(c => (
+                <div key={`inv-${c}`} className="flex justify-between items-center border-b border-slate-700/50 pb-1 last:border-0">
+                  <span className="text-xs font-bold text-slate-300">{c}</span>
+                  <span className="text-sm font-black text-violet-400">
+                    {(stats?.byCurrency[c]?.invested || 0).toLocaleString()}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+          {/* Withdrawn Card */}
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 relative overflow-hidden">
             <div className="absolute -right-4 -top-4 w-12 h-12 bg-orange-500/10 rounded-full blur-xl"></div>
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Withdrawn</div>
-            <div className="text-lg font-black text-orange-400 truncate">
-              {stats?.totalWithdrawn.toLocaleString() || 0}
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-3">Total Withdrawn</div>
+            <div className="space-y-2">
+              {currencies.map(c => (
+                <div key={`with-${c}`} className="flex justify-between items-center border-b border-slate-700/50 pb-1 last:border-0">
+                  <span className="text-xs font-bold text-slate-300">{c}</span>
+                  <span className="text-sm font-black text-orange-400">
+                    {(stats?.byCurrency[c]?.withdrawn || 0).toLocaleString()}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
