@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { convertFromUGX } from '@/lib/currency'; // 👈 Added this
 
 type Tier = {
   target: number;
@@ -14,6 +15,7 @@ type Tier = {
 export default function TasksPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'spin' | 'rewards'>('spin');
+  const [currency, setCurrency] = useState('UGX'); // 👈 Added this to track user currency
   
   // Rewards State
   const [teamInvestment, setTeamInvestment] = useState(0);
@@ -32,6 +34,17 @@ export default function TasksPage() {
 
   async function loadData() {
     try {
+      // 👈 Fetch user currency first
+      const meRes = await fetch('/api/me?t=' + Date.now());
+      if (meRes.status === 401) {
+        router.replace('/login');
+        return;
+      }
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        setCurrency(meData.user.currency || 'UGX');
+      }
+
       // Load Rewards
       const rewardsRes = await fetch('/api/rewards?t=' + Date.now());
       if (rewardsRes.status === 401) {
@@ -73,7 +86,6 @@ export default function TasksPage() {
     setSpinResult(null);
 
     try {
-      // Add a fake delay for the spinning animation effect
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const res = await fetch('/api/spin', { method: 'POST' });
@@ -110,7 +122,6 @@ export default function TasksPage() {
         toast.error(data.error || 'Failed to claim');
       } else {
         toast.success('Reward claimed successfully!');
-        // Reload tiers to update the UI
         const rewardsRes = await fetch('/api/rewards?t=' + Date.now());
         if (rewardsRes.ok) {
           const rewardsData = await rewardsRes.json();
@@ -233,7 +244,7 @@ export default function TasksPage() {
       )}
 
       {/* ========================================= */}
-      {/* REWARDS TAB (Minimized) */}
+      {/* REWARDS TAB */}
       {/* ========================================= */}
       {activeTab === 'rewards' && (
         <div className="animate-fade-in">
@@ -247,7 +258,8 @@ export default function TasksPage() {
               <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-2xl p-4 mb-6 shadow-xl flex items-center justify-between">
                 <div>
                   <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Investment</div>
-                  <div className="text-lg font-black text-violet-400">UGX {teamInvestment.toLocaleString()}</div>
+                  {/* 👈 Converted here */}
+                  <div className="text-lg font-black text-violet-400">{currency} {convertFromUGX(teamInvestment, currency).toLocaleString()}</div>
                 </div>
                 <div className="w-px h-8 bg-white/10 mx-2"></div>
                 <div className="text-right">
@@ -256,7 +268,7 @@ export default function TasksPage() {
                 </div>
               </div>
 
-              {/* Tiers List (Minimized) */}
+              {/* Tiers List */}
               <div className="space-y-3">
                 {tiers.map((tier, index) => {
                   const progress = Math.min((teamInvestment / tier.target) * 100, 100);
@@ -280,11 +292,13 @@ export default function TasksPage() {
                             )}
                           </div>
                           <div>
-                            <div className="font-bold text-white text-xs">UGX {tier.target.toLocaleString()}</div>
+                            {/* 👈 Converted here */}
+                            <div className="font-bold text-white text-xs">{currency} {convertFromUGX(tier.target, currency).toLocaleString()}</div>
                           </div>
                         </div>
+                        {/* 👈 Converted here */}
                         <div className={`font-black text-xs ${tier.isClaimed ? 'text-zinc-500 line-through' : 'text-violet-400'}`}>
-                          +{tier.reward.toLocaleString()}
+                          +{convertFromUGX(tier.reward, currency).toLocaleString()}
                         </div>
                       </div>
 
@@ -302,8 +316,9 @@ export default function TasksPage() {
 
                       {/* Footer: Progress text OR Claim Button */}
                       <div className="flex items-center justify-between mt-1">
+                        {/* 👈 Converted here */}
                         <div className="text-[9px] font-bold text-zinc-500">
-                          {tier.isClaimed ? 'Completed' : `UGX ${remaining.toLocaleString()} to go`}
+                          {tier.isClaimed ? 'Completed' : `${currency} ${convertFromUGX(remaining, currency).toLocaleString()} to go`}
                         </div>
                         
                         {tier.isTargetHit && !tier.isClaimed && (
@@ -338,8 +353,10 @@ export default function TasksPage() {
             {spinResult.type === 'product' ? (
               <div className="mb-6">
                 <div className="text-cyan-400 font-bold text-lg mb-1">{spinResult.productName}</div>
-                <div className="text-zinc-400 text-xs">Worth 20,000 UGX</div>
-                <div className="text-emerald-400 font-bold text-sm mt-2">Earning 4,000 UGX daily</div>
+                {/* 👈 Converted here */}
+                <div className="text-zinc-400 text-xs">Worth {currency} {convertFromUGX(20000, currency).toLocaleString()}</div>
+                {/* 👈 Converted here */}
+                <div className="text-emerald-400 font-bold text-sm mt-2">Earning {currency} {convertFromUGX(4000, currency).toLocaleString()} daily</div>
                 <div className="text-[10px] text-zinc-500 mt-2 bg-white/5 py-2 rounded-lg border border-white/10">Check your Portfolio to see it!</div>
               </div>
             ) : (
@@ -360,4 +377,4 @@ export default function TasksPage() {
 
     </main>
   );
-      }
+                  }
