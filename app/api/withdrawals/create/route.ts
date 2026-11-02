@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       const closeTotalMinutes = WITHDRAW_CLOSE_HOUR * 60;
 
       if (eatTotalMinutes < openTotalMinutes || eatTotalMinutes >= closeTotalMinutes) {
-        return NextResponse.json({ error: `Withdrawals are only available between 7:00 AM and 5:00 PM EAT.` }, { status: 400 });
+        return NextResponse.json({ error: `Withdrawals are only available between 9:00 AM and 5:00 PM EAT.` }, { status: 400 });
       }
     }
 
@@ -116,13 +116,19 @@ export async function POST(req: NextRequest) {
       .update({ balance: Number(user.balance) - numAmount })
       .eq('id', session.userId);
 
+    // 👈 Determine the gateway dynamically (No MarzPay)
+    let gateway = 'manual';
+    if (user.country === 'UG') gateway = 'pesajet';
+    else if (user.country === 'ZM') gateway = 'manual_zm';
+    else if (user.country === 'RW') gateway = 'manual_rw';
+
     const { data: withdrawal, error: insErr } = await supabaseAdmin
       .from('withdrawals')
       .insert({
         user_id: session.userId,
         amount: numAmount,
         currency: userCurrency,
-        gateway: user.country === 'UG' ? 'pesajet' : 'marzpay',
+        gateway: gateway, // 👈 Uses the new dynamic gateway
         status: 'pending',
         recipient_phone: payoutPhone,
         recipient_name: payoutName,
