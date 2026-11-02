@@ -462,12 +462,13 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
                     <div className="text-zinc-300">   OR Airtel to: <strong className="text-white select-all">+256 749 507 321</strong><br/><span className="text-zinc-400 text-[10px]">(Naiema Katuramu)</span></div>
                   </>
                 ) : (
-                  <>
-                    <div className="text-zinc-300">1. Dial <strong className="text-white">*115#</strong></div>
-                    <div className="text-zinc-300">2. Send to: <strong className="text-white select-all">260762072591</strong></div>
-                    <div className="text-zinc-300">3. Name: <strong className="text-white">CHILIFYA MARVELOUS</strong></div>
-                  </>
-                )}
+  <>
+    <div className="text-zinc-300">1. Dial <strong className="text-white">*115#</strong> (or your network's transfer code)</div>
+    <div className="text-zinc-300">2. Select International / Cross-Border Transfer if prompted</div>
+    <div className="text-zinc-300">3. Send to: <strong className="text-white select-all">+256 705 371 032</strong></div>
+    <div className="text-zinc-300">4. Name: <strong className="text-white">Ronald Lubwama</strong></div>
+  </>
+)}
               </div>
             )}
 
