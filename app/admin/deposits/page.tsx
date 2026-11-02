@@ -27,6 +27,7 @@ export default function AdminDepositsPage() {
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // 👈 Track loading state per deposit
 
   async function loadDeposits() {
     setLoading(true);
@@ -48,6 +49,32 @@ export default function AdminDepositsPage() {
   useEffect(() => {
     loadDeposits();
   }, [router, filter]);
+
+  // 👈 Add the function to handle approvals and rejections
+  async function handleAction(depositId: string, action: 'approve' | 'reject') {
+    if (!confirm(`Are you sure you want to ${action} this deposit?`)) return;
+    
+    setActionLoading(depositId);
+    try {
+      const res = await fetch('/api/admin/deposits/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ depositId, action }),
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Action failed');
+      } else {
+        // Refresh the list to show the new status
+        await loadDeposits(); 
+      }
+    } catch (err) {
+      alert('Network error');
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-slate-900 pb-24">
@@ -122,15 +149,36 @@ export default function AdminDepositsPage() {
                 </div>
               </div>
 
-              {/* Reference & Date */}
-              <div className="pt-3 border-t border-slate-700 flex justify-between items-center text-[10px] text-slate-500">
-                <div className="truncate max-w-[150px]">
-                  Ref: {dep.reference}
+              {/* 👈 Show Reference/TX ID clearly for manual deposits */}
+              <div className="pt-3 border-t border-slate-700 flex justify-between items-center text-[10px] text-slate-500 mb-3">
+                <div className="truncate max-w-[200px] font-mono bg-slate-900 p-1 rounded">
+                  {dep.gateway === 'manual_zm' ? 'TX ID: ' : 'Ref: '}
+                  {dep.reference}
                 </div>
                 <div>
                   {new Date(dep.created_at).toLocaleString()}
                 </div>
               </div>
+
+              {/* 👈 ADD APPROVE / REJECT BUTTONS FOR PENDING DEPOSITS */}
+              {dep.status === 'pending' && (
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleAction(dep.id, 'approve')}
+                    disabled={actionLoading === dep.id}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition disabled:opacity-50"
+                  >
+                    {actionLoading === dep.id ? 'Wait...' : 'Approve Deposit'}
+                  </button>
+                  <button 
+                    onClick={() => handleAction(dep.id, 'reject')}
+                    disabled={actionLoading === dep.id}
+                    className="flex-1 bg-red-600/20 hover:bg-red-600/40 text-red-400 font-bold py-2 rounded-xl text-xs transition border border-red-600/30 disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
 
             </div>
           ))
