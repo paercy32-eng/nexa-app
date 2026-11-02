@@ -5,6 +5,7 @@ export const fetchCache = 'force-no-store';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth';
+import { convertFromUGX } from '@/lib/currency'; // 👈 Added this
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,6 +13,16 @@ export async function GET(req: NextRequest) {
     if (!token) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     const session = await verifySession(token);
     if (!session) return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+
+    // 👈 1. Fetch the user's currency from the database
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('currency')
+      .eq('id', session.userId)
+      .single();
+
+    if (userError) throw userError;
+    const userCurrency = user?.currency || 'UGX';
 
     // Fetch the user's active assets from the database
     const { data: modules, error } = await supabaseAdmin
@@ -29,11 +40,12 @@ export async function GET(req: NextRequest) {
       return {
         id: m.id,
         product_name: m.product_name,
-        price_paid: m.price_paid,
-        daily_profit: m.daily_return, 
+        // 👈 2. Convert all money fields from UGX to the user's currency
+        price_paid: convertFromUGX(m.price_paid, userCurrency),
+        daily_profit: convertFromUGX(m.daily_return, userCurrency), 
+        total_earned: convertFromUGX(m.total_credited, userCurrency),
         duration_days: m.cycle_days,  
         days_remaining: daysRemaining,
-        total_earned: m.total_credited,
         start_at: m.started_at, 
         last_credit_at: m.started_at, 
         status: m.status
