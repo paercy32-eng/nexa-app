@@ -12,7 +12,7 @@ function getEATDateString(date: Date) {
 
 // Helper: Check if user is eligible to spin
 async function checkEligibility(userId: string) {
-  // 1. Check for Active Product
+  // 1. Check if the user themselves has an Active Product
   const { count: activeProducts } = await supabaseAdmin
     .from('user_modules')
     .select('id', { count: 'exact', head: true })
@@ -23,7 +23,7 @@ async function checkEligibility(userId: string) {
     return { canSpin: false, reason: 'You need an active asset to spin.', invitesToday: 0 };
   }
 
-  // 2. Check if already spun today
+  // 2. Check if they already spun today
   const { data: user } = await supabaseAdmin
     .from('users')
     .select('last_spin_at, currency, last_spin_prize')
@@ -43,21 +43,40 @@ async function checkEligibility(userId: string) {
     }
   }
 
-  // 3. Count Level 1 invites who became ACTIVE today
-  const startOfDayUTC = new Date(nowUTC);
-  startOfDayUTC.setUTCHours(0, 0, 0, 0); 
-  // Note: 00:00 EAT is 21:00 UTC of the previous day. 
-  // To keep it simple, we look for modules created in the last 24 hours, 
-  // OR we can strictly use EAT. Let's use EAT.
-  const startOfDayEAT = new Date(nowUTC.getTime() - 3 * 60 * 60 * 1000);
-  startOfDayEAT.setUTCHours(0, 0, 0, 0);
-  
-  const { count: invitesToday } = await supabaseAdmin
+  // 3. Count Level 1 referrals who BECAME ACTIVE today (purchased today)
+  // Calculate midnight EAT in UTC
+  const nowEAT = new Date(nowUTC.getTime() + 3 * 60 * 60 * 1000);
+  const startOfDayEAT = new Date(Date.UTC(
+    nowEAT.getUTCFullYear(),
+    nowEAT.getUTCMonth(),
+    nowEAT.getUTCDate(),
+    0, 0, 0, 0
+  ).getTime() - 3 * 60 * 60 * 1000);
+
+  // Step A: Get all users who were referred by this user
+  const { data: referredUsers } = await supabaseAdmin
+    .from('users')
+    .select('id')
+    .eq('referred_by', userId);
+
+  if (!referredUsers || referredUsers.length === 0) {
+    return { canSpin: false, reason: 'You need 3 active invites today to spin. You have 0/3.', invitesToday: 0 };
+  }
+
+  const referredUserIds = referredUsers.map(u => u.id);
+
+  // Step B: Check how many of those referrals bought an active asset TODAY
+  const { count: invitesToday, error: countError } = await supabaseAdmin
     .from('user_modules')
-    .select('user_id, users!inner(referred_by)', { count: 'exact', head: true })
-    .eq('users.referred_by', userId)
+    .select('id', { count: 'exact', head: true })
+    .in('user_id', referredUserIds)
     .eq('status', 'active')
     .gte('created_at', startOfDayEAT.toISOString());
+
+  if (countError) {
+    console.error('Spin count error:', countError);
+    return { canSpin: false, reason: 'Error checking invites.', invitesToday: 0 };
+  }
 
   if (!invitesToday || invitesToday < 3) {
     return { 
@@ -100,13 +119,8 @@ export async function POST(req: NextRequest) {
     const nowUTC = new Date();
     
     // 🚨 PRIZE POOL & NO REPEAT LOGIC
-    // Define all possible prizes
     const allPrizes = ['product', 'cash_5000', 'cash_10000', 'cash_20000'];
-    
-    // Remove the last won prize from the pool
     const availablePrizes = allPrizes.filter(p => p !== status.lastPrize);
-    
-    // Pick a random prize from the remaining pool
     const randomIndex = Math.floor(Math.random() * availablePrizes.length);
     const selectedPrize = availablePrizes[randomIndex];
 
@@ -118,7 +132,6 @@ export async function POST(req: NextRequest) {
     if (selectedPrize === 'product') {
       prizeType = 'product';
       
-      // Fetch the Nexa Flow Node product to get its ID
       const { data: product } = await supabaseAdmin
         .from('products')
         .select('*')
@@ -128,9 +141,7 @@ export async function POST(req: NextRequest) {
       if (product) {
         productWon = product;
         const startedAt = new Date();
-        // Hardcode 60 days cycle for the prize if product isn't found, otherwise use product's cycle
         const cycleDays = product.cycle_days || 60; 
-        // Hardcode 4000 daily return as requested (even if product base is different)
         const prizeDailyReturn = 4000; 
         const expiresAt = new Date(startedAt.getTime() + cycleDays * 24 * 60 * 60 * 1000);
         
@@ -138,7 +149,7 @@ export async function POST(req: NextRequest) {
           user_id: session.userId,
           product_id: product.id,
           product_name: product.name,
-          price_paid: 0, // Won for free
+          price_paid: 0,
           cycle_days: cycleDays,
           daily_return: prizeDailyReturn, 
           total_creditable: cycleDays * prizeDailyReturn,
@@ -160,7 +171,6 @@ export async function POST(req: NextRequest) {
 
       cashAmount = convertFromUGX(cashUGX, userCurrency);
 
-      // Credit user balance
       const { data: user } = await supabaseAdmin.from('users').select('balance').eq('id', session.userId).single();
       await supabaseAdmin
         .from('users')
@@ -168,7 +178,6 @@ export async function POST(req: NextRequest) {
         .eq('id', session.userId);
     }
 
-    // Mark as spun today AND save the prize they won
     await supabaseAdmin
       .from('users')
       .update({ 
@@ -177,7 +186,6 @@ export async function POST(req: NextRequest) {
       })
       .eq('id', session.userId);
 
-    // Log the transaction
     await supabaseAdmin.from('transactions').insert({
       user_id: session.userId,
       type: 'spin_win',
