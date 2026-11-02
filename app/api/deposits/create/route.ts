@@ -8,11 +8,6 @@ import { convertFromUGX } from '@/lib/currency';
 const BASE_MIN_DEPOSIT_UGX = 20000; 
 const PESAJET_FEE_RATE = 0.025; 
 
-// MarzPay flat fees (can adjust based on exact RWF needs)
-const MARZPAY_FEES: Record<string, number> = {
-  KES: 5, RWF: 100, ZMW: 2, XAF: 100,
-};
-
 export async function POST(req: NextRequest) {
   try {
     const token = req.cookies.get(SESSION_COOKIE)?.value;
@@ -44,21 +39,25 @@ export async function POST(req: NextRequest) {
     }
 
     const reference = crypto.randomUUID();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.aurua.shop';
 
     // ==========================================
-    // ROUTE A: ZAMBIA (MANUAL DEPOSIT)
+    // ROUTE A: MANUAL DEPOSITS (ZAMBIA & RWANDA)
     // ==========================================
-    if (userCountry === 'ZM') {
-      if (!transactionId) return NextResponse.json({ error: 'Transaction ID is required.' }, { status: 400 });
+    if (userCountry === 'ZM' || userCountry === 'RW') {
+      if (!transactionId) {
+        return NextResponse.json({ error: 'Transaction ID is required for manual deposits.' }, { status: 400 });
+      }
 
+      const gatewayName = userCountry === 'ZM' ? 'manual_zm' : 'manual_rw';
+
+      // Save the deposit as 'pending' for the admin to review
       const { data: deposit, error: insErr } = await supabaseAdmin
         .from('deposits')
         .insert({
           user_id: user.id,
           amount: numAmount,
           currency: userCurrency,
-          gateway: 'manual_zm',
+          gateway: gatewayName,
           status: 'pending',
           reference: transactionId,
         })
@@ -67,15 +66,19 @@ export async function POST(req: NextRequest) {
 
       if (insErr) throw insErr;
 
+      // Log the transaction
       await supabaseAdmin.from('transactions').insert({
         user_id: user.id,
         amount: numAmount,
         type: 'deposit',
         status: 'pending',
-        meta: { reference: transactionId, deposit_id: deposit.id, type: 'manual_zm' }
+        meta: { reference: transactionId, deposit_id: deposit.id, type: gatewayName }
       });
 
-      return NextResponse.json({ success: true, message: `Deposit submitted! Admin will verify TX ID: ${transactionId} shortly.` });
+      return NextResponse.json({ 
+        success: true, 
+        message: `Deposit submitted! Admin will verify TX ID: ${transactionId} shortly.` 
+      });
     }
 
     // ==========================================
@@ -118,86 +121,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ==========================================
-    // ROUTE C: RWANDA & OTHERS (MARZPAY AUTOMATED)
-    // ==========================================
-    if (userCountry !== 'ZM' && userCountry !== 'UG') {
-      try {
-        const marzpayKey = process.env.MARZPAY_API_KEY;
-        const marzpaySecret = process.env.MARZPAY_API_SECRET;
-        const marzpayBaseUrl = 'https://wallet.wearemarz.com/api/v1';
-
-        if (!marzpayKey || !marzpaySecret) throw new Error('MarzPay credentials missing');
-
-        const authToken = Buffer.from(`${marzpayKey}:${marzpaySecret}`).toString('base64');
-        
-        // Format phone to +250...
-        let formattedPhone = phone.trim();
-        if (!formattedPhone.startsWith('+')) formattedPhone = `+${formattedPhone}`;
-
-        // Add MarzPay flat fee for RWF
-        const marzpayFee = MARZPAY_FEES[userCurrency] || 0;
-        const amountToPrompt = numAmount + marzpayFee;
-
-        const { data: deposit, error: insErr } = await supabaseAdmin
-          .from('deposits')
-          .insert({
-            user_id: user.id, amount: numAmount, currency: userCurrency, gateway: 'marzpay', status: 'pending', reference: reference,
-          })
-          .select('id')
-          .single();
-
-        if (insErr) throw insErr;
-
-        await supabaseAdmin.from('transactions').insert({
-          user_id: user.id, amount: numAmount, type: 'deposit', status: 'pending',
-          meta: { reference: reference, deposit_id: deposit.id, fee_charged: marzpayFee }
-        });
-
-        // MarzPay API Call
-        const marzpayRes = await fetch(`${marzpayBaseUrl}/collect-money`, {
-          method: 'POST',
-          headers: { 
-            'Authorization': `Basic ${authToken}`, 
-            'Content-Type': 'application/json', 
-            Accept: 'application/json' 
-          },
-          body: JSON.stringify({
-            amount: amountToPrompt,
-            phone_number: formattedPhone,
-            reference: reference,
-            country: userCountry, // 'RW'
-            currency: userCurrency, // 'RWF'
-            description: `Nexa Deposit`,
-            callback_url: `${appUrl}/api/webhooks/marzpay`, // Ensure you have this webhook route!
-            metadata: [{ depositId: deposit.id }, { userId: user.id }]
-          }),
-        });
-
-        const marzpayData = await marzpayRes.json().catch(() => ({}));
-
-        if (!marzpayRes.ok || marzpayData?.status === 'error') {
-          await supabaseAdmin.from('deposits').update({ status: 'failed' }).eq('id', deposit.id);
-          return NextResponse.json({ error: marzpayData?.message || 'MarzPay request failed' }, { status: 400 });
-        }
-
-        return NextResponse.json({ 
-          success: true, 
-          depositId: deposit.id, 
-          reference, 
-          amount: numAmount, 
-          message: `A PIN prompt for ${amountToPrompt} RWF was sent to your phone.` 
-        });
-
-      } catch (apiError: any) {
-        console.error('MarzPay Error:', apiError);
-        return NextResponse.json({ error: apiError.message || 'Payment gateway rejected the request' }, { status: 400 });
-      }
-    }
-
     return NextResponse.json({ error: 'Unsupported country' }, { status: 400 });
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-                                }
+    }
