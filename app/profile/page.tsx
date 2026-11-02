@@ -330,15 +330,17 @@ export default function ProfilePage() {
 }
 
 // ==========================================
-// RECHARGE (DEPOSIT) MODAL - UPDATED FOR ZAMBIA
+// RECHARGE (DEPOSIT) MODAL - ZAMBIA & RWANDA MANUAL
 // ==========================================
 function RechargeModal({ currency, onClose, onSuccess }: any) {
   const minDeposit = convertFromUGX(20000, currency);
-  const isZM = currency === 'ZMW'; // 👈 Check if user is from Zambia
+  
+  // 👈 Check if the currency is manual (Zambia or Rwanda)
+  const isManual = currency === 'ZMW' || currency === 'RWF'; 
   
   const [amount, setAmount] = useState(String(minDeposit));
   const [phone, setPhone] = useState('');
-  const [manualTxId, setManualTxId] = useState(''); // 👈 For Zambia TX ID
+  const [manualTxId, setManualTxId] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   
@@ -354,8 +356,7 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
   async function submit(e: any) {
     e.preventDefault();
     
-    // For Zambia, ensure they entered the TX ID
-    if (isZM && !manualTxId) {
+    if (isManual && !manualTxId) {
       setMsg('Please enter the Transaction ID from your mobile money.');
       return;
     }
@@ -369,7 +370,7 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         body: JSON.stringify({ 
           amount: Number(amount), 
           phone,
-          transactionId: isZM ? manualTxId : undefined // 👈 Send TX ID to backend
+          transactionId: isManual ? manualTxId : undefined 
         }),
       });
       const data = await res.json();
@@ -379,11 +380,9 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
       } else {
         setSent(true);
         
-        // If Zambia (Manual), don't poll for PesaJet. Just show a success message.
-        if (isZM) {
+        if (isManual) {
           setMsg(data.message || 'Deposit submitted! Waiting for admin approval.');
         } else {
-          // PesaJet automated flow
           setReference(data.reference);
           setTxId(data.transactionId);
           startPolling(data.reference, data.transactionId);
@@ -440,13 +439,24 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         {!sent ? (
           <form onSubmit={submit} className="space-y-4">
             
-            {/* 👈 SHOW MANUAL INSTRUCTIONS FOR ZAMBIA */}
-            {isZM && (
+            {/* 👈 SHOW MANUAL INSTRUCTIONS FOR ZAMBIA & RWANDA */}
+            {isManual && (
               <div className="bg-[#1a1a24] border border-violet-500/30 rounded-xl p-4 text-xs space-y-2 mb-4">
                 <div className="font-bold text-violet-400 mb-2 uppercase tracking-wider">Manual Deposit</div>
-                <div className="text-zinc-300">1. Dial <strong className="text-white">*115#</strong></div>
-                <div className="text-zinc-300">2. Send to: <strong className="text-white select-all">260762072591</strong></div>
-                <div className="text-zinc-300">3. Name: <strong className="text-white">CHILIFYA MARVELOUS</strong></div>
+                
+                {currency === 'RWF' ? (
+                  <>
+                    <div className="text-zinc-300">1. Dial <strong className="text-white">*182#</strong></div>
+                    <div className="text-zinc-300">2. Send MTN to: <strong className="text-white select-all">+256 768 521 710</strong><br/><span className="text-zinc-400 text-[10px]">(Nabirye Flavia)</span></div>
+                    <div className="text-zinc-300">   OR Airtel to: <strong className="text-white select-all">+256 749 507 321</strong><br/><span className="text-zinc-400 text-[10px]">(Naiema Katuramu)</span></div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-zinc-300">1. Dial <strong className="text-white">*115#</strong></div>
+                    <div className="text-zinc-300">2. Send to: <strong className="text-white select-all">260762072591</strong></div>
+                    <div className="text-zinc-300">3. Name: <strong className="text-white">CHILIFYA MARVELOUS</strong></div>
+                  </>
+                )}
               </div>
             )}
 
@@ -471,8 +481,7 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-violet-500 transition" required />
             </div>
 
-            {/* 👈 ADD TX ID INPUT FOR ZAMBIA */}
-            {isZM && (
+            {isManual && (
               <div>
                 <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Transaction ID</label>
                 <input type="text" value={manualTxId} onChange={(e) => setManualTxId(e.target.value)} placeholder="e.g. TX123456789" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-violet-500 transition" required />
@@ -482,33 +491,32 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
             {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
             
             <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-50">
-              {loading ? 'Sending Request...' : (isZM ? 'Submit Deposit' : 'Deposit Now')}
+              {loading ? 'Sending Request...' : (isManual ? 'Submit Deposit' : 'Deposit Now')}
             </button>
           </form>
         ) : (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              {isZM ? (
+              {isManual ? (
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
               ) : (
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
               )}
             </div>
             <div className="text-lg font-bold text-white mb-2">
-              {isZM ? 'Deposit Submitted!' : 'Check your phone'}
+              {isManual ? 'Deposit Submitted!' : 'Check your phone'}
             </div>
             <div className="text-sm text-zinc-400 mb-4">
-              {isZM ? 'Admin will verify your Transaction ID and credit your account shortly.' : 'Enter your PIN to complete the deposit.'}
+              {isManual ? 'Admin will verify your Transaction ID and credit your account shortly.' : 'Enter your PIN to complete the deposit.'}
             </div>
             
-            {/* Only show polling timer for PesaJet */}
-            {!isZM && (
+            {!isManual && (
               <div className="text-xs text-violet-400 font-bold animate-pulse">
                 Verifying payment... ({60 - pollCount * 3}s)
               </div>
             )}
             
-            {isZM && (
+            {isManual && (
                <button onClick={onClose} className="mt-6 w-full border border-white/10 text-zinc-300 font-bold py-4 rounded-xl hover:bg-white/5 transition">
                  Close
                </button>
@@ -521,11 +529,11 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
 }
 
 // ==========================================
-// WITHDRAW MODAL - UPDATED FOR ZAMBIA
+// WITHDRAW MODAL - UPDATED FOR ZAMBIA & RWANDA
 // ==========================================
 function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
   const minWithdraw = convertFromUGX(4000, currency);
-  const isZM = currency === 'ZMW';
+  const isManual = currency === 'ZMW' || currency === 'RWF';
   
   const [amount, setAmount] = useState(String(minWithdraw));
   const [loading, setLoading] = useState(false);
@@ -548,7 +556,7 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       const data = await res.json();
       if (!res.ok) setMsg(data.error);
       else {
-        if (isZM) {
+        if (isManual) {
           setMsg('Withdrawal submitted! Admin will process it shortly.');
           setTimeout(() => onSuccess(), 2000);
         } else {
@@ -572,8 +580,7 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
         
         <form onSubmit={submit} className="space-y-4">
           
-          {/* 👈 ADD NOTE FOR ZAMBIA MANUAL WITHDRAWAL */}
-          {isZM && (
+          {isManual && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-[10px] text-blue-300 text-center font-medium mb-2">
               Manual Withdrawal. Admin will send funds to your bound account number.
             </div>
@@ -602,4 +609,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-              }
+      }
