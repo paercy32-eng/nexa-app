@@ -269,7 +269,7 @@ target="_blank" rel="noopener noreferrer" className="w-full bg-[#12121a] border 
           </div>
           <div className="text-left flex-1">
              <div className="text-xs font-bold text-zinc-300 tracking-wide uppercase">RWANDA & ZAMBIA TEAM</div>
-             <div className="text-[9px] text-zinc-500">Join WhatsApp Group</div>
+             <div className="text-[9px] text-zinc-500">Join WhatsApp Channel</div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto group-hover:text-white transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
