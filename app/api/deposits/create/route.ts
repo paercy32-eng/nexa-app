@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
     });
 
     // ==========================================
-    // ROUTE A: UGANDA (PESAJET)
+    // ROUTE A: UGANDA (PESAJET) - UNTOUCHED
     // ==========================================
     if (gateway === 'pesajet') {
       try {
@@ -146,10 +146,11 @@ export async function POST(req: NextRequest) {
           method: 'POST',
           headers: { 'Authorization': `Basic ${authToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
-            amount: amountToPrompt, // Total + Fee for MarzPay
+            amount: amountToPrompt, 
             phone_number: formattedPhone,
             reference: reference,
             country: userCountry,
+            currency: userCurrency, // 👈 ADDED THIS LINE! MarzPay needs the currency to route correctly.
             description: `Nexa Deposit`,
             callback_url: `${appUrl}/api/webhooks/marzpay`,
             metadata: [{ depositId: deposit.id }, { userId: user.id }]
@@ -176,4 +177,4 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-          }
+                                                          }
