@@ -20,24 +20,35 @@ export async function POST(req: NextRequest) {
     // 2. Verify Signature
     const isValid = pesajet.webhooks.verify(rawBody, signature);
     if (!isValid) {
-      console.error('Invalid PesaJet webhook signature');
+      console.error('❌ Invalid PesaJet webhook signature');
       return NextResponse.json({ error: 'Signature mismatch' }, { status: 401 });
     }
 
     const { event, status, reference, amount } = body;
-    console.log(`Received PesaJet webhook: ${event} for ref ${reference} (${status})`);
+    console.log(`🔔 Received PesaJet webhook: Event: ${event}, Status: ${status}, Ref: ${reference}`);
 
-    const isSuccess = event === 'payment.completed' || status === 'COMPLETED';
-    const isFailure = event === 'payment.failed' || status === 'FAILED' || status === 'EXPIRED';
+    // 👈 Made the success check much more robust for PesaJet
+    const isSuccess = 
+      event === 'payment.completed' || 
+      event === 'payment.success' ||
+      status === 'COMPLETED' || 
+      status === 'SUCCESS' ||
+      status === 'SUCCESSFUL';
+
+    const isFailure = 
+      event === 'payment.failed' || 
+      status === 'FAILED' || 
+      status === 'EXPIRED' || 
+      status === 'CANCELLED';
 
     if (!isSuccess && !isFailure) {
+      console.log(`⚠️ Unhandled status/event: ${event} / ${status}`);
       return NextResponse.json({ received: true }); 
     }
 
     // ==========================================
     // A. HANDLE DEPOSITS (COLLECTION)
     // ==========================================
-    // We check the 'deposits' table
     const { data: deposit } = await supabaseAdmin
       .from('deposits')
       .select('id, user_id, status, amount')
@@ -55,28 +66,40 @@ export async function POST(req: NextRequest) {
         // 2. Credit user balance
         const { data: user } = await supabaseAdmin
           .from('users')
-          .select('balance')
+          .select('balance, total_deposited')
           .eq('id', deposit.user_id)
           .single();
 
         if (user) {
-          await supabaseAdmin
+          const newBalance = Number(user.balance || 0) + Number(deposit.amount);
+          const newTotalDeposited = Number(user.total_deposited || 0) + Number(deposit.amount);
+          
+          const { error: updateError } = await supabaseAdmin
             .from('users')
-            .update({ balance: Number(user.balance || 0) + Number(deposit.amount) })
+            .update({ 
+              balance: newBalance,
+              total_deposited: newTotalDeposited 
+            })
             .eq('id', deposit.user_id);
+
+          if (updateError) {
+             console.error('❌ Failed to credit user balance:', updateError);
+          } else {
+             console.log(`✅ PesaJet Deposit successful: Credited ${deposit.amount} to user ${deposit.user_id}`);
+          }
         }
 
         // 3. Update transaction log
         await supabaseAdmin
           .from('transactions')
           .update({ status: 'completed' })
-          .eq('meta->>reference', reference);
+          .eq('reference', reference)
+          .eq('type', 'deposit');
 
-        console.log(`✅ PesaJet Deposit successful: Credited ${deposit.amount} to user ${deposit.user_id}`);
       } else {
         // Mark as failed
         await supabaseAdmin.from('deposits').update({ status: 'failed' }).eq('id', deposit.id);
-        await supabaseAdmin.from('transactions').update({ status: 'failed' }).eq('meta->>reference', reference);
+        await supabaseAdmin.from('transactions').update({ status: 'failed' }).eq('reference', reference).eq('type', 'deposit');
         console.log(`❌ PesaJet Deposit failed for ref ${reference}`);
       }
       return NextResponse.json({ received: true });
@@ -134,11 +157,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    console.log(`Webhook reference ${reference} not found in database.`);
+    console.log(`Webhook reference ${reference} not found in database or already processed.`);
     return NextResponse.json({ received: true });
 
   } catch (error) {
     console.error('PesaJet Webhook Error:', error);
     return NextResponse.json({ received: true });
   }
-      }
+}
