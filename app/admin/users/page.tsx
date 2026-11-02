@@ -39,6 +39,9 @@ export default function AdminUsersPage() {
   
   // 🚨 State for the active country tab
   const [activeCountry, setActiveCountry] = useState('ALL');
+  
+  // 🚨 State for the search query
+  const [searchQuery, setSearchQuery] = useState('');
 
   async function loadUsers() {
     setLoading(true);
@@ -61,10 +64,15 @@ export default function AdminUsersPage() {
     loadUsers();
   }, [router]);
 
-  // 🚨 Filter users based on the selected country tab
-  const filteredUsers = users.filter(u => 
-    activeCountry === 'ALL' || u.country === activeCountry
-  );
+  // 🚨 Filter users based on country AND phone number search
+  const filteredUsers = users.filter(u => {
+    const matchesCountry = activeCountry === 'ALL' || u.country === activeCountry;
+    
+    // Only search by phone number
+    const matchesSearch = u.phone.includes(searchQuery);
+
+    return matchesCountry && matchesSearch;
+  });
 
   return (
     <main className="min-h-screen bg-slate-900 pb-24">
@@ -78,6 +86,24 @@ export default function AdminUsersPage() {
           </div>
           <div className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-400/20">
             {filteredUsers.length} Users
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search by phone number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-emerald-500 transition"
+            />
           </div>
         </div>
 
@@ -106,7 +132,7 @@ export default function AdminUsersPage() {
           <div className="text-center text-slate-400 py-10">Loading users…</div>
         ) : filteredUsers.length === 0 ? (
           <div className="text-center text-slate-500 py-10 bg-slate-800 rounded-2xl border border-slate-700">
-            No users found for this country.
+            No users found matching your search.
           </div>
         ) : (
           filteredUsers.map((u) => (
@@ -353,4 +379,4 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
       </div>
     </div>
   );
-            }
+}
