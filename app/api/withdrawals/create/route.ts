@@ -11,7 +11,7 @@ import { convertFromUGX } from '@/lib/currency';
 const BASE_MIN_WITHDRAW_UGX = 4000;
 const WITHDRAW_OPEN_HOUR = 9;
 const WITHDRAW_CLOSE_HOUR = 17;
-const DAILY_LIMIT = 2;
+const DAILY_LIMIT = 1;
 
 export async function POST(req: NextRequest) {
   try {
