@@ -40,10 +40,10 @@ export async function GET(req: NextRequest) {
       l3Ids = (l3Data ?? []).map(u => u.id);
     }
 
-    // 4. Combine ALL levels into one array
+    // 4. Combine ALL levels (Level 1 + Level 2 + Level 3)
     const allTeamIds = [...l1Ids, ...l2Ids, ...l3Ids];
     
-    // 5. Set team size to the total of all 3 levels
+    // 5. Set team size to the TOTAL of all 3 levels
     const teamSize = allTeamIds.length;
 
     // 6. Calculate Team Investment from ALL levels
