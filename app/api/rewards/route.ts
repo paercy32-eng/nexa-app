@@ -22,31 +22,23 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Fetch Level 1
-    const { data: l1Data } = await supabaseAdmin.from('users').select('id').eq('referred_by', userId);
-    const l1Ids = (l1Data ?? []).map(u => u.id);
+    // 🚨 1. FETCH ALL USERS IN ONE GO (100% Reliable)
+    const { data: allUsers, error: usersError } = await supabaseAdmin
+      .from('users')
+      .select('id, referred_by');
 
-    // 2. Fetch Level 2
-    let l2Ids: string[] = [];
-    if (l1Ids.length > 0) {
-      const { data: l2Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l1Ids);
-      l2Ids = (l2Data ?? []).map(u => u.id);
-    }
+    if (usersError) throw usersError;
 
-    // 3. Fetch Level 3
-    let l3Ids: string[] = [];
-    if (l2Ids.length > 0) {
-      const { data: l3Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l2Ids);
-      l3Ids = (l3Data ?? []).map(u => u.id);
-    }
+    // 2. Build the 3 levels inside JavaScript
+    const l1Ids = (allUsers ?? []).filter(u => u.referred_by === userId).map(u => u.id);
+    const l2Ids = (allUsers ?? []).filter(u => l1Ids.includes(u.referred_by)).map(u => u.id);
+    const l3Ids = (allUsers ?? []).filter(u => l2Ids.includes(u.referred_by)).map(u => u.id);
 
-    // 4. Combine ALL levels (Level 1 + Level 2 + Level 3)
+    // 3. Combine ALL levels
     const allTeamIds = [...l1Ids, ...l2Ids, ...l3Ids];
-    
-    // 5. Set team size to the TOTAL of all 3 levels
     const teamSize = allTeamIds.length;
 
-    // 6. Calculate Team Investment from ALL levels
+    // 4. Calculate Team Investment from ALL levels
     let teamInvestment = 0;
     if (allTeamIds.length > 0) {
       const { data: modules } = await supabaseAdmin
@@ -59,7 +51,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 7. Check claimed tiers
+    // 5. Check claimed tiers
     const { data: existingRewards } = await supabaseAdmin
       .from('transactions')
       .select('meta')
