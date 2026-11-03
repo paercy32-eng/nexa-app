@@ -119,7 +119,6 @@ export default function AdminWithdrawalsPage() {
           </div>
         ) : (
           withdrawals.map((wd) => {
-            // 🚨 UPDATED: 13% Fee (87% Net)
             const fee = Math.round(wd.amount * 0.13);
             const net = Math.round(wd.amount * 0.87);
             const isPending = wd.status === 'pending';
@@ -127,26 +126,43 @@ export default function AdminWithdrawalsPage() {
             return (
               <div key={wd.id} className="bg-slate-800 border border-slate-700 rounded-2xl p-4">
                 
-                {/* User Info */}
+                {/* User Info & Payout Details */}
                 <div className="flex justify-between items-start mb-4 pb-3 border-b border-slate-700">
-                  <div>
-                    <h3 className="text-white font-bold text-sm">{wd.recipient_name}</h3>
-                    <p className="text-slate-400 text-xs mt-0.5">{wd.recipient_phone}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[9px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded uppercase">
+                  
+                  <div className="space-y-3 flex-1 pr-2">
+                    {/* Account User (The person requesting) */}
+                    <div>
+                      <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Account User</div>
+                      <h3 className="text-white font-bold text-sm">{wd.user?.name || 'Unknown'}</h3>
+                      <p className="text-slate-400 text-xs">{wd.user?.phone}</p>
+                    </div>
+
+                    {/* Payout Destination (The bound mobile money) */}
+                    <div>
+                      <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Payout To</div>
+                      <h3 className="text-emerald-400 font-bold text-sm">{wd.recipient_name}</h3>
+                      <p className="text-slate-400 text-xs">{wd.recipient_phone}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[9px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded uppercase border border-slate-600">
                         {wd.user?.country || 'N/A'}
                       </span>
-                      <span className={`text-[9px] px-2 py-0.5 rounded uppercase ${
-                        wd.gateway === 'pesajet' ? 'bg-emerald-900/50 text-emerald-400' : 'bg-blue-900/50 text-blue-400'
+                      <span className={`text-[9px] px-2 py-0.5 rounded uppercase border ${
+                        wd.gateway === 'pesajet' 
+                          ? 'bg-emerald-900/30 text-emerald-400 border-emerald-700/50' 
+                          : 'bg-blue-900/30 text-blue-400 border-blue-700/50'
                       }`}>
                         {wd.gateway}
                       </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-white font-bold text-sm">{wd.currency} {wd.amount.toLocaleString()}</div>
+
+                  {/* Amounts */}
+                  <div className="text-right shrink-0">
+                    <div className="text-white font-bold text-base">{wd.currency} {wd.amount.toLocaleString()}</div>
                     <div className="text-[10px] text-red-400 mt-1">Fee (13%): {wd.currency} {fee.toLocaleString()}</div>
-                    <div className="text-[10px] text-emerald-400 font-bold mt-0.5">Net: {wd.currency} {net.toLocaleString()}</div>
+                    <div className="text-[11px] text-emerald-400 font-bold mt-0.5 bg-emerald-400/10 px-1.5 py-0.5 rounded">Net: {wd.currency} {net.toLocaleString()}</div>
                   </div>
                 </div>
 
