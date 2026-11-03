@@ -12,7 +12,7 @@ function getEATDateString(date: Date) {
 
 // Helper: Check if user is eligible to spin
 async function checkEligibility(userId: string) {
-  // 1. Check if the user themselves has an Active Product
+  // 1. Check for Active Product (User must have bought an asset)
   const { count: activeProducts } = await supabaseAdmin
     .from('user_modules')
     .select('id', { count: 'exact', head: true })
@@ -23,7 +23,7 @@ async function checkEligibility(userId: string) {
     return { canSpin: false, reason: 'You need an active asset to spin.', invitesToday: 0 };
   }
 
-  // 2. Check if they already spun today
+  // 2. Check if already spun today
   const { data: user } = await supabaseAdmin
     .from('users')
     .select('last_spin_at, currency, last_spin_prize')
@@ -43,17 +43,18 @@ async function checkEligibility(userId: string) {
     }
   }
 
-  // 3. Count Level 1 referrals who BECAME ACTIVE today (purchased today)
-  // Calculate midnight EAT in UTC
+  // 3. Count Level 1 invites who BECAME ACTIVE today (purchased today)
   const nowEAT = new Date(nowUTC.getTime() + 3 * 60 * 60 * 1000);
+  
+  // 👈 FIX: Date.UTC returns a number, so we don't use .getTime()
   const startOfDayEAT = new Date(Date.UTC(
     nowEAT.getUTCFullYear(),
     nowEAT.getUTCMonth(),
     nowEAT.getUTCDate(),
     0, 0, 0, 0
-  ).getTime() - 3 * 60 * 60 * 1000);
+  ) - 3 * 60 * 60 * 1000); 
 
-  // Step A: Get all users who were referred by this user
+  // Step A: Get all users referred by this user
   const { data: referredUsers } = await supabaseAdmin
     .from('users')
     .select('id')
@@ -121,6 +122,7 @@ export async function POST(req: NextRequest) {
     // 🚨 PRIZE POOL & NO REPEAT LOGIC
     const allPrizes = ['product', 'cash_5000', 'cash_10000', 'cash_20000'];
     const availablePrizes = allPrizes.filter(p => p !== status.lastPrize);
+    
     const randomIndex = Math.floor(Math.random() * availablePrizes.length);
     const selectedPrize = availablePrizes[randomIndex];
 
@@ -214,4 +216,4 @@ export async function POST(req: NextRequest) {
     console.error('Spin error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+        }
