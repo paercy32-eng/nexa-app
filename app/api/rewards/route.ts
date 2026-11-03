@@ -22,27 +22,31 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Fetch Team
+    // 1. Fetch Level 1
     const { data: l1Data } = await supabaseAdmin.from('users').select('id').eq('referred_by', userId);
     const l1Ids = (l1Data ?? []).map(u => u.id);
 
-    let level2: any[] = [];
+    // 2. Fetch Level 2
+    let l2Ids: string[] = [];
     if (l1Ids.length > 0) {
       const { data: l2Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l1Ids);
-      level2 = l2Data ?? [];
+      l2Ids = (l2Data ?? []).map(u => u.id);
     }
-    const l2Ids = level2.map(u => u.id);
 
-    let level3: any[] = [];
+    // 3. Fetch Level 3
+    let l3Ids: string[] = [];
     if (l2Ids.length > 0) {
       const { data: l3Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l2Ids);
-      level3 = l3Data ?? [];
+      l3Ids = (l3Data ?? []).map(u => u.id);
     }
 
-    const allTeamIds = [...l1Ids, ...l2Ids, ...level3.map(u => u.id)];
+    // 4. Combine ALL levels into one array
+    const allTeamIds = [...l1Ids, ...l2Ids, ...l3Ids];
+    
+    // 5. Set team size to the total of all 3 levels
     const teamSize = allTeamIds.length;
 
-    // 2. Calculate Team Investment
+    // 6. Calculate Team Investment from ALL levels
     let teamInvestment = 0;
     if (allTeamIds.length > 0) {
       const { data: modules } = await supabaseAdmin
@@ -55,7 +59,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 3. Check claimed tiers
+    // 7. Check claimed tiers
     const { data: existingRewards } = await supabaseAdmin
       .from('transactions')
       .select('meta')
