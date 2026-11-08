@@ -65,7 +65,6 @@ export default function HomePage() {
     const price = Number(product.price);
     const currency = me?.currency || 'UGX';
 
-    // Client-side check first (server should still enforce this too)
     if (balance < price) {
       setFeedback({
         ok: false,
@@ -135,11 +134,11 @@ export default function HomePage() {
       <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
           <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-800 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.5)] overflow-hidden">
-            <span className="text-white font-black text-xl">N</span>
+            <span className="text-white font-black text-xl">C</span>
           </div>
           <div>
-            <h1 className="text-xl font-black text-white leading-tight tracking-widest uppercase drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">NEXA</h1>
-            <p className="text-[9px] text-violet-400 font-bold tracking-[0.2em] uppercase">Capital</p>
+            <h1 className="text-xl font-black text-white leading-tight tracking-widest uppercase drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">CADBURY</h1>
+            <p className="text-[9px] text-violet-400 font-bold tracking-[0.2em] uppercase">Wealth</p>
           </div>
         </div>
         <div className="text-right">
@@ -169,4 +168,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-}
+          }
