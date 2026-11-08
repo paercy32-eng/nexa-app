@@ -8,8 +8,8 @@ import Script from "next/script"; // 🚨 Imported Script
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Nexa Capital",
-  description: "Invest in high-yield industrial assets.",
+  title: "Cadbury",
+  description: "The Sweet Taste of Success.",
   manifest: "/manifest.json", // 🚨 Linked Manifest here
   appleWebApp: {
     capable: true,
