@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div className="bg-slate-800 border-b border-slate-700 p-5 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-white">Nexa Admin</h1>
+          <h1 className="text-xl font-black text-white">Cadbury Admin</h1>
           <p className="text-slate-400 text-xs mt-1">Platform Management</p>
         </div>
         <button 
@@ -180,14 +180,23 @@ export default function AdminDashboardPage() {
             <div className="text-slate-400 text-[10px]">Manage investments</div>
           </Link>
 
+          {/* Gift Codes - NEW */}
+          <Link href="/admin/giftcodes" className="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-slate-750 col-span-2">
+            <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-1">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+            </div>
+            <div className="text-white font-bold text-sm">Gift Codes</div>
+            <div className="text-slate-400 text-[10px]">Generate & manage reward codes</div>
+          </Link>
+
         </div>
 
         {/* Info Banner */}
         <div className="bg-emerald-900/30 border border-emerald-500/20 rounded-2xl p-4 text-center">
-          <p className="text-emerald-400 text-xs font-bold mb-1">Nexa Platform is Live</p>
+          <p className="text-emerald-400 text-xs font-bold mb-1">Cadbury Platform is Live</p>
           <p className="text-slate-400 text-[10px]">Remember to check the Withdrawals tab daily to approve user payouts.</p>
         </div>
       </div>
     </main>
   );
-}
+      }
