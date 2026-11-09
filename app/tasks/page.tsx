@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { convertFromUGX } from '@/lib/currency'; // 👈 Added this
+import { convertFromUGX } from '@/lib/currency';
 
 type Tier = {
   target: number;
@@ -15,7 +15,7 @@ type Tier = {
 export default function TasksPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'spin' | 'rewards'>('spin');
-  const [currency, setCurrency] = useState('UGX'); // 👈 Added this to track user currency
+  const [currency, setCurrency] = useState('UGX');
   
   // Rewards State
   const [teamInvestment, setTeamInvestment] = useState(0);
@@ -34,7 +34,7 @@ export default function TasksPage() {
 
   async function loadData() {
     try {
-      // 👈 Fetch user currency first
+      // Fetch user currency first
       const meRes = await fetch('/api/me?t=' + Date.now());
       if (meRes.status === 401) {
         router.replace('/login');
@@ -136,12 +136,12 @@ export default function TasksPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-violet-500/30">
+    <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-amber-500/30">
       
       {/* Header */}
       <div className="px-1 mb-6">
         <h1 className="text-3xl font-black text-white tracking-tight">Tasks & Rewards</h1>
-        <p className="text-violet-400 font-bold text-[10px] mt-1 tracking-[0.2em] uppercase">Earn daily prizes</p>
+        <p className="text-amber-500 font-bold text-[10px] mt-1 tracking-[0.2em] uppercase">Earn daily prizes</p>
       </div>
 
       {/* Tab Switcher */}
@@ -150,7 +150,7 @@ export default function TasksPage() {
           onClick={() => setActiveTab('spin')}
           className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 ${
             activeTab === 'spin'
-              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]'
+              ? 'bg-gradient-to-r from-amber-600 to-amber-800 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]'
               : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
@@ -161,7 +161,7 @@ export default function TasksPage() {
           onClick={() => setActiveTab('rewards')}
           className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 ${
             activeTab === 'rewards'
-              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]'
+              ? 'bg-gradient-to-r from-amber-600 to-amber-800 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]'
               : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
@@ -177,23 +177,23 @@ export default function TasksPage() {
         <div className="animate-fade-in flex flex-col items-center">
           {loadingSpin ? (
             <div className="flex justify-center py-20">
-              <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+              <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-6 w-full max-w-sm">
               
               {/* Spin Wheel Area */}
               <div className="relative w-64 h-64 mb-8 flex items-center justify-center">
-                <div className={`absolute inset-0 rounded-full border-4 border-dashed border-violet-500/30 ${spinning ? 'animate-spin-slow' : ''}`}></div>
+                <div className={`absolute inset-0 rounded-full border-4 border-dashed border-amber-500/30 ${spinning ? 'animate-spin-slow' : ''}`}></div>
                 <div className={`absolute inset-4 rounded-full border-2 border-cyan-500/20 ${spinning ? 'animate-reverse-spin' : ''}`}></div>
-                <div className="absolute inset-8 rounded-full bg-gradient-to-br from-violet-900/40 to-[#12121a] border border-white/10 shadow-[0_0_50px_rgba(139,92,246,0.2)]"></div>
+                <div className="absolute inset-8 rounded-full bg-gradient-to-br from-amber-900/40 to-[#12121a] border border-white/10 shadow-[0_0_50px_rgba(217,119,6,0.2)]"></div>
                 
                 <button
                   onClick={handleSpin}
                   disabled={!canSpin || spinning}
                   className={`relative z-10 w-32 h-32 rounded-full flex flex-col items-center justify-center transition-all duration-300 ${
                     canSpin 
-                      ? 'bg-gradient-to-br from-violet-500 to-indigo-600 shadow-[0_0_30px_rgba(139,92,246,0.6)] active:scale-95' 
+                      ? 'bg-gradient-to-br from-amber-500 to-amber-700 shadow-[0_0_30px_rgba(217,119,6,0.6)] active:scale-95' 
                       : 'bg-zinc-800 border-2 border-zinc-700 opacity-80 cursor-not-allowed'
                   }`}
                 >
@@ -250,7 +250,7 @@ export default function TasksPage() {
         <div className="animate-fade-in">
           {loadingRewards ? (
              <div className="flex justify-center py-20">
-               <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+               <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
              </div>
           ) : (
             <>
@@ -258,8 +258,7 @@ export default function TasksPage() {
               <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-2xl p-4 mb-6 shadow-xl flex items-center justify-between">
                 <div>
                   <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Investment</div>
-                  {/* 👈 Converted here */}
-                  <div className="text-lg font-black text-violet-400">{currency} {convertFromUGX(teamInvestment, currency).toLocaleString()}</div>
+                  <div className="text-lg font-black text-amber-500">{currency} {convertFromUGX(teamInvestment, currency).toLocaleString()}</div>
                 </div>
                 <div className="w-px h-8 bg-white/10 mx-2"></div>
                 <div className="text-right">
@@ -292,12 +291,10 @@ export default function TasksPage() {
                             )}
                           </div>
                           <div>
-                            {/* 👈 Converted here */}
                             <div className="font-bold text-white text-xs">{currency} {convertFromUGX(tier.target, currency).toLocaleString()}</div>
                           </div>
                         </div>
-                        {/* 👈 Converted here */}
-                        <div className={`font-black text-xs ${tier.isClaimed ? 'text-zinc-500 line-through' : 'text-violet-400'}`}>
+                        <div className={`font-black text-xs ${tier.isClaimed ? 'text-zinc-500 line-through' : 'text-amber-500'}`}>
                           +{convertFromUGX(tier.reward, currency).toLocaleString()}
                         </div>
                       </div>
@@ -308,7 +305,7 @@ export default function TasksPage() {
                           className={`h-full rounded-full transition-all duration-1000 ${
                             tier.isClaimed 
                               ? 'bg-emerald-500' 
-                              : 'bg-gradient-to-r from-violet-600 to-indigo-500'
+                              : 'bg-gradient-to-r from-amber-600 to-amber-500'
                           }`}
                           style={{ width: `${progress}%` }}
                         />
@@ -316,7 +313,6 @@ export default function TasksPage() {
 
                       {/* Footer: Progress text OR Claim Button */}
                       <div className="flex items-center justify-between mt-1">
-                        {/* 👈 Converted here */}
                         <div className="text-[9px] font-bold text-zinc-500">
                           {tier.isClaimed ? 'Completed' : `${currency} ${convertFromUGX(remaining, currency).toLocaleString()} to go`}
                         </div>
@@ -344,8 +340,8 @@ export default function TasksPage() {
       {/* Spin Result Modal */}
       {spinResult && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setSpinResult(null)}>
-          <div className="w-full max-w-sm bg-[#12121a] border border-violet-500/30 rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(139,92,246,0.3)] animate-scale-in" onClick={(e) => e.stopPropagation()}>
-            <div className="w-20 h-20 bg-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(139,92,246,0.5)]">
+          <div className="w-full max-w-sm bg-[#12121a] border border-amber-500/30 rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(217,119,6,0.3)] animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(217,119,6,0.5)]">
               <span className="text-4xl">🎉</span>
             </div>
             <h2 className="text-2xl font-black text-white mb-2">You Won!</h2>
@@ -353,9 +349,7 @@ export default function TasksPage() {
             {spinResult.type === 'product' ? (
               <div className="mb-6">
                 <div className="text-cyan-400 font-bold text-lg mb-1">{spinResult.productName}</div>
-                {/* 👈 Converted here */}
                 <div className="text-zinc-400 text-xs">Worth {currency} {convertFromUGX(20000, currency).toLocaleString()}</div>
-                {/* 👈 Converted here */}
                 <div className="text-emerald-400 font-bold text-sm mt-2">Earning {currency} {convertFromUGX(4000, currency).toLocaleString()} daily</div>
                 <div className="text-[10px] text-zinc-500 mt-2 bg-white/5 py-2 rounded-lg border border-white/10">Check your Portfolio to see it!</div>
               </div>
@@ -368,7 +362,7 @@ export default function TasksPage() {
               </div>
             )}
 
-            <button onClick={() => setSpinResult(null)} className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-95 transition">
+            <button onClick={() => setSpinResult(null)} className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-95 transition">
               Awesome!
             </button>
           </div>
@@ -377,4 +371,4 @@ export default function TasksPage() {
 
     </main>
   );
-                  }
+              }
