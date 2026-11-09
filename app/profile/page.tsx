@@ -36,6 +36,7 @@ export default function ProfilePage() {
 
   const [showRecharge, setShowRecharge] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [showGiftCode, setShowGiftCode] = useState(false); // 👈 New Gift Code State
 
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
@@ -138,7 +139,6 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
-          {/* COCOA GRADIENT LOGO */}
           <div className="w-10 h-10 bg-gradient-to-br from-amber-700 to-amber-900 rounded-xl shadow-[0_0_15px_rgba(217,119,6,0.5)] flex items-center justify-center">
             <span className="text-white font-black text-xl">C</span>
           </div>
@@ -260,7 +260,18 @@ export default function ProfilePage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto group-hover:text-white transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
 
-        {/* WHATSAPP CHANNEL LINK */}
+        {/* 👈 GIFT CODE BUTTON ADDED HERE */}
+        <button onClick={() => setShowGiftCode(true)} className="w-full bg-[#12121a] border border-white/5 rounded-2xl p-3 flex items-center gap-3 active:scale-[0.99] transition hover:bg-white/5 group">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+          </div>
+          <div className="text-left flex-1">
+             <div className="text-xs font-bold text-zinc-300 tracking-wide uppercase">Redeem Gift Code</div>
+             <div className="text-[9px] text-zinc-500">Win up to 700 UGX</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto group-hover:text-white transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+
         <a href="https://whatsapp.com/channel/0029Vb9HI2CKgsNtliNvbq0L" target="_blank" rel="noopener noreferrer" className="w-full bg-[#12121a] border border-white/5 rounded-2xl p-3 flex items-center gap-3 active:scale-[0.99] transition hover:bg-white/5 group">
           <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -268,7 +279,7 @@ export default function ProfilePage() {
             </svg>
           </div>
           <div className="text-left flex-1">
-             <div className="text-xs font-bold text-zinc-300 tracking-wide uppercase">RWANDA & ZAMBIA TEAM</div>
+             <div className="text-xs font-bold text-zinc-300 tracking-wide uppercase">CADBURY TEAM</div>
              <div className="text-[9px] text-zinc-500">Join WhatsApp Channel</div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto group-hover:text-white transition"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -316,6 +327,17 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Gift Code Modal */}
+      {showGiftCode && (
+        <GiftCodeModal 
+          onClose={() => setShowGiftCode(false)} 
+          onSuccess={async () => {
+            await loadMe();
+            setShowGiftCode(false);
+          }}
+        />
+      )}
+
       {/* Recharge Modal */}
       {showRecharge && (
         <RechargeModal
@@ -341,6 +363,81 @@ export default function ProfilePage() {
         />
       )}
     </main>
+  );
+}
+
+// ==========================================
+// GIFT CODE MODAL (NEW)
+// ==========================================
+function GiftCodeModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<{ok: boolean, text: string} | null>(null);
+
+  async function submit(e: any) {
+    e.preventDefault();
+    if (!code) return;
+    
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await fetch('/api/giftcodes/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.trim().toUpperCase() }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setMsg({ ok: false, text: data.error || 'Invalid code.' });
+      } else {
+        setMsg({ ok: true, text: `🎉 Success! You received ${data.currency} ${data.amount.toLocaleString()}` });
+        setTimeout(() => onSuccess(), 2500);
+      }
+    } catch {
+      setMsg({ ok: false, text: 'Network error.' });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-sm bg-[#12121a] border border-amber-500/30 rounded-3xl p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <div className="text-xl font-black text-white flex items-center gap-2">
+              <span className="text-amber-500">🎁</span> Gift Code
+            </div>
+            <div className="text-[10px] text-zinc-500 font-bold mt-1 uppercase tracking-wider">Win 50 - 700 UGX</div>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
+        </div>
+
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <input 
+              type="text" 
+              value={code} 
+              onChange={(e) => setCode(e.target.value.toUpperCase())} 
+              placeholder="Enter gift code" 
+              className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-center text-white font-bold tracking-widest text-lg focus:outline-none focus:border-amber-500 transition uppercase" 
+              required 
+            />
+          </div>
+
+          {msg && (
+            <div className={`text-xs p-3 rounded-lg border text-center font-bold ${msg.ok ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+              {msg.text}
+            </div>
+          )}
+
+          <button type="submit" disabled={loading || msg?.ok} className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(217,119,6,0.3)] disabled:opacity-50">
+            {loading ? 'Checking...' : 'Redeem Code'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -542,19 +639,18 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
 }
 
 // ==========================================
-// WITHDRAW MODAL 
+// WITHDRAW MODAL (UPDATED: MANUAL, 16% FEE, 6AM-4PM)
 // ==========================================
 function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
   const minWithdraw = convertFromUGX(4000, currency);
-  const isManual = currency === 'ZMW' || currency === 'RWF';
   
   const [amount, setAmount] = useState(String(minWithdraw));
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
   const numAmount = Number(amount) || 0;
-  const fee = Math.round(numAmount * 0.13);
-  const net = Math.round(numAmount * 0.87);
+  const fee = Math.round(numAmount * 0.16); // 👈 16% Fee
+  const net = Math.round(numAmount * 0.84); // 👈 84% Net
 
   async function submit(e: any) {
     e.preventDefault();
@@ -569,12 +665,8 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       const data = await res.json();
       if (!res.ok) setMsg(data.error);
       else {
-        if (isManual) {
-          setMsg('Withdrawal submitted! Admin will process it shortly.');
-          setTimeout(() => onSuccess(), 2000);
-        } else {
-          onSuccess();
-        }
+        setMsg('Withdrawal submitted! Admin will process it shortly.');
+        setTimeout(() => onSuccess(), 2000);
       }
     } catch { setMsg('Something went wrong.'); }
     finally { setLoading(false); }
@@ -593,11 +685,10 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
         
         <form onSubmit={submit} className="space-y-4">
           
-          {isManual && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-[10px] text-blue-300 text-center font-medium mb-2">
-              Manual Withdrawal. Admin will send funds to your bound account number.
-            </div>
-          )}
+          {/* 👈 ALWAYS MANUAL NOW */}
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-[10px] text-blue-300 text-center font-medium mb-2">
+            Manual Withdrawal. Admin will send funds to your bound account number.
+          </div>
 
           <div>
             <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Amount ({currency})</label>
@@ -608,7 +699,7 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
           {numAmount > 0 && (
              <div className="bg-black/40 border border-white/5 rounded-2xl p-3 text-xs space-y-2">
                 <div className="flex justify-between text-zinc-400"><span>Request Amount</span><span className="font-semibold text-white">{currency} {numAmount.toLocaleString()}</span></div>
-                <div className="flex justify-between text-zinc-400"><span>Fee (13%)</span><span className="font-semibold text-red-400">-{currency} {fee.toLocaleString()}</span></div>
+                <div className="flex justify-between text-zinc-400"><span>Fee (16%)</span><span className="font-semibold text-red-400">-{currency} {fee.toLocaleString()}</span></div>
                 <div className="flex justify-between border-t border-white/10 pt-2 mt-2"><span className="text-white font-bold">You Receive</span><span className="font-black text-emerald-400">{currency} {net.toLocaleString()}</span></div>
              </div>
           )}
@@ -622,4 +713,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-                                   }
+          }
