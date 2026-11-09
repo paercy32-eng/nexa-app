@@ -136,16 +136,16 @@ export default function ProfilePage() {
     <main className="min-h-screen px-4 py-6 animate-fade-in pb-24 bg-[#0a0a0f] text-zinc-100 selection:bg-violet-500/30">
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 px-1">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-800 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.5)] flex items-center justify-center">
-            <span className="text-white font-black text-xl">N</span>
-          </div>
-          <div>
-            <h1 className="text-xl font-black text-white leading-tight tracking-widest uppercase">NEXA</h1>
-            <p className="text-[9px] text-violet-400 font-bold tracking-[0.2em] uppercase">Profile</p>
-          </div>
-        </div>
+<div className="flex items-center justify-between mb-8 px-1">
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-800 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.5)] flex items-center justify-center">
+      <span className="text-white font-black text-xl">C</span>
+    </div>
+    <div>
+      <h1 className="text-xl font-black text-white leading-tight tracking-widest uppercase">CADBURY</h1>
+      <p className="text-[9px] text-violet-400 font-bold tracking-[0.2em] uppercase">Profile</p>
+    </div>
+  </div>
         <div className="text-right">
           <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Signed In</div>
           <div className="text-sm font-bold text-zinc-200">{me?.name}</div>
