@@ -23,7 +23,7 @@ export default function ProductCard({
   const totalReturn = Number(product.daily_return) * product.cycle_days;
 
   return (
-    <div className="bg-[#12121a] border border-white/5 rounded-3xl overflow-hidden flex shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition hover:border-violet-500/30 group">
+    <div className="bg-[#12121a] border border-white/5 rounded-3xl overflow-hidden flex shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition hover:border-amber-500/30 group">
       
       {/* Image Section */}
       <div className="w-[45%] h-36 relative bg-[#0a0a0f] flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -35,12 +35,12 @@ export default function ProductCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-4xl font-black text-violet-500/20">N</span>
+            <span className="text-4xl font-black text-amber-500/20">C</span>
           </div>
         )}
         
         {/* Glowing Cycle Badge */}
-        <div className="absolute top-2 left-2 bg-violet-600/80 backdrop-blur-md text-white text-[9px] font-bold px-2 py-1 rounded-md shadow-[0_0_10px_rgba(139,92,246,0.5)]">
+        <div className="absolute top-2 left-2 bg-amber-700/80 backdrop-blur-md text-white text-[9px] font-bold px-2 py-1 rounded-md shadow-[0_0_10px_rgba(217,119,6,0.5)]">
           {product.cycle_days} Days
         </div>
       </div>
@@ -55,7 +55,8 @@ export default function ProductCard({
           <div className="space-y-2">
             <div className="flex justify-between items-center text-[10px]">
               <span className="text-zinc-500 font-medium uppercase tracking-wider">Daily</span>
-              <span className="font-bold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
+              {/* 👈 GOLD DAILY YIELD */}
+              <span className="font-bold text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.5)]">
                 {currency} {Number(product.daily_return).toLocaleString()}
               </span>
             </div>
@@ -76,7 +77,7 @@ export default function ProductCard({
             type="button"
             onClick={() => onRent(product)}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[10px] font-bold py-2.5 rounded-xl active:scale-95 transition shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-1.5"
+            className="w-full bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700 text-white text-[10px] font-bold py-2.5 rounded-xl active:scale-95 transition shadow-[0_0_15px_rgba(217,119,6,0.3)] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-1.5"
           >
             {loading ? (
               <>
