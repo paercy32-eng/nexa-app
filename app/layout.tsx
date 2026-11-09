@@ -1,33 +1,14 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
-import WelcomeModal from "@/components/WelcomeModal";
-import Script from "next/script"; // 🚨 Imported Script
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cadbury",
+  title: "Cadbury | Premium Assets",
   description: "The Sweet Taste of Success.",
-  manifest: "/manifest.json", // 🚨 Linked Manifest here
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Nexa Capital",
-  },
-  // Once you generate your icons, uncomment and update these paths:
-  // icons: {
-  //   icon: "/icon-192x192.png",
-  //   apple: "/icon-192x192.png",
-  // },
-};
-
-export const viewport: Viewport = {
-  themeColor: "#0a0a0f",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -37,24 +18,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-[#0a0a0f] text-zinc-100 min-h-screen`}>
-        <div className="max-w-md mx-auto min-h-screen relative">
+      <body className={`${inter.className} bg-[#0a0a0f] text-zinc-100 antialiased min-h-screen`}>
+        {/* Main Page Content */}
+        <div className="max-w-md mx-auto relative min-h-screen">
           {children}
-          <BottomNav />
-          <WelcomeModal />
         </div>
-        
-        {/* 🚨 Register Service Worker */}
-        <Script id="register-sw" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.register('/sw.js')
-                .catch(function(err) {
-                  console.log('Service Worker registration failed: ', err);
-                });
-            }
-          `}
-        </Script>
+
+        {/* Bottom Navigation (Hides automatically on auth/admin pages) */}
+        <BottomNav />
+
+        {/* Toast Notifications */}
+        <Toaster 
+          position="top-center" 
+          toastOptions={{
+            style: {
+              background: '#12121a',
+              color: '#fff',
+              border: '1px solid rgba(255,255,255,0.1)',
+            },
+          }} 
+        />
       </body>
     </html>
   );
