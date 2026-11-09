@@ -38,17 +38,17 @@ export default function MyPortfolioPage() {
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
-        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 animate-fade-in bg-[#0a0a0f] text-zinc-100 pb-24 selection:bg-violet-500/30">
+    <main className="min-h-screen px-4 py-6 animate-fade-in bg-[#0a0a0f] text-zinc-100 pb-24 selection:bg-amber-500/30">
       
       {/* Header */}
       <div className="px-1 mb-8">
-        <h1 className="text-3xl font-black text-white tracking-tight">My Portfolio</h1>
+        <h1 className="text-3xl font-black text-white tracking-tight">Sweet Assets</h1>
         <p className="text-zinc-500 text-xs mt-1 font-medium uppercase tracking-wider">
           {rentals.length === 0
             ? 'Your active assets will appear here.'
@@ -67,9 +67,9 @@ export default function MyPortfolioPage() {
           </div>
           
           <div className="text-zinc-500 font-bold text-lg tracking-wide uppercase">
-            No active assets
+            No sweet assets yet
           </div>
-          <button onClick={() => router.push('/')} className="mt-6 text-xs text-violet-400 font-bold hover:text-violet-300 transition">
+          <button onClick={() => router.push('/')} className="mt-6 text-xs text-amber-400 font-bold hover:text-amber-300 transition">
             Browse Assets &rarr;
           </button>
         </div>
@@ -83,7 +83,7 @@ export default function MyPortfolioPage() {
               <div key={r.id} className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl group">
                 
                 {/* Subtle Glow Effect */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 blur-2xl rounded-full group-hover:bg-cyan-500/10 transition"></div>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 blur-2xl rounded-full group-hover:bg-amber-500/10 transition"></div>
 
                 <div className="relative z-10 flex items-start justify-between mb-5">
                   <div>
@@ -94,7 +94,7 @@ export default function MyPortfolioPage() {
                       Started {new Date(r.start_at).toLocaleDateString()}
                     </div>
                     {r.status === 'active' && (
-                      <div className="text-[10px] text-violet-400 mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <div className="text-[10px] text-amber-400 mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         Next Payout: 00:00 (Midnight)
                       </div>
@@ -121,7 +121,7 @@ export default function MyPortfolioPage() {
                   <Stat
                     label="Total Earned"
                     value={`${r.total_earned.toLocaleString()}`}
-                    highlight="violet"
+                    highlight="amber"
                   />
                   <Stat label="Days Left" value={r.days_remaining.toString()} />
                 </div>
@@ -134,7 +134,7 @@ export default function MyPortfolioPage() {
                   </div>
                   <div className="w-full h-2 rounded-full bg-black/50 overflow-hidden border border-white/5">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_10px_rgba(139,92,246,0.5)] transition-all"
+                      className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_10px_rgba(217,119,6,0.5)] transition-all"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -155,7 +155,7 @@ function Stat({
 }: {
   label: string;
   value: string;
-  highlight?: 'cyan' | 'violet';
+  highlight?: 'cyan' | 'amber';
 }) {
   return (
     <div className="rounded-2xl p-3 text-center bg-black/40 border border-white/5">
@@ -165,7 +165,7 @@ function Stat({
       <div
         className={`text-[11px] font-black ${
           highlight === 'cyan' ? 'text-cyan-400' : 
-          highlight === 'violet' ? 'text-violet-400' : 
+          highlight === 'amber' ? 'text-amber-400' : 
           'text-zinc-200'
         }`}
       >
@@ -173,4 +173,4 @@ function Stat({
       </div>
     </div>
   );
-}
+                }
