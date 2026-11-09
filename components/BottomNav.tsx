@@ -3,94 +3,95 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-type IconProps = { active: boolean };
-
-const ACTIVE = '#a78bfa'; // Light Violet
-const INACTIVE = '#52525b'; // Zinc Gray
-
-function HomeIcon({ active }: IconProps) {
-  const color = active ? ACTIVE : INACTIVE;
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V10.5z" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill={active ? '#2e1065' : 'none'} />
-    </svg>
-  );
-}
-
-function OrderIcon({ active }: IconProps) {
-  const color = active ? ACTIVE : INACTIVE;
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M21 8l-9-5-9 5v8l9 5 9-5V8z" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill={active ? '#2e1065' : 'none'} />
-      <path d="M3 8l9 5 9-5M12 21v-8" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-// 🚨 NEW: Tasks Icon
-function TasksIcon({ active }: IconProps) {
-  const color = active ? ACTIVE : INACTIVE;
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill={active ? '#2e1065' : 'none'} />
-      <rect x="9" y="3" width="6" height="4" rx="1" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill={active ? '#2e1065' : 'none'} />
-      <path d="M9 14l2 2 4-4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function TeamIcon({ active }: IconProps) {
-  const color = active ? ACTIVE : INACTIVE;
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="9" cy="8" r="3.2" stroke={color} strokeWidth="1.8" fill={active ? '#2e1065' : 'none'} />
-      <circle cx="17" cy="9" r="2.4" stroke={color} strokeWidth="1.8" fill={active ? '#2e1065' : 'none'} />
-      <path d="M2.5 19c.7-3.2 3.3-5 6.5-5s5.8 1.8 6.5 5M15 14.2c2.7.2 4.7 1.7 5.4 4.3" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ProfileIcon({ active }: IconProps) {
-  const color = active ? ACTIVE : INACTIVE;
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="8" r="3.5" stroke={color} strokeWidth="1.8" fill={active ? '#2e1065' : 'none'} />
-      <path d="M4.5 20c.9-3.6 3.9-5.5 7.5-5.5s6.6 1.9 7.5 5.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-const tabs = [
-  { href: '/', label: 'Home', Icon: HomeIcon },
-  { href: '/my-portfolio', label: 'Portfolio', Icon: OrderIcon },
-  { href: '/tasks', label: 'Tasks', Icon: TasksIcon }, // 🚨 New Tasks Tab
-  { href: '/team', label: 'Team', Icon: TeamIcon },
-  { href: '/profile', label: 'Profile', Icon: ProfileIcon },
-];
-
 export default function BottomNav() {
   const pathname = usePathname();
 
-  if (pathname.includes('/login') || pathname.includes('/register') || pathname.includes('/admin')) {
-    return null;
-  }
+  const navItems = [
+    { 
+      name: 'Home', 
+      path: '/', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      )
+    },
+    { 
+      name: 'Sweet Assets', 
+      path: '/portfolio', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+      )
+    },
+    { 
+      name: 'Tasks', 
+      path: '/tasks', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+          <path d="M9 14l2 2 4-4"></path>
+        </svg>
+      )
+    },
+    { 
+      name: 'Team', 
+      path: '/team', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      )
+    },
+    { 
+      name: 'Profile', 
+      path: '/profile', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      )
+    },
+  ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0a0f]/90 backdrop-blur-xl border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-      <div className="mx-auto max-w-md grid grid-cols-5"> {/* 🚨 Changed to 5 columns */}
-        {tabs.map((t) => {
-          const active = pathname === t.href;
-          const Icon = t.Icon;
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-lg border-t border-white/5 pb-safe">
+      <div className="flex items-center justify-around h-16 px-2">
+        {navItems.map((item) => {
+          const isActive = pathname === item.path;
+          
           return (
-            <Link key={t.href} href={t.href} className="flex flex-col items-center justify-center py-3 gap-1 transition">
-              <Icon active={active} />
-              <span className="text-[9px] font-bold tracking-wider uppercase" style={{ color: active ? ACTIVE : INACTIVE }}>
-                {t.label}
+            <Link 
+              key={item.name} 
+              href={item.path}
+              className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
+                isActive ? 'text-amber-500' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {/* Icon */}
+              <div className={`${isActive ? 'drop-shadow-[0_0_8px_rgba(217,119,6,0.5)]' : ''} transition-all`}>
+                {item.icon}
+              </div>
+              
+              {/* Text */}
+              <span className={`text-[9px] font-bold tracking-wider uppercase ${
+                isActive ? 'text-amber-500' : 'text-zinc-500'
+              }`}>
+                {item.name}
               </span>
             </Link>
           );
         })}
       </div>
-    </nav>
+    </div>
   );
 }
