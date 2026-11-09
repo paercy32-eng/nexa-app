@@ -9,9 +9,9 @@ import { convertFromUGX } from '@/lib/currency';
 
 // Base minimum in UGX (which we convert to local currency)
 const BASE_MIN_WITHDRAW_UGX = 4000;
-const WITHDRAW_OPEN_HOUR = 9;
-const WITHDRAW_CLOSE_HOUR = 17;
-const DAILY_LIMIT = 1;
+const WITHDRAW_OPEN_HOUR = 6;  // 👈 Updated to 6 AM
+const WITHDRAW_CLOSE_HOUR = 16; // 👈 Updated to 4 PM (16:00)
+const DAILY_LIMIT = 2;
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const userCurrency = user.currency || 'UGX';
     const localMinWithdraw = convertFromUGX(BASE_MIN_WITHDRAW_UGX, userCurrency);
 
-    // 1. 🚨 Check for Active Product
+    // 1. Check for Active Product
     if (!bypass) {
       const { count: activeProducts } = await supabaseAdmin
         .from('user_modules')
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Time window check
+    // 2. Time window check (6:00 AM to 4:00 PM EAT)
     if (!bypass) {
       const nowUTC = new Date();
       const eatHour = (nowUTC.getUTCHours() + 3) % 24;
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       const closeTotalMinutes = WITHDRAW_CLOSE_HOUR * 60;
 
       if (eatTotalMinutes < openTotalMinutes || eatTotalMinutes >= closeTotalMinutes) {
-        return NextResponse.json({ error: `Withdrawals are only available between 9:00 AM and 5:00 PM EAT.` }, { status: 400 });
+        return NextResponse.json({ error: `Withdrawals are only available between 6:00 AM and 4:00 PM EAT.` }, { status: 400 });
       }
     }
 
@@ -116,19 +116,14 @@ export async function POST(req: NextRequest) {
       .update({ balance: Number(user.balance) - numAmount })
       .eq('id', session.userId);
 
-    // 👈 Determine the gateway dynamically (No MarzPay)
-    let gateway = 'manual';
-    if (user.country === 'UG') gateway = 'pesajet';
-    else if (user.country === 'ZM') gateway = 'manual_zm';
-    else if (user.country === 'RW') gateway = 'manual_rw';
-
+    // 🚨 ALL WITHDRAWALS ARE NOW MANUAL
     const { data: withdrawal, error: insErr } = await supabaseAdmin
       .from('withdrawals')
       .insert({
         user_id: session.userId,
         amount: numAmount,
         currency: userCurrency,
-        gateway: gateway, // 👈 Uses the new dynamic gateway
+        gateway: 'manual', // 👈 Forced to manual for everyone
         status: 'pending',
         recipient_phone: payoutPhone,
         recipient_name: payoutName,
@@ -154,12 +149,12 @@ export async function POST(req: NextRequest) {
       success: true,
       withdrawalId: withdrawal.id,
       amount: numAmount,
-      netAmount: Math.round(numAmount * 0.87), // 🚨 13% fee (87% net)
-      fee: Math.round(numAmount * 0.13),
+      netAmount: Math.round(numAmount * 0.84), // 👈 16% fee (84% net)
+      fee: Math.round(numAmount * 0.16),
     });
 
   } catch (err) {
     console.error('Withdrawal create error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+  }
