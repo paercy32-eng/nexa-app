@@ -55,7 +55,7 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center px-4 overflow-hidden bg-[#0a0a0f]">
+    <main className="min-h-screen relative flex items-center justify-center px-4 overflow-hidden bg-[#0a0a0f] selection:bg-amber-500/30">
       
       {/* Dark Background Overlay */}
       <div className="absolute inset-0 z-0">
@@ -70,7 +70,8 @@ function LoginForm() {
       <div className="w-full max-w-sm relative z-20">
         <div className="mb-6 text-center">
           <div className="flex justify-center mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-700 to-indigo-800 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.4)]">
+            {/* 👈 COCOA LOGO */}
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center shadow-[0_0_20px_rgba(217,119,6,0.4)]">
               <span className="text-white font-black text-2xl">C</span>
             </div>
           </div>
@@ -82,13 +83,12 @@ function LoginForm() {
         <div className="bg-[#12121a]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-3">
             
-            {/* 👈 COUNTRY DROPDOWN (Now only has Uganda) */}
             <div>
               <label className="block text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Country</label>
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-violet-500 transition text-sm appearance-none cursor-pointer"
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-500 transition text-sm appearance-none cursor-pointer"
               >
                 {COUNTRIES.map((c) => (
                   <option key={c.code} value={c.code} className="text-black bg-white">
@@ -100,7 +100,7 @@ function LoginForm() {
 
             <div>
               <label className="block text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Phone Number</label>
-              <div className="flex items-center bg-black/50 border border-white/10 rounded-xl focus-within:border-violet-500 transition overflow-hidden">
+              <div className="flex items-center bg-black/50 border border-white/10 rounded-xl focus-within:border-amber-500 transition overflow-hidden">
                 <span className="pl-3 pr-2 text-zinc-300 text-sm font-bold select-none border-r border-white/10">
                   {selectedCountry.dial}
                 </span>
@@ -123,7 +123,7 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 transition pr-12 text-sm"
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500 transition pr-12 text-sm"
                   required
                 />
                 <button
@@ -145,7 +145,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3 rounded-xl active:scale-[0.98] transition text-sm mt-2 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+              className="w-full bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700 text-white font-bold py-3 rounded-xl active:scale-[0.98] transition text-sm mt-2 shadow-[0_0_15px_rgba(217,119,6,0.3)]"
             >
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
@@ -153,7 +153,7 @@ function LoginForm() {
 
           <div className="mt-4 text-center text-[10px] text-zinc-500 font-medium">
             Don't have an account?{' '}
-            <Link href="/register" className="text-violet-400 font-bold hover:text-violet-300 transition">
+            <Link href="/register" className="text-amber-400 font-bold hover:text-amber-300 transition">
               Create one
             </Link>
           </div>
@@ -167,10 +167,10 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
-        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
       </div>
     }>
       <LoginForm />
     </Suspense>
   );
-                }
+}
