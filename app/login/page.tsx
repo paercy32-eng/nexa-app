@@ -4,12 +4,9 @@ import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+// 👈 ONLY UGANDA LEFT
 const COUNTRIES = [
   { code: 'UG', name: 'Uganda', dial: '+256', flag: '🇺🇬', placeholder: '700123456' },
-  { code: 'KE', name: 'Kenya', dial: '+254', flag: '🇰🇪', placeholder: '712345678' },
-  { code: 'RW', name: 'Rwanda', dial: '+250', flag: '🇷🇼', placeholder: '781234567' },
-  { code: 'ZM', name: 'Zambia', dial: '+260', flag: '🇿🇲', placeholder: '971234567' },
-  { code: 'CM', name: 'Cameroon', dial: '+237', flag: '🇨🇲', placeholder: '671234567' },
 ];
 
 function LoginForm() {
@@ -65,7 +62,7 @@ function LoginForm() {
         <div className="absolute inset-0 bg-black/80 z-10 backdrop-blur-sm"></div>
         <img 
           src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80" 
-          alt="Nexa" 
+          alt="Cadbury" 
           className="w-full h-full object-cover opacity-40" 
         />
       </div>
@@ -74,17 +71,18 @@ function LoginForm() {
         <div className="mb-6 text-center">
           <div className="flex justify-center mb-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-800 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.4)]">
-              <span className="text-white font-black text-2xl">N</span>
+              <span className="text-white font-black text-2xl">C</span>
             </div>
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight">Welcome Back</h1>
-          <p className="text-zinc-400 text-xs mt-1">Sign in to your Nexa account.</p>
+          <p className="text-zinc-400 text-xs mt-1">Sign in to your Cadbury account.</p>
         </div>
 
         {/* Minimized Form Container */}
         <div className="bg-[#12121a]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-3">
             
+            {/* 👈 COUNTRY DROPDOWN (Now only has Uganda) */}
             <div>
               <label className="block text-[9px] text-zinc-500 font-bold mb-1 uppercase tracking-widest">Country</label>
               <select
@@ -175,4 +173,4 @@ export default function LoginPage() {
       <LoginForm />
     </Suspense>
   );
-                  }
+                }
