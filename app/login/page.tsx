@@ -70,7 +70,7 @@ function LoginForm() {
       <div className="w-full max-w-sm relative z-20">
         <div className="mb-6 text-center">
           <div className="flex justify-center mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-800 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.4)]">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-700 to-indigo-800 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.4)]">
               <span className="text-white font-black text-2xl">C</span>
             </div>
           </div>
