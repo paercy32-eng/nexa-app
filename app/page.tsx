@@ -57,9 +57,8 @@ export default function HomePage() {
     load();
   }, [router]);
 
-  // 🔥 One button: tap Invest → invest immediately
   async function handleRent(product: Product) {
-    if (pendingId) return; // ignore double taps
+    if (pendingId) return;
 
     const balance = me?.balance ?? 0;
     const price = Number(product.price);
@@ -97,7 +96,7 @@ export default function HomePage() {
       }
 
       setFeedback({ ok: true, msg: `🎉 You invested in ${product.name}!` });
-      await loadMe(); // refresh balance
+      await loadMe();
     } catch (err: any) {
       setFeedback({ ok: false, msg: err.message || 'Network error.' });
     } finally {
@@ -108,21 +107,20 @@ export default function HomePage() {
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
-        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-violet-500/30">
+    <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-amber-500/30">
 
-      {/* Toast */}
       {feedback && (
         <div
           onClick={() => setFeedback(null)}
           className={`fixed top-3 left-3 right-3 z-[999999] p-3 rounded-xl text-xs font-semibold text-center border backdrop-blur-md cursor-pointer ${
             feedback.ok
-              ? 'bg-violet-600/20 border-violet-500/40 text-violet-200'
+              ? 'bg-amber-600/20 border-amber-500/40 text-amber-200'
               : 'bg-red-600/20 border-red-500/40 text-red-200'
           }`}
         >
@@ -133,12 +131,14 @@ export default function HomePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-800 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.5)] overflow-hidden">
+          {/* 👈 COCOA GRADIENT LOGO */}
+          <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-amber-700 to-amber-900 rounded-xl shadow-[0_0_15px_rgba(217,119,6,0.5)] overflow-hidden">
             <span className="text-white font-black text-xl">C</span>
           </div>
           <div>
             <h1 className="text-xl font-black text-white leading-tight tracking-widest uppercase drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">CADBURY</h1>
-            <p className="text-[9px] text-violet-400 font-bold tracking-[0.2em] uppercase">Wealth</p>
+            {/* 👈 GOLD SUBTEXT */}
+            <p className="text-[9px] text-amber-500 font-bold tracking-[0.2em] uppercase">Wealth</p>
           </div>
         </div>
         <div className="text-right">
@@ -152,7 +152,8 @@ export default function HomePage() {
       {/* Products List */}
       <div className="flex items-center justify-between mb-4 px-1">
         <h2 className="text-sm font-bold text-zinc-200 tracking-wide uppercase">Available Assets</h2>
-        <div className="h-px bg-gradient-to-r from-violet-500/50 to-transparent flex-1 ml-4"></div>
+        {/* 👈 GOLD DIVIDER LINE */}
+        <div className="h-px bg-gradient-to-r from-amber-500/50 to-transparent flex-1 ml-4"></div>
       </div>
 
       <div className="space-y-4">
@@ -168,4 +169,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-          }
+      }
