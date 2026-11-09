@@ -6,6 +6,15 @@ import { usePathname } from 'next/navigation';
 export default function BottomNav() {
   const pathname = usePathname();
 
+  // 👈 HIDE BOTTOM NAV ON THESE PAGES
+  if (
+    pathname === '/login' || 
+    pathname === '/register' || 
+    pathname.startsWith('/admin')
+  ) {
+    return null;
+  }
+
   const navItems = [
     { 
       name: 'Home', 
@@ -65,7 +74,7 @@ export default function BottomNav() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-lg border-t border-white/5 pb-safe">
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className="flex items-center justify-around h-16 max-w-md mx-auto px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.path;
           
