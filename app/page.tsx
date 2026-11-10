@@ -27,18 +27,15 @@ export default function HomePage() {
 
   useEffect(() => {
     async function init() {
-      // Check auth
       const meRes = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
       
       if (meRes.status === 401) {
-        // Not logged in, show splash for 2 seconds then redirect to login
         setTimeout(() => {
           router.replace('/login');
         }, 2000);
         return;
       }
 
-      // Logged in, load data
       const meData = await meRes.json();
       setMe(meData.user);
       setIsAuthenticated(true);
@@ -80,24 +77,22 @@ export default function HomePage() {
     }
   }
 
-  // 🍫 SPLASH SCREEN (Shows while loading or redirecting to login)
+  // 🍫 SPLASH SCREEN
   if (loading || !isAuthenticated) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#3A1065]">
         <div className="flex flex-col items-center animate-fade-in">
-          {/* Logo Container */}
           <div className="w-32 h-32 bg-white rounded-3xl flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)] mb-6 overflow-hidden p-2">
+            {/* 👈 NEW LOCAL LOGO */}
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Cadbury_logo.svg/1200px-Cadbury_logo.svg.png" 
+              src="/file_0000000014148208a423cea0fa9d9804.png" 
               alt="Cadbury" 
               className="w-full object-contain"
-              referrerPolicy="no-referrer" // 👈 Fixes the broken image
             />
           </div>
           
           <h1 className="text-3xl font-black text-white tracking-widest mb-12">CADBURY WEALTH</h1>
           
-          {/* Loading Bar */}
           <div className="w-48 h-1.5 bg-white/20 rounded-full overflow-hidden mb-3">
             <div className="h-full bg-white animate-pulse w-full"></div>
           </div>
@@ -147,4 +142,4 @@ export default function HomePage() {
       <BottomNav />
     </main>
   );
-}
+      }
