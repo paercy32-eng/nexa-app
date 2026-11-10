@@ -6,12 +6,8 @@ import { usePathname } from 'next/navigation';
 export default function BottomNav() {
   const pathname = usePathname();
 
-  // 👈 HIDE BOTTOM NAV ON THESE PAGES
-  if (
-    pathname === '/login' || 
-    pathname === '/register' || 
-    pathname.startsWith('/admin')
-  ) {
+  // Hide nav on auth pages
+  if (pathname === '/login' || pathname === '/register' || pathname.startsWith('/admin')) {
     return null;
   }
 
@@ -28,7 +24,7 @@ export default function BottomNav() {
     },
     { 
       name: 'Sweet Assets', 
-      path: '/portfolio', 
+      path: '/sweet-assets', // 👈 Updated path here
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -86,12 +82,10 @@ export default function BottomNav() {
                 isActive ? 'text-amber-500' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              {/* Icon */}
               <div className={`${isActive ? 'drop-shadow-[0_0_8px_rgba(217,119,6,0.5)]' : ''} transition-all`}>
                 {item.icon}
               </div>
               
-              {/* Text */}
               <span className={`text-[9px] font-bold tracking-wider uppercase ${
                 isActive ? 'text-amber-500' : 'text-zinc-500'
               }`}>
