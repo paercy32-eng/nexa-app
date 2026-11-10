@@ -56,14 +56,13 @@ function LoginForm() {
   return (
     <main className="min-h-screen flex flex-col bg-[#120804] selection:bg-purple-500/30">
       
-      {/* 🍫 Hero Image Section (Matches Pringles style) */}
+      {/* 🍫 Hero Image Section */}
       <div className="relative w-full h-[35vh] min-h-[250px]">
         <img 
           src="https://images.unsplash.com/photo-1548907040-4baa42d10919?q=80&w=2000&auto=format&fit=crop" 
           alt="People enjoying chocolate" 
           className="w-full h-full object-cover" 
         />
-        {/* Gradient Fade at the bottom to blend into the dark background */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#120804] via-[#120804]/40 to-transparent"></div>
       </div>
 
@@ -161,4 +160,4 @@ export default function LoginPage() {
       <LoginForm />
     </Suspense>
   );
-      }
+}
