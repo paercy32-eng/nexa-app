@@ -21,14 +21,9 @@ type Product = {
   price: number;
 };
 
-// 🚨 Country Tabs Data
+// 👈 ONLY UGANDA LEFT
 const COUNTRIES = [
-  { code: 'ALL', label: 'All', flag: '🌍' },
   { code: 'UG', label: 'Uganda', flag: '🇺🇬' },
-  { code: 'KE', label: 'Kenya', flag: '🇰🇪' },
-  { code: 'RW', label: 'Rwanda', flag: '🇷🇼' },
-  { code: 'ZM', label: 'Zambia', flag: '🇿🇲' },
-  { code: 'CM', label: 'Cameroon', flag: '🇨🇲' },
 ];
 
 export default function AdminUsersPage() {
@@ -37,10 +32,8 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   
-  // 🚨 State for the active country tab
-  const [activeCountry, setActiveCountry] = useState('ALL');
-  
-  // 🚨 State for the search query
+  // 👈 Default to UG instead of ALL
+  const [activeCountry, setActiveCountry] = useState('UG');
   const [searchQuery, setSearchQuery] = useState('');
 
   async function loadUsers() {
@@ -64,13 +57,10 @@ export default function AdminUsersPage() {
     loadUsers();
   }, [router]);
 
-  // 🚨 Filter users based on country AND phone number search
+  // Filter users based on country AND phone number search
   const filteredUsers = users.filter(u => {
     const matchesCountry = activeCountry === 'ALL' || u.country === activeCountry;
-    
-    // Only search by phone number
     const matchesSearch = u.phone.includes(searchQuery);
-
     return matchesCountry && matchesSearch;
   });
 
@@ -107,7 +97,7 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {/* Country Scrollable Tabs */}
+        {/* Country Scrollable Tabs (Only Uganda now) */}
         <div className="flex overflow-x-auto gap-2 px-4 pb-3 scrollbar-hide">
           {COUNTRIES.map((c) => (
             <button
@@ -379,4 +369,4 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
       </div>
     </div>
   );
-}
+            }
