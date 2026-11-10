@@ -29,7 +29,7 @@ export default function TeamPage() {
     );
   }
 
-  const referralLink = `https://www.aurua.shop/register?ref=${user?.referral_code || ''}`;
+  const referralLink = `https://cadbury.aurua.shop/register?ref=${user?.referral_code || ''}`;
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
