@@ -10,7 +10,7 @@ type Me = {
   total_deposited?: number; total_withdrawn?: number; bound_phone?: string; bound_name?: string;
 };
 
-const CS_TELEGRAM_LINK = 'https://t.me/aaaaa56590'; 
+const CS_TELEGRAM_LINK = 'https://t.me/pixel56899'; 
 const WHATSAPP_CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbDiFDI3LdQdJfKehp1m'; // 👈 NEW LINK
 
 export default function ProfilePage() {
@@ -303,12 +303,11 @@ function GiftCodeModal({ onClose, onSuccess }: { onClose: () => void, onSuccess:
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-sm bg-[#1a0b1c] border border-purple-500/30 rounded-3xl p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start mb-6">
-          <div>
-            <div className="text-xl font-black text-white flex items-center gap-2"><span className="text-amber-400">🎁</span> Gift Code</div>
-            <div className="text-[10px] text-zinc-500 font-bold mt-1 uppercase tracking-wider">Win 50 - 700 UGX</div>
-          </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
-        </div>
+  <div className="text-xl font-black text-white flex items-center gap-2">
+    <span className="text-amber-400">🎁</span> Gift Code
+  </div>
+  <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
+</div>
         <form onSubmit={submit} className="space-y-4">
           <div>
             <input type="text" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Enter gift code" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-center text-white font-bold tracking-widest text-lg focus:outline-none focus:border-purple-500 transition uppercase" required />
