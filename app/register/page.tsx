@@ -79,7 +79,7 @@ function RegisterForm() {
   return (
     <main className="min-h-screen relative flex items-center justify-center px-4 py-8 overflow-hidden bg-[#120804] selection:bg-purple-500/30">
       
-      {/* 100% Reliable Background Image */}
+      {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-black/70 z-10 backdrop-blur-[3px]"></div>
         <img 
@@ -92,11 +92,12 @@ function RegisterForm() {
       <div className="w-full max-w-sm relative z-20 my-auto">
         <div className="mb-6 text-center">
           <div className="flex justify-center mb-4">
-            {/* 100% Reliable Cadbury Logo */}
+            {/* 👈 RELIABLE WIKIPEDIA LOGO */}
             <img 
-              src="https://logos-world.net/wp-content/uploads/2020/09/Cadbury-Logo.png" 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Cadbury_logo.svg/1200px-Cadbury_logo.svg.png" 
               alt="Cadbury Logo" 
               className="h-14 object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+              referrerPolicy="no-referrer"
             />
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-lg">Join Cadbury</h1>
@@ -221,4 +222,4 @@ export default function RegisterPage() {
       <RegisterForm />
     </Suspense>
   );
-}
+      }
