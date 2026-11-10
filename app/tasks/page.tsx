@@ -53,25 +53,25 @@ export default function TasksPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-amber-500/30">
+    <main className="min-h-screen px-4 py-6 bg-[#120804] text-zinc-100 animate-fade-in pb-24 selection:bg-purple-500/30">
       <div className="px-1 mb-6">
         <h1 className="text-3xl font-black text-white tracking-tight">Team Rewards</h1>
-        <p className="text-amber-500 font-bold text-[10px] mt-1 tracking-[0.2em] uppercase">Earn Milestone Prizes</p>
+        <p className="text-purple-400 font-bold text-[10px] mt-1 tracking-[0.2em] uppercase">Earn Milestone Prizes</p>
       </div>
 
       {loadingRewards ? (
-        <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" /></div>
       ) : (
         <>
-          <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-2xl p-4 mb-6 shadow-xl flex items-center justify-between">
+          <div className="relative overflow-hidden bg-[#1a0b1c] border border-purple-500/20 rounded-2xl p-4 mb-6 shadow-xl flex items-center justify-between">
             <div>
               <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Investment</div>
-              <div className="text-lg font-black text-amber-500">{currency} {convertFromUGX(teamInvestment, currency).toLocaleString()}</div>
+              <div className="text-lg font-black text-amber-400">{currency} {convertFromUGX(teamInvestment, currency).toLocaleString()}</div>
             </div>
-            <div className="w-px h-8 bg-white/10 mx-2"></div>
+            <div className="w-px h-8 bg-purple-500/20 mx-2"></div>
             <div className="text-right">
               <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Size</div>
-              <div className="text-lg font-black text-cyan-400">{teamSize}</div>
+              <div className="text-lg font-black text-purple-300">{teamSize}</div>
             </div>
           </div>
 
@@ -80,18 +80,18 @@ export default function TasksPage() {
               const progress = Math.min((teamInvestment / tier.target) * 100, 100);
               const remaining = Math.max(tier.target - teamInvestment, 0);
               return (
-                <div key={index} className="bg-[#12121a] border border-white/10 rounded-2xl p-3 shadow-md">
+                <div key={index} className="bg-[#1a0b1c] border border-purple-500/20 rounded-2xl p-3 shadow-md">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${tier.isClaimed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-black/50 text-zinc-500 border-white/5'}`}>
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${tier.isClaimed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-black/50 text-purple-400 border-purple-500/20'}`}>
                         {tier.isClaimed ? (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>) : (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>)}
                       </div>
                       <div><div className="font-bold text-white text-xs">{currency} {convertFromUGX(tier.target, currency).toLocaleString()}</div></div>
                     </div>
-                    <div className={`font-black text-xs ${tier.isClaimed ? 'text-zinc-500 line-through' : 'text-amber-500'}`}>+{convertFromUGX(tier.reward, currency).toLocaleString()}</div>
+                    <div className={`font-black text-xs ${tier.isClaimed ? 'text-zinc-500 line-through' : 'text-amber-400'}`}>+{convertFromUGX(tier.reward, currency).toLocaleString()}</div>
                   </div>
-                  <div className="w-full h-1.5 bg-black/50 border border-white/5 rounded-full overflow-hidden mb-2">
-                    <div className={`h-full rounded-full transition-all duration-1000 ${tier.isClaimed ? 'bg-emerald-500' : 'bg-gradient-to-r from-amber-600 to-amber-500'}`} style={{ width: `${progress}%` }} />
+                  <div className="w-full h-1.5 bg-black/50 border border-purple-500/10 rounded-full overflow-hidden mb-2">
+                    <div className={`h-full rounded-full transition-all duration-1000 ${tier.isClaimed ? 'bg-emerald-500' : 'bg-gradient-to-r from-purple-600 to-purple-400'}`} style={{ width: `${progress}%` }} />
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <div className="text-[9px] font-bold text-zinc-500">{tier.isClaimed ? 'Completed' : `${currency} ${convertFromUGX(remaining, currency).toLocaleString()} to go`}</div>
