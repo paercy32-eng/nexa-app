@@ -19,7 +19,6 @@ export default function BottomNav() {
   ];
 
   return (
-    {/* 👈 Dark Chocolate bg with Purple border */}
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#120804]/95 backdrop-blur-lg border-t border-purple-500/20 pb-safe">
       <div className="flex items-center justify-around h-16 max-w-md mx-auto px-2">
         {navItems.map((item) => {
@@ -30,7 +29,6 @@ export default function BottomNav() {
               key={item.name} 
               href={item.path}
               className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
-                /* 👈 Active is Gold, Inactive is Purple-ish Grey */
                 isActive ? 'text-amber-400' : 'text-zinc-500 hover:text-purple-300'
               }`}
             >
