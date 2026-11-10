@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 
@@ -20,25 +19,36 @@ export default function HomePage() {
 
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
-    if (res.status === 401) { setIsAuthenticated(false); setLoading(false); return; }
+    if (res.status === 401) { setIsAuthenticated(false); return; }
     const data = await res.json();
     setMe(data.user);
     setIsAuthenticated(true);
   }
 
   useEffect(() => {
-    async function load() {
+    async function init() {
+      // Check auth
       const meRes = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
-      if (meRes.status === 401) { setIsAuthenticated(false); setLoading(false); return; }
+      
+      if (meRes.status === 401) {
+        // Not logged in, show splash for 2 seconds then redirect to login
+        setTimeout(() => {
+          router.replace('/login');
+        }, 2000);
+        return;
+      }
+
+      // Logged in, load data
       const meData = await meRes.json();
       setMe(meData.user);
       setIsAuthenticated(true);
+
       const prodRes = await fetch('/api/products?t=' + Date.now(), { cache: 'no-store' });
       const prodData = await prodRes.json();
       setProducts(prodData.products ?? []);
       setLoading(false);
     }
-    load();
+    init();
   }, [router]);
 
   async function handleRent(product: Product) {
@@ -70,30 +80,28 @@ export default function HomePage() {
     }
   }
 
-  if (loading) {
+  // 🍫 SPLASH SCREEN (Shows while loading or redirecting to login)
+  if (loading || !isAuthenticated) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#120804]">
-        <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
-      </main>
-    );
-  }
-
-  // 🍫 LANDING PAGE
-  if (!isAuthenticated) {
-    return (
-      <main className="min-h-screen relative flex flex-col items-center justify-center px-6 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#120804]/80 via-[#120804]/60 to-[#120804]/95 z-10"></div>
-          <img src="https://images.unsplash.com/photo-1549007994-cb92caefcdbf?q=80&w=2000&auto=format&fit=crop" alt="Chocolate" className="w-full h-full object-cover" />
-        </div>
-        <div className="relative z-20 w-full max-w-sm text-center animate-fade-in mb-20">
-          <div className="flex justify-center mb-8">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Cadbury_logo.svg/1200px-Cadbury_logo.svg.png" alt="Cadbury Logo" className="h-20 object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]" />
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#3A1065]">
+        <div className="flex flex-col items-center animate-fade-in">
+          {/* Logo Container */}
+          <div className="w-32 h-32 bg-white rounded-3xl flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)] mb-6 overflow-hidden p-2">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Cadbury_logo.svg/1200px-Cadbury_logo.svg.png" 
+              alt="Cadbury" 
+              className="w-full object-contain"
+              referrerPolicy="no-referrer" // 👈 Fixes the broken image
+            />
           </div>
-          <h1 className="text-4xl font-black text-white leading-tight mb-3 drop-shadow-lg">The Sweet Taste of <span className="text-amber-400">Success</span></h1>
-          <p className="text-zinc-200 text-sm mb-12 font-medium leading-relaxed drop-shadow-md">Invest in premium Cadbury assets and earn daily returns. Unwrap your financial future today.</p>
-          {/* 👈 Purple Button */}
-          <Link href="/register" className="block w-full bg-gradient-to-r from-purple-700 to-purple-900 text-white font-black text-lg py-4 rounded-2xl shadow-[0_0_30px_rgba(147,51,234,0.4)] active:scale-95 transition">Join Cadbury</Link>
+          
+          <h1 className="text-3xl font-black text-white tracking-widest mb-12">CADBURY WEALTH</h1>
+          
+          {/* Loading Bar */}
+          <div className="w-48 h-1.5 bg-white/20 rounded-full overflow-hidden mb-3">
+            <div className="h-full bg-white animate-pulse w-full"></div>
+          </div>
+          <p className="text-white/70 text-xs font-bold tracking-widest uppercase">Loading...</p>
         </div>
       </main>
     );
@@ -102,7 +110,6 @@ export default function HomePage() {
   // 📱 DASHBOARD
   return (
     <main className="min-h-screen px-4 py-6 bg-[#120804] text-zinc-100 animate-fade-in pb-24 selection:bg-purple-500/30">
-      
       {feedback && (
         <div onClick={() => setFeedback(null)} className={`fixed top-3 left-3 right-3 z-[999999] p-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border backdrop-blur-md cursor-pointer shadow-lg ${feedback.ok ? 'bg-purple-600/20 border-purple-500/40 text-purple-200' : 'bg-red-600/20 border-red-500/40 text-red-200'}`}>
           <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-black text-white shrink-0 ${feedback.ok ? 'bg-purple-700' : 'bg-red-700'}`}>C</div>
@@ -112,8 +119,7 @@ export default function HomePage() {
 
       <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
-          {/* 👈 Cadbury Purple Logo */}
-          <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-purple-700 to-purple-900 rounded-xl shadow-[0_0_15px_rgba(147,51,234,0.5)] overflow-hidden border border-purple-500/30">
+          <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-purple-700 to-purple-900 rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.5)] overflow-hidden border border-purple-500/30">
             <span className="text-white font-black text-xl">C</span>
           </div>
           <div>
@@ -141,4 +147,4 @@ export default function HomePage() {
       <BottomNav />
     </main>
   );
-            }
+}
