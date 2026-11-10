@@ -77,135 +77,124 @@ function RegisterForm() {
   }
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center px-4 py-8 overflow-hidden bg-[#120804] selection:bg-purple-500/30">
+    <main className="min-h-screen flex flex-col bg-[#120804] selection:bg-purple-500/30">
       
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-black/70 z-10 backdrop-blur-[3px]"></div>
+      {/* 🍫 Hero Image Section */}
+      <div className="relative w-full h-[30vh] min-h-[200px]">
         <img 
-          src="https://images.unsplash.com/photo-1511381939415-e44015466834?q=80&w=2000&auto=format&fit=crop" 
-          alt="Chocolate Background" 
+          src="https://images.unsplash.com/photo-1548907040-4baa42d10919?q=80&w=2000&auto=format&fit=crop" 
+          alt="People enjoying chocolate" 
           className="w-full h-full object-cover" 
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#120804] via-[#120804]/40 to-transparent"></div>
       </div>
 
-      <div className="w-full max-w-sm relative z-20 my-auto">
-        <div className="mb-6 text-center">
-          <div className="flex justify-center mb-4">
-            {/* 👈 RELIABLE WIKIPEDIA LOGO */}
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Cadbury_logo.svg/1200px-Cadbury_logo.svg.png" 
-              alt="Cadbury Logo" 
-              className="h-14 object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-lg">Join Cadbury</h1>
-        </div>
+      {/* Form Section */}
+      <div className="flex-1 px-6 -mt-16 relative z-10 pb-10 w-full max-w-md mx-auto">
+        
+        <h1 className="text-3xl font-black text-white tracking-tight mb-8 drop-shadow-md">Create Account</h1>
 
-        {/* Premium Glass Form Container */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            
-            <div>
-              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">Country</label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          <div>
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl focus-within:border-purple-500 transition overflow-hidden backdrop-blur-md">
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-purple-500 transition text-sm appearance-none cursor-pointer"
+                className="bg-transparent pl-4 pr-2 py-4 text-purple-400 font-bold focus:outline-none text-sm appearance-none cursor-pointer border-r border-white/10"
               >
                 {COUNTRIES.map((c) => (
                   <option key={c.code} value={c.code} className="text-black bg-white">
-                    {c.flag} {c.name} ({c.currency})
+                    {c.dial}
                   </option>
                 ))}
               </select>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').replace(/^0+/, ''))}
+                placeholder="Enter Username Number"
+                className="w-full bg-transparent px-4 py-4 text-white placeholder-zinc-500 focus:outline-none text-sm font-medium"
+                required
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">Phone Number</label>
-              <div className="flex items-center bg-black/40 border border-white/10 rounded-xl focus-within:border-purple-500 transition overflow-hidden">
-                <span className="pl-3 pr-2 text-zinc-200 text-sm font-bold select-none border-r border-white/10">
-                  {selectedCountry.dial}
-                </span>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').replace(/^0+/, ''))}
-                  placeholder={selectedCountry.placeholder}
-                  className="w-full bg-transparent px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none text-sm"
-                  required
-                />
+          <div>
+            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl focus-within:border-purple-500 transition backdrop-blur-md">
+              <div className="pl-4 text-zinc-400">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                className="w-full bg-transparent px-4 py-4 text-white placeholder-zinc-500 focus:outline-none pr-12 text-sm font-medium"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 text-zinc-400 hover:text-white transition"
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                )}
+              </button>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 6 characters"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition pr-12 text-sm"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[9px] font-bold hover:text-white uppercase tracking-wider"
-                >
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
+          <div>
+            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl focus-within:border-purple-500 transition backdrop-blur-md">
+              <div className="pl-4 text-zinc-400">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">Confirm Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repeat password"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition text-sm"
+                placeholder="Re-enter password"
+                className="w-full bg-transparent px-4 py-4 text-white placeholder-zinc-500 focus:outline-none pr-12 text-sm font-medium"
                 required
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">
-                Referral Code <span className="text-zinc-500 lowercase font-normal">(optional)</span>
-              </label>
+          <div>
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl focus-within:border-purple-500 transition backdrop-blur-md">
               <input
                 type="text"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                placeholder="Enter referral code"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition text-sm"
+                placeholder="Invitation Code (Optional)"
+                className="w-full bg-transparent px-4 py-4 text-white placeholder-zinc-500 focus:outline-none text-sm font-medium"
               />
             </div>
-
-            {error && (
-              <div className="text-[10px] text-red-400 bg-red-500/20 rounded-lg px-3 py-2 border border-red-500/30 text-center font-medium">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-700 to-purple-900 hover:from-purple-600 hover:to-purple-800 text-white font-bold py-3.5 rounded-xl active:scale-[0.98] transition text-sm mt-4 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
-            >
-              {loading ? 'Creating account…' : 'Create Account'}
-            </button>
-          </form>
-
-          <div className="mt-5 text-center text-[10px] text-zinc-300 font-medium">
-            Already have an account?{' '}
-            <Link href="/login" className="text-amber-400 font-bold hover:text-amber-300 transition">
-              Sign in
-            </Link>
           </div>
+
+          {error && (
+            <div className="text-[11px] text-red-400 bg-red-500/10 rounded-xl px-4 py-3 border border-red-500/20 text-center font-medium backdrop-blur-sm">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-purple-700 to-purple-900 hover:from-purple-600 hover:to-purple-800 text-white font-bold py-4 rounded-full active:scale-[0.98] transition text-sm mt-4 shadow-[0_0_20px_rgba(168,85,247,0.4)] tracking-wider"
+          >
+            {loading ? 'REGISTERING…' : 'REGISTER'}
+          </button>
+        </form>
+
+        <div className="mt-8 text-center text-sm text-zinc-400 font-medium">
+          Already have an account?{' '}
+          <Link href="/login" className="text-purple-400 font-bold hover:text-purple-300 transition">
+            Log In
+          </Link>
         </div>
       </div>
     </main>
@@ -222,4 +211,4 @@ export default function RegisterPage() {
       <RegisterForm />
     </Suspense>
   );
-      }
+            }
