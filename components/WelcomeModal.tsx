@@ -109,7 +109,7 @@ export default function WelcomeModal() {
 
           {/* Join Channel Button */}
           <a 
-            href="https://whatsapp.com/channel/0029Vb9HI2CKgsNtliNvbq0L" 
+            href="https://whatsapp.com/channel/0029VbDiFDI3LdQdJfKehp1m"
             target="_blank" 
             rel="noopener noreferrer"
             className="w-full bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-[0_0_15px_rgba(217,119,6,0.3)]"
