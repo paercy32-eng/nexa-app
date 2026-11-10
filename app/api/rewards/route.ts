@@ -22,27 +22,32 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Fetch ALL users to build the 3 levels
-    const { data: allUsers, error: usersError } = await supabaseAdmin
-      .from('users')
-      .select('id, referred_by');
+    // 👈 1. Fetch Level 1 DIRECTLY from the database
+    const { data: l1Data } = await supabaseAdmin.from('users').select('id').eq('referred_by', userId);
+    const l1Ids = (l1Data ?? []).map(u => u.id);
 
-    if (usersError) throw usersError;
+    // 👈 2. Fetch Level 2
+    let l2Ids: string[] = [];
+    if (l1Ids.length > 0) {
+      const { data: l2Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l1Ids);
+      l2Ids = (l2Data ?? []).map(u => u.id);
+    }
 
-    // 2. Build the 3 levels
-    const l1Ids = (allUsers ?? []).filter(u => u.referred_by === userId).map(u => u.id);
-    const l2Ids = (allUsers ?? []).filter(u => l1Ids.includes(u.referred_by)).map(u => u.id);
-    const l3Ids = (allUsers ?? []).filter(u => l2Ids.includes(u.referred_by)).map(u => u.id);
+    // 👈 3. Fetch Level 3
+    let l3Ids: string[] = [];
+    if (l2Ids.length > 0) {
+      const { data: l3Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l2Ids);
+      l3Ids = (l3Data ?? []).map(u => u.id);
+    }
 
     const allTeamIds = [...l1Ids, ...l2Ids, ...l3Ids];
     const teamSize = allTeamIds.length;
     
-    // 👈 NEW: Calculate individual level counts
     const l1Count = l1Ids.length;
     const l2Count = l2Ids.length;
     const l3Count = l3Ids.length;
 
-    // 3. Calculate Team Investment
+    // 4. Calculate Team Investment
     let teamInvestment = 0;
     if (allTeamIds.length > 0) {
       const { data: modules } = await supabaseAdmin
@@ -55,7 +60,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 4. Check claimed tiers
+    // 5. Check claimed tiers
     const { data: existingRewards } = await supabaseAdmin
       .from('transactions')
       .select('meta')
@@ -72,7 +77,7 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json(
-      { teamInvestment, teamSize, l1Count, l2Count, l3Count, tiers }, // 👈 Added counts here
+      { teamInvestment, teamSize, l1Count, l2Count, l3Count, tiers },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
     );
   } catch (err) {
