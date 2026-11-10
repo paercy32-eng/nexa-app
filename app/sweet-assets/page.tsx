@@ -28,14 +28,14 @@ export default function SweetAssetsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
-        <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+      <main className="min-h-screen flex items-center justify-center bg-[#120804]">
+        <div className="w-8 h-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 animate-fade-in bg-[#0a0a0f] text-zinc-100 pb-24 selection:bg-amber-500/30">
+    <main className="min-h-screen px-4 py-6 animate-fade-in bg-[#120804] text-zinc-100 pb-24 selection:bg-purple-500/30">
       <div className="px-1 mb-8">
         <h1 className="text-3xl font-black text-white tracking-tight">Sweet Assets</h1>
         <p className="text-zinc-500 text-xs mt-1 font-medium uppercase tracking-wider">
@@ -45,7 +45,7 @@ export default function SweetAssetsPage() {
 
       {rentals.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 opacity-70">
-          <div className="mb-6 text-zinc-600">
+          <div className="mb-6 text-purple-500/50">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 8L12 3L3 8V16L12 21L21 16V8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><path d="M3 8L12 13L21 8" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><path d="M12 21V13" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>
           </div>
           <div className="text-zinc-500 font-bold text-lg tracking-wide uppercase">No sweet assets yet</div>
@@ -56,8 +56,8 @@ export default function SweetAssetsPage() {
           {rentals.map((r) => {
             const progress = ((r.duration_days - r.days_remaining) / r.duration_days) * 100;
             return (
-              <div key={r.id} className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl group">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 blur-2xl rounded-full group-hover:bg-amber-500/10 transition"></div>
+              <div key={r.id} className="relative overflow-hidden bg-[#1a0b1c] border border-purple-500/20 rounded-3xl p-6 shadow-xl group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 blur-2xl rounded-full group-hover:bg-purple-500/20 transition"></div>
                 <div className="relative z-10 flex items-start justify-between mb-5">
                   <div>
                     <div className="font-black text-white text-lg tracking-wide">{r.product_name}</div>
@@ -71,14 +71,14 @@ export default function SweetAssetsPage() {
                   <div className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border ${r.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>{r.status}</div>
                 </div>
                 <div className="relative z-10 grid grid-cols-3 gap-3 mb-5">
-                  <Stat label="Daily Yield" value={`${r.daily_profit.toLocaleString()}`} highlight="cyan" />
-                  <Stat label="Total Earned" value={`${r.total_earned.toLocaleString()}`} highlight="amber" />
+                  <Stat label="Daily Yield" value={`${r.daily_profit.toLocaleString()}`} highlight="gold" />
+                  <Stat label="Total Earned" value={`${r.total_earned.toLocaleString()}`} highlight="gold" />
                   <Stat label="Days Left" value={r.days_remaining.toString()} />
                 </div>
                 <div className="relative z-10">
                   <div className="flex justify-between text-[10px] text-zinc-400 font-bold mb-2 tracking-wider uppercase"><span>Asset Progress</span><span>{Math.round(progress)}%</span></div>
                   <div className="w-full h-2 rounded-full bg-black/50 overflow-hidden border border-white/5">
-                    <div className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_10px_rgba(217,119,6,0.5)] transition-all" style={{ width: `${progress}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-purple-600 to-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)] transition-all" style={{ width: `${progress}%` }} />
                   </div>
                 </div>
               </div>
@@ -91,11 +91,11 @@ export default function SweetAssetsPage() {
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: 'cyan' | 'amber'; }) {
+function Stat({ label, value, highlight }: { label: string; value: string; highlight?: 'gold'; }) {
   return (
     <div className="rounded-2xl p-3 text-center bg-black/40 border border-white/5">
       <div className="text-[9px] text-zinc-500 font-bold mb-1.5 uppercase tracking-wider">{label}</div>
-      <div className={`text-[11px] font-black ${highlight === 'cyan' ? 'text-cyan-400' : highlight === 'amber' ? 'text-amber-400' : 'text-zinc-200'}`}>{value}</div>
+      <div className={`text-[11px] font-black ${highlight === 'gold' ? 'text-amber-400' : 'text-zinc-200'}`}>{value}</div>
     </div>
   );
 }
