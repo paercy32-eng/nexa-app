@@ -14,27 +14,16 @@ type Tier = {
 
 export default function TasksPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'spin' | 'rewards'>('spin');
   const [currency, setCurrency] = useState('UGX');
   
-  // Rewards State
   const [teamInvestment, setTeamInvestment] = useState(0);
   const [teamSize, setTeamSize] = useState(0);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [loadingRewards, setLoadingRewards] = useState(true);
   const [claimingId, setClaimingId] = useState<number | null>(null);
 
-  // Spin State
-  const [canSpin, setCanSpin] = useState(false);
-  const [spinReason, setSpinReason] = useState('');
-  const [invitesToday, setInvitesToday] = useState(0);
-  const [loadingSpin, setLoadingSpin] = useState(true);
-  const [spinning, setSpinning] = useState(false);
-  const [spinResult, setSpinResult] = useState<any>(null);
-
   async function loadData() {
     try {
-      // Fetch user currency first
       const meRes = await fetch('/api/me?t=' + Date.now());
       if (meRes.status === 401) {
         router.replace('/login');
@@ -45,7 +34,6 @@ export default function TasksPage() {
         setCurrency(meData.user.currency || 'UGX');
       }
 
-      // Load Rewards
       const rewardsRes = await fetch('/api/rewards?t=' + Date.now());
       if (rewardsRes.status === 401) {
         router.replace('/login');
@@ -58,55 +46,15 @@ export default function TasksPage() {
         setTiers(rewardsData.tiers || []);
       }
       setLoadingRewards(false);
-
-      // Load Spin Status
-      const spinRes = await fetch('/api/spin?t=' + Date.now());
-      if (spinRes.ok) {
-        const spinData = await spinRes.json();
-        setCanSpin(spinData.canSpin);
-        setSpinReason(spinData.reason || '');
-        setInvitesToday(spinData.invitesToday || 0);
-      }
-      setLoadingSpin(false);
     } catch (err) {
       console.error(err);
       setLoadingRewards(false);
-      setLoadingSpin(false);
     }
   }
 
   useEffect(() => {
     loadData();
   }, [router]);
-
-  async function handleSpin() {
-    if (!canSpin || spinning) return;
-
-    setSpinning(true);
-    setSpinResult(null);
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const res = await fetch('/api/spin', { method: 'POST' });
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || 'Spin failed');
-        setCanSpin(false);
-        setSpinReason(data.error);
-      } else {
-        setSpinResult(data.prize);
-        setCanSpin(false);
-        setSpinReason('You have already spun today. Come back tomorrow!');
-        toast.success('Congratulations!');
-      }
-    } catch {
-      toast.error('Network error');
-    } finally {
-      setSpinning(false);
-    }
-  }
 
   async function handleClaim(target: number) {
     setClaimingId(target);
@@ -140,235 +88,96 @@ export default function TasksPage() {
       
       {/* Header */}
       <div className="px-1 mb-6">
-        <h1 className="text-3xl font-black text-white tracking-tight">Tasks & Rewards</h1>
-        <p className="text-amber-500 font-bold text-[10px] mt-1 tracking-[0.2em] uppercase">Earn daily prizes</p>
+        <h1 className="text-3xl font-black text-white tracking-tight">Team Rewards</h1>
+        <p className="text-amber-500 font-bold text-[10px] mt-1 tracking-[0.2em] uppercase">Earn Milestone Prizes</p>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="flex bg-[#12121a] p-1.5 rounded-2xl border border-white/5 mb-6">
-        <button
-          onClick={() => setActiveTab('spin')}
-          className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 ${
-            activeTab === 'spin'
-              ? 'bg-gradient-to-r from-amber-600 to-amber-800 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]'
-              : 'text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-          Spin to Win
-        </button>
-        <button
-          onClick={() => setActiveTab('rewards')}
-          className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 ${
-            activeTab === 'rewards'
-              ? 'bg-gradient-to-r from-amber-600 to-amber-800 text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]'
-              : 'text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
-          Team Rewards
-        </button>
-      </div>
-
-      {/* ========================================= */}
-      {/* SPIN TAB */}
-      {/* ========================================= */}
-      {activeTab === 'spin' && (
-        <div className="animate-fade-in flex flex-col items-center">
-          {loadingSpin ? (
-            <div className="flex justify-center py-20">
-              <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6 w-full max-w-sm">
-              
-              {/* Spin Wheel Area */}
-              <div className="relative w-64 h-64 mb-8 flex items-center justify-center">
-                <div className={`absolute inset-0 rounded-full border-4 border-dashed border-amber-500/30 ${spinning ? 'animate-spin-slow' : ''}`}></div>
-                <div className={`absolute inset-4 rounded-full border-2 border-cyan-500/20 ${spinning ? 'animate-reverse-spin' : ''}`}></div>
-                <div className="absolute inset-8 rounded-full bg-gradient-to-br from-amber-900/40 to-[#12121a] border border-white/10 shadow-[0_0_50px_rgba(217,119,6,0.2)]"></div>
-                
-                <button
-                  onClick={handleSpin}
-                  disabled={!canSpin || spinning}
-                  className={`relative z-10 w-32 h-32 rounded-full flex flex-col items-center justify-center transition-all duration-300 ${
-                    canSpin 
-                      ? 'bg-gradient-to-br from-amber-500 to-amber-700 shadow-[0_0_30px_rgba(217,119,6,0.6)] active:scale-95' 
-                      : 'bg-zinc-800 border-2 border-zinc-700 opacity-80 cursor-not-allowed'
-                  }`}
-                >
-                  {spinning ? (
-                    <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={canSpin ? 'text-white mb-1' : 'text-zinc-500 mb-1'}>
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                      </svg>
-                      <span className={`text-sm font-black uppercase tracking-widest ${canSpin ? 'text-white' : 'text-zinc-500'}`}>
-                        {canSpin ? 'SPIN' : 'LOCKED'}
-                      </span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* 1,2,3 Indicators */}
-              <div className="flex flex-col items-center gap-3 w-full bg-[#12121a] border border-white/5 rounded-3xl p-6">
-                <div className="flex items-center justify-center gap-4">
-                  {[1, 2, 3].map((num) => (
-                    <div 
-                      key={num} 
-                      className={`w-12 h-12 rounded-full flex items-center justify-center border-2 font-black text-lg transition-all duration-300 ${
-                        invitesToday >= num 
-                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
-                          : 'bg-zinc-900 border-zinc-700 text-zinc-600'
-                      }`}
-                    >
-                      {num}
-                    </div>
-                  ))}
-                </div>
-
-                {!canSpin && (
-                   <div className="text-center mt-2 px-2">
-                     <p className="text-[10px] text-zinc-500 font-medium leading-relaxed">
-                       {spinReason}
-                     </p>
-                   </div>
-                )}
-              </div>
-
-            </div>
-          )}
+      {loadingRewards ? (
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
         </div>
-      )}
+      ) : (
+        <>
+          {/* Summary Card */}
+          <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-2xl p-4 mb-6 shadow-xl flex items-center justify-between">
+            <div>
+              <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Investment</div>
+              <div className="text-lg font-black text-amber-500">{currency} {convertFromUGX(teamInvestment, currency).toLocaleString()}</div>
+            </div>
+            <div className="w-px h-8 bg-white/10 mx-2"></div>
+            <div className="text-right">
+              <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Size</div>
+              <div className="text-lg font-black text-cyan-400">{teamSize}</div>
+            </div>
+          </div>
 
-      {/* ========================================= */}
-      {/* REWARDS TAB */}
-      {/* ========================================= */}
-      {activeTab === 'rewards' && (
-        <div className="animate-fade-in">
-          {loadingRewards ? (
-             <div className="flex justify-center py-20">
-               <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
-             </div>
-          ) : (
-            <>
-              {/* Compact Summary Card */}
-              <div className="relative overflow-hidden bg-[#12121a] border border-white/10 rounded-2xl p-4 mb-6 shadow-xl flex items-center justify-between">
-                <div>
-                  <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Investment</div>
-                  <div className="text-lg font-black text-amber-500">{currency} {convertFromUGX(teamInvestment, currency).toLocaleString()}</div>
-                </div>
-                <div className="w-px h-8 bg-white/10 mx-2"></div>
-                <div className="text-right">
-                  <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Size</div>
-                  <div className="text-lg font-black text-cyan-400">{teamSize}</div>
-                </div>
-              </div>
+          {/* Tiers List */}
+          <div className="space-y-3">
+            {tiers.map((tier, index) => {
+              const progress = Math.min((teamInvestment / tier.target) * 100, 100);
+              const remaining = Math.max(tier.target - teamInvestment, 0);
 
-              {/* Tiers List */}
-              <div className="space-y-3">
-                {tiers.map((tier, index) => {
-                  const progress = Math.min((teamInvestment / tier.target) * 100, 100);
-                  const remaining = Math.max(tier.target - teamInvestment, 0);
-
-                  return (
-                    <div key={index} className="bg-[#12121a] border border-white/10 rounded-2xl p-3 shadow-md">
-                      
-                      {/* Header: Icon, Target, Reward */}
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                            tier.isClaimed 
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                              : 'bg-black/50 text-zinc-500 border-white/5'
-                          }`}>
-                            {tier.isClaimed ? (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            ) : (
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-bold text-white text-xs">{currency} {convertFromUGX(tier.target, currency).toLocaleString()}</div>
-                          </div>
-                        </div>
-                        <div className={`font-black text-xs ${tier.isClaimed ? 'text-zinc-500 line-through' : 'text-amber-500'}`}>
-                          +{convertFromUGX(tier.reward, currency).toLocaleString()}
-                        </div>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="w-full h-1.5 bg-black/50 border border-white/5 rounded-full overflow-hidden mb-2">
-                        <div
-                          className={`h-full rounded-full transition-all duration-1000 ${
-                            tier.isClaimed 
-                              ? 'bg-emerald-500' 
-                              : 'bg-gradient-to-r from-amber-600 to-amber-500'
-                          }`}
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-
-                      {/* Footer: Progress text OR Claim Button */}
-                      <div className="flex items-center justify-between mt-1">
-                        <div className="text-[9px] font-bold text-zinc-500">
-                          {tier.isClaimed ? 'Completed' : `${currency} ${convertFromUGX(remaining, currency).toLocaleString()} to go`}
-                        </div>
-                        
-                        {tier.isTargetHit && !tier.isClaimed && (
-                          <button
-                            onClick={() => handleClaim(tier.target)}
-                            disabled={claimingId === tier.target}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase px-4 py-1.5 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.4)] animate-pulse disabled:opacity-50"
-                          >
-                            {claimingId === tier.target ? '...' : 'Claim'}
-                          </button>
+              return (
+                <div key={index} className="bg-[#12121a] border border-white/10 rounded-2xl p-3 shadow-md">
+                  
+                  {/* Header: Icon, Target, Reward */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                        tier.isClaimed 
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                          : 'bg-black/50 text-zinc-500 border-white/5'
+                      }`}>
+                        {tier.isClaimed ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        ) : (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         )}
                       </div>
-
+                      <div>
+                        <div className="font-bold text-white text-xs">{currency} {convertFromUGX(tier.target, currency).toLocaleString()}</div>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-      )}
+                    <div className={`font-black text-xs ${tier.isClaimed ? 'text-zinc-500 line-through' : 'text-amber-500'}`}>
+                      +{convertFromUGX(tier.reward, currency).toLocaleString()}
+                    </div>
+                  </div>
 
-      {/* Spin Result Modal */}
-      {spinResult && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setSpinResult(null)}>
-          <div className="w-full max-w-sm bg-[#12121a] border border-amber-500/30 rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(217,119,6,0.3)] animate-scale-in" onClick={(e) => e.stopPropagation()}>
-            <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(217,119,6,0.5)]">
-              <span className="text-4xl">🎉</span>
-            </div>
-            <h2 className="text-2xl font-black text-white mb-2">You Won!</h2>
-            
-            {spinResult.type === 'product' ? (
-              <div className="mb-6">
-                <div className="text-cyan-400 font-bold text-lg mb-1">{spinResult.productName}</div>
-                <div className="text-zinc-400 text-xs">Worth {currency} {convertFromUGX(20000, currency).toLocaleString()}</div>
-                <div className="text-emerald-400 font-bold text-sm mt-2">Earning {currency} {convertFromUGX(4000, currency).toLocaleString()} daily</div>
-                <div className="text-[10px] text-zinc-500 mt-2 bg-white/5 py-2 rounded-lg border border-white/10">Check your Portfolio to see it!</div>
-              </div>
-            ) : (
-              <div className="mb-6">
-                <div className="text-emerald-400 font-black text-4xl mb-2">
-                  {spinResult.currency} {Number(spinResult.amount).toLocaleString()}
+                  {/* Progress Bar */}
+                  <div className="w-full h-1.5 bg-black/50 border border-white/5 rounded-full overflow-hidden mb-2">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        tier.isClaimed 
+                          ? 'bg-emerald-500' 
+                          : 'bg-gradient-to-r from-amber-600 to-amber-500'
+                      }`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+
+                  {/* Footer: Progress text OR Claim Button */}
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="text-[9px] font-bold text-zinc-500">
+                      {tier.isClaimed ? 'Completed' : `${currency} ${convertFromUGX(remaining, currency).toLocaleString()} to go`}
+                    </div>
+                    
+                    {tier.isTargetHit && !tier.isClaimed && (
+                      <button
+                        onClick={() => handleClaim(tier.target)}
+                        disabled={claimingId === tier.target}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase px-4 py-1.5 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.4)] animate-pulse disabled:opacity-50"
+                      >
+                        {claimingId === tier.target ? '...' : 'Claim'}
+                      </button>
+                    )}
+                  </div>
+
                 </div>
-                <div className="text-zinc-400 text-xs">Has been added to your balance!</div>
-              </div>
-            )}
-
-            <button onClick={() => setSpinResult(null)} className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-95 transition">
-              Awesome!
-            </button>
+              );
+            })}
           </div>
-        </div>
+        </>
       )}
-
     </main>
   );
-              }
+}
