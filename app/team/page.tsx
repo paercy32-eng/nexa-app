@@ -8,15 +8,39 @@ export default function TeamPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [teamStats, setTeamStats] = useState({
+    teamSize: 0,
+    l1Count: 0,
+    l2Count: 0,
+    l3Count: 0,
+  });
   const [activeTab, setActiveTab] = useState(1);
 
   useEffect(() => {
     async function load() {
-      const res = await fetch('/api/me?t=' + Date.now());
-      if (res.status === 401) { router.replace('/login'); return; }
-      const data = await res.json();
-      setUser(data.user);
-      setLoading(false);
+      try {
+        // 1. Fetch User Info (for referral code and balance)
+        const meRes = await fetch('/api/me?t=' + Date.now());
+        if (meRes.status === 401) { router.replace('/login'); return; }
+        const meData = await meRes.json();
+        setUser(meData.user);
+
+        // 2. Fetch Team Stats (for accurate level counts)
+        const rewardsRes = await fetch('/api/rewards?t=' + Date.now());
+        if (rewardsRes.ok) {
+          const rewardsData = await rewardsRes.json();
+          setTeamStats({
+            teamSize: rewardsData.teamSize || 0,
+            l1Count: rewardsData.l1Count || 0,
+            l2Count: rewardsData.l2Count || 0,
+            l3Count: rewardsData.l3Count || 0,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [router]);
@@ -50,8 +74,8 @@ export default function TeamPage() {
         </div>
         <div className="bg-[#1a0b1c] border border-purple-500/20 rounded-2xl p-4 text-center">
           <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Size</div>
-          {/* 👈 Changed to Users */}
-          <div className="text-lg font-black text-purple-300">{user?.team_size || 0} Users</div>
+          {/* 👈 Now uses the accurate team size from the API */}
+          <div className="text-lg font-black text-purple-300">{teamStats.teamSize} Users</div>
         </div>
       </div>
 
@@ -75,28 +99,31 @@ export default function TeamPage() {
       <div className="flex bg-[#1a0b1c] p-1.5 rounded-2xl border border-purple-500/20 mb-6">
         <button onClick={() => setActiveTab(1)} className={`flex-1 py-2 rounded-xl text-center transition ${activeTab === 1 ? 'bg-gradient-to-r from-purple-700 to-purple-900 shadow-lg' : ''}`}>
           <div className={`text-[9px] font-bold uppercase ${activeTab === 1 ? 'text-white' : 'text-zinc-500'}`}>Level 1</div>
-          <div className={`text-xs font-black mt-0.5 ${activeTab === 1 ? 'text-white' : 'text-amber-400'}`}>26% ({user?.l1_count || 0})</div>
+          {/* 👈 Now uses l1Count */}
+          <div className={`text-xs font-black mt-0.5 ${activeTab === 1 ? 'text-white' : 'text-amber-400'}`}>26% ({teamStats.l1Count})</div>
         </button>
         <button onClick={() => setActiveTab(2)} className={`flex-1 py-2 rounded-xl text-center transition ${activeTab === 2 ? 'bg-gradient-to-r from-purple-700 to-purple-900 shadow-lg' : ''}`}>
           <div className={`text-[9px] font-bold uppercase ${activeTab === 2 ? 'text-white' : 'text-zinc-500'}`}>Level 2</div>
-          <div className={`text-xs font-black mt-0.5 ${activeTab === 2 ? 'text-white' : 'text-amber-400'}`}>3% ({user?.l2_count || 0})</div>
+          {/* 👈 Now uses l2Count */}
+          <div className={`text-xs font-black mt-0.5 ${activeTab === 2 ? 'text-white' : 'text-amber-400'}`}>3% ({teamStats.l2Count})</div>
         </button>
         <button onClick={() => setActiveTab(3)} className={`flex-1 py-2 rounded-xl text-center transition ${activeTab === 3 ? 'bg-gradient-to-r from-purple-700 to-purple-900 shadow-lg' : ''}`}>
           <div className={`text-[9px] font-bold uppercase ${activeTab === 3 ? 'text-white' : 'text-zinc-500'}`}>Level 3</div>
-          <div className={`text-xs font-black mt-0.5 ${activeTab === 3 ? 'text-white' : 'text-amber-400'}`}>2% ({user?.l3_count || 0})</div>
+          {/* 👈 Now uses l3Count */}
+          <div className={`text-xs font-black mt-0.5 ${activeTab === 3 ? 'text-white' : 'text-amber-400'}`}>2% ({teamStats.l3Count})</div>
         </button>
       </div>
 
       <div className="bg-[#1a0b1c] border border-purple-500/20 rounded-2xl p-6 text-center">
         <p className="text-zinc-400 text-sm mb-4">
-          {/* 👈 Changed to Users */}
-          You have <strong className="text-white">{activeTab === 1 ? user?.l1_count || 0 : activeTab === 2 ? user?.l2_count || 0 : user?.l3_count || 0}</strong> users in Level {activeTab}.
+          You have <strong className="text-white">
+            {activeTab === 1 ? teamStats.l1Count : activeTab === 2 ? teamStats.l2Count : teamStats.l3Count}
+          </strong> users in Level {activeTab}.
         </p>
-        {/* 👈 Changed to View Team */}
         <button className="w-full border border-purple-500/30 bg-white/5 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition hover:bg-white/10">View Team &gt;</button>
       </div>
       
       <BottomNav />
     </main>
   );
-}
+    }
