@@ -50,7 +50,8 @@ export default function TeamPage() {
         </div>
         <div className="bg-[#1a0b1c] border border-purple-500/20 rounded-2xl p-4 text-center">
           <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Size</div>
-          <div className="text-lg font-black text-purple-300">{user?.team_size || 0} Members</div>
+          {/* 👈 Changed to Users */}
+          <div className="text-lg font-black text-purple-300">{user?.team_size || 0} Users</div>
         </div>
       </div>
 
@@ -88,9 +89,11 @@ export default function TeamPage() {
 
       <div className="bg-[#1a0b1c] border border-purple-500/20 rounded-2xl p-6 text-center">
         <p className="text-zinc-400 text-sm mb-4">
-          You have <strong className="text-white">{activeTab === 1 ? user?.l1_count || 0 : activeTab === 2 ? user?.l2_count || 0 : user?.l3_count || 0}</strong> members in Level {activeTab}.
+          {/* 👈 Changed to Users */}
+          You have <strong className="text-white">{activeTab === 1 ? user?.l1_count || 0 : activeTab === 2 ? user?.l2_count || 0 : user?.l3_count || 0}</strong> users in Level {activeTab}.
         </p>
-        <button className="w-full border border-purple-500/30 bg-white/5 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition hover:bg-white/10">View Member List &gt;</button>
+        {/* 👈 Changed to View Team */}
+        <button className="w-full border border-purple-500/30 bg-white/5 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition hover:bg-white/10">View Team &gt;</button>
       </div>
       
       <BottomNav />
