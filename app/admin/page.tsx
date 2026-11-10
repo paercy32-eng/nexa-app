@@ -53,8 +53,8 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // Get all currencies present in the stats, or fallback to the main 3
-  const currencies = Object.keys(stats?.byCurrency || { UGX: 1, RWF: 1, ZMW: 1 });
+  // 👈 FORCE CURRENCY TO ONLY UGX
+  const currencies = ['UGX'];
 
   return (
     <main className="min-h-screen bg-slate-900 pb-24">
@@ -88,7 +88,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Financials Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+        <div className="grid grid-cols-1 gap-3 mb-8">
           
           {/* Deposits Card */}
           <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 relative overflow-hidden">
@@ -96,7 +96,7 @@ export default function AdminDashboardPage() {
             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-3">Total Deposited</div>
             <div className="space-y-2">
               {currencies.map(c => (
-                <div key={`dep-${c}`} className="flex justify-between items-center border-b border-slate-700/50 pb-1 last:border-0">
+                <div key={`dep-${c}`} className="flex justify-between items-center pb-1">
                   <span className="text-xs font-bold text-slate-300">{c}</span>
                   <span className="text-sm font-black text-emerald-400">
                     {(stats?.byCurrency[c]?.deposited || 0).toLocaleString()}
@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-3">Total Invested</div>
             <div className="space-y-2">
               {currencies.map(c => (
-                <div key={`inv-${c}`} className="flex justify-between items-center border-b border-slate-700/50 pb-1 last:border-0">
+                <div key={`inv-${c}`} className="flex justify-between items-center pb-1">
                   <span className="text-xs font-bold text-slate-300">{c}</span>
                   <span className="text-sm font-black text-violet-400">
                     {(stats?.byCurrency[c]?.invested || 0).toLocaleString()}
@@ -128,7 +128,7 @@ export default function AdminDashboardPage() {
             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-3">Total Withdrawn</div>
             <div className="space-y-2">
               {currencies.map(c => (
-                <div key={`with-${c}`} className="flex justify-between items-center border-b border-slate-700/50 pb-1 last:border-0">
+                <div key={`with-${c}`} className="flex justify-between items-center pb-1">
                   <span className="text-xs font-bold text-slate-300">{c}</span>
                   <span className="text-sm font-black text-orange-400">
                     {(stats?.byCurrency[c]?.withdrawn || 0).toLocaleString()}
@@ -144,7 +144,6 @@ export default function AdminDashboardPage() {
         <h2 className="text-white font-bold mb-3 px-1 text-sm uppercase tracking-wider">Management Menu</h2>
         <div className="grid grid-cols-2 gap-3 mb-6">
           
-          {/* Users */}
           <Link href="/admin/users" className="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-slate-750">
             <div className="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mb-1">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -153,7 +152,6 @@ export default function AdminDashboardPage() {
             <div className="text-slate-400 text-[10px]">Manage all accounts</div>
           </Link>
 
-          {/* Deposits */}
           <Link href="/admin/deposits" className="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-slate-750">
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-1">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
@@ -162,7 +160,6 @@ export default function AdminDashboardPage() {
             <div className="text-slate-400 text-[10px]">View incoming funds</div>
           </Link>
 
-          {/* Withdrawals */}
           <Link href="/admin/withdrawals" className="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-slate-750">
             <div className="w-12 h-12 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center mb-1">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /><path d="M15 15h3" /></svg>
@@ -171,7 +168,6 @@ export default function AdminDashboardPage() {
             <div className="text-slate-400 text-[10px]">Approve payouts</div>
           </Link>
 
-          {/* Products */}
           <Link href="/admin/products" className="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-slate-750">
             <div className="w-12 h-12 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center mb-1">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
@@ -180,7 +176,6 @@ export default function AdminDashboardPage() {
             <div className="text-slate-400 text-[10px]">Manage investments</div>
           </Link>
 
-          {/* Gift Codes - NEW */}
           <Link href="/admin/giftcodes" className="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 active:scale-[0.98] transition hover:bg-slate-750 col-span-2">
             <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-1">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
