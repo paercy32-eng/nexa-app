@@ -22,23 +22,27 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 🚨 1. FETCH ALL USERS IN ONE GO (100% Reliable)
+    // 1. Fetch ALL users to build the 3 levels
     const { data: allUsers, error: usersError } = await supabaseAdmin
       .from('users')
       .select('id, referred_by');
 
     if (usersError) throw usersError;
 
-    // 2. Build the 3 levels inside JavaScript
+    // 2. Build the 3 levels
     const l1Ids = (allUsers ?? []).filter(u => u.referred_by === userId).map(u => u.id);
     const l2Ids = (allUsers ?? []).filter(u => l1Ids.includes(u.referred_by)).map(u => u.id);
     const l3Ids = (allUsers ?? []).filter(u => l2Ids.includes(u.referred_by)).map(u => u.id);
 
-    // 3. Combine ALL levels
     const allTeamIds = [...l1Ids, ...l2Ids, ...l3Ids];
     const teamSize = allTeamIds.length;
+    
+    // 👈 NEW: Calculate individual level counts
+    const l1Count = l1Ids.length;
+    const l2Count = l2Ids.length;
+    const l3Count = l3Ids.length;
 
-    // 4. Calculate Team Investment from ALL levels
+    // 3. Calculate Team Investment
     let teamInvestment = 0;
     if (allTeamIds.length > 0) {
       const { data: modules } = await supabaseAdmin
@@ -51,7 +55,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 5. Check claimed tiers
+    // 4. Check claimed tiers
     const { data: existingRewards } = await supabaseAdmin
       .from('transactions')
       .select('meta')
@@ -68,7 +72,7 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json(
-      { teamInvestment, teamSize, tiers },
+      { teamInvestment, teamSize, l1Count, l2Count, l3Count, tiers }, // 👈 Added counts here
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
     );
   } catch (err) {
