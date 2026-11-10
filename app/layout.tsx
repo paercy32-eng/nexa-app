@@ -17,14 +17,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-[#0a0a0f] text-zinc-100 antialiased min-h-screen`}>
+      {/* 👈 Dark chocolate background */}
+      <body className={`${inter.className} bg-[#120804] text-zinc-100 antialiased min-h-screen`}>
         <div className="max-w-md mx-auto relative min-h-screen">
           {children}
         </div>
+        
         <Toaster 
           position="top-center" 
           toastOptions={{
-            style: { background: '#12121a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+            style: { background: '#1a0b1c', color: '#fff', border: '1px solid rgba(168,85,247,0.3)' },
           }} 
         />
       </body>
