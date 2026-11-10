@@ -32,7 +32,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   
-  // 👈 Default to UG instead of ALL
+  // 👈 Default to UG
   const [activeCountry, setActiveCountry] = useState('UG');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -97,13 +97,13 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {/* Country Scrollable Tabs (Only Uganda now) */}
-        <div className="flex overflow-x-auto gap-2 px-4 pb-3 scrollbar-hide">
+        {/* Country Tabs (Only Uganda now) */}
+        <div className="flex gap-2 px-4 pb-3 scrollbar-hide">
           {COUNTRIES.map((c) => (
             <button
               key={c.code}
               onClick={() => setActiveCountry(c.code)}
-              className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
                 activeCountry === c.code
                   ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20'
                   : 'bg-slate-900/50 text-slate-400 border-slate-700 hover:text-white'
@@ -369,4 +369,4 @@ function UserDetailModal({ userId, onClose, onRefresh }: { userId: string, onClo
       </div>
     </div>
   );
-            }
+      }
