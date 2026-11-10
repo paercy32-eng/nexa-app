@@ -211,4 +211,4 @@ export default function RegisterPage() {
       <RegisterForm />
     </Suspense>
   );
-            }
+}
