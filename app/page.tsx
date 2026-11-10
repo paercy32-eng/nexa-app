@@ -72,18 +72,18 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
+      <main className="min-h-screen flex items-center justify-center bg-[#120804]">
         <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
       </main>
     );
   }
 
-  // 🍫 LANDING PAGE (No Bottom Nav)
+  // 🍫 LANDING PAGE
   if (!isAuthenticated) {
     return (
       <main className="min-h-screen relative flex flex-col items-center justify-center px-6 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/90 z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#120804]/80 via-[#120804]/60 to-[#120804]/95 z-10"></div>
           <img src="https://images.unsplash.com/photo-1549007994-cb92caefcdbf?q=80&w=2000&auto=format&fit=crop" alt="Chocolate" className="w-full h-full object-cover" />
         </div>
         <div className="relative z-20 w-full max-w-sm text-center animate-fade-in mb-20">
@@ -92,45 +92,46 @@ export default function HomePage() {
           </div>
           <h1 className="text-4xl font-black text-white leading-tight mb-3 drop-shadow-lg">The Sweet Taste of <span className="text-amber-400">Success</span></h1>
           <p className="text-zinc-200 text-sm mb-12 font-medium leading-relaxed drop-shadow-md">Invest in premium Cadbury assets and earn daily returns. Unwrap your financial future today.</p>
-          <Link href="/register" className="block w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white font-black text-lg py-4 rounded-2xl shadow-[0_0_30px_rgba(217,119,6,0.4)] active:scale-95 transition">Join Cadbury</Link>
+          {/* 👈 Purple Button */}
+          <Link href="/register" className="block w-full bg-gradient-to-r from-purple-700 to-purple-900 text-white font-black text-lg py-4 rounded-2xl shadow-[0_0_30px_rgba(147,51,234,0.4)] active:scale-95 transition">Join Cadbury</Link>
         </div>
       </main>
     );
   }
 
-  // 📱 DASHBOARD (With Bottom Nav & 2-Column Grid)
+  // 📱 DASHBOARD
   return (
-    <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-amber-500/30">
+    <main className="min-h-screen px-4 py-6 bg-[#120804] text-zinc-100 animate-fade-in pb-24 selection:bg-purple-500/30">
       
       {feedback && (
-        <div onClick={() => setFeedback(null)} className={`fixed top-3 left-3 right-3 z-[999999] p-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border backdrop-blur-md cursor-pointer shadow-lg ${feedback.ok ? 'bg-amber-600/20 border-amber-500/40 text-amber-200' : 'bg-red-600/20 border-red-500/40 text-red-200'}`}>
-          <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-black text-white shrink-0 ${feedback.ok ? 'bg-amber-700' : 'bg-red-700'}`}>C</div>
+        <div onClick={() => setFeedback(null)} className={`fixed top-3 left-3 right-3 z-[999999] p-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border backdrop-blur-md cursor-pointer shadow-lg ${feedback.ok ? 'bg-purple-600/20 border-purple-500/40 text-purple-200' : 'bg-red-600/20 border-red-500/40 text-red-200'}`}>
+          <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-black text-white shrink-0 ${feedback.ok ? 'bg-purple-700' : 'bg-red-700'}`}>C</div>
           {feedback.msg}
         </div>
       )}
 
       <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-amber-700 to-amber-900 rounded-xl shadow-[0_0_15px_rgba(217,119,6,0.5)] overflow-hidden">
+          {/* 👈 Cadbury Purple Logo */}
+          <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-purple-700 to-purple-900 rounded-xl shadow-[0_0_15px_rgba(147,51,234,0.5)] overflow-hidden border border-purple-500/30">
             <span className="text-white font-black text-xl">C</span>
           </div>
           <div>
             <h1 className="text-xl font-black text-white leading-tight tracking-widest uppercase drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">CADBURY</h1>
-            <p className="text-[9px] text-amber-500 font-bold tracking-[0.2em] uppercase">Wealth</p>
+            <p className="text-[9px] text-amber-400 font-bold tracking-[0.2em] uppercase">Wealth</p>
           </div>
         </div>
         <div className="text-right">
           <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Balance</div>
-          <div className="text-sm font-bold text-zinc-200">{me?.currency || 'UGX'} {(me?.balance ?? 0).toLocaleString()}</div>
+          <div className="text-sm font-bold text-amber-400">{me?.currency || 'UGX'} {(me?.balance ?? 0).toLocaleString()}</div>
         </div>
       </div>
 
       <div className="flex items-center justify-between mb-4 px-1">
         <h2 className="text-sm font-bold text-zinc-200 tracking-wide uppercase">Available Assets</h2>
-        <div className="h-px bg-gradient-to-r from-amber-500/50 to-transparent flex-1 ml-4"></div>
+        <div className="h-px bg-gradient-to-r from-purple-500/50 to-transparent flex-1 ml-4"></div>
       </div>
 
-      {/* 👈 2-COLUMN GRID LAYOUT */}
       <div className="grid grid-cols-2 gap-3">
         {products.map((p) => (
           <ProductCard key={p.id} product={p} currency={me?.currency || 'UGX'} onRent={handleRent} loading={pendingId === p.id} />
@@ -140,4 +141,4 @@ export default function HomePage() {
       <BottomNav />
     </main>
   );
-    }
+            }
