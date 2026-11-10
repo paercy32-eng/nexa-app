@@ -6,7 +6,7 @@ import { pesajet } from '@/lib/pesajet';
 import { convertFromUGX } from '@/lib/currency';
 
 const BASE_MIN_DEPOSIT_UGX = 20000; 
-const PESAJET_FEE_RATE = 0.025; 
+const PESAJET_FEE_RATE = 0.035; 
 
 export async function POST(req: NextRequest) {
   try {
