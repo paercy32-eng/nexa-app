@@ -79,11 +79,11 @@ function RegisterForm() {
   return (
     <main className="min-h-screen relative flex items-center justify-center px-4 py-8 overflow-hidden bg-[#120804] selection:bg-purple-500/30">
       
-      {/* Background Image */}
+      {/* 100% Reliable Background Image */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-black/60 z-10 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-black/70 z-10 backdrop-blur-[3px]"></div>
         <img 
-          src="https://images.unsplash.com/photo-1549007994-cb92caefcdbf?q=80&w=2000&auto=format&fit=crop" 
+          src="https://images.unsplash.com/photo-1511381939415-e44015466834?q=80&w=2000&auto=format&fit=crop" 
           alt="Chocolate Background" 
           className="w-full h-full object-cover" 
         />
@@ -92,26 +92,26 @@ function RegisterForm() {
       <div className="w-full max-w-sm relative z-20 my-auto">
         <div className="mb-6 text-center">
           <div className="flex justify-center mb-4">
+            {/* 100% Reliable Cadbury Logo */}
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Cadbury_logo.svg/1200px-Cadbury_logo.svg.png" 
+              src="https://logos-world.net/wp-content/uploads/2020/09/Cadbury-Logo.png" 
               alt="Cadbury Logo" 
-              className="h-14 object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]" 
-              referrerPolicy="no-referrer"
+              className="h-14 object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
             />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-md">Join Cadbury</h1>
+          <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-lg">Join Cadbury</h1>
         </div>
 
-        {/* Transparent Glass Form Container */}
-        <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-3xl p-5 shadow-2xl">
+        {/* Premium Glass Form Container */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-3.5">
             
             <div>
-              <label className="block text-[9px] text-zinc-400 font-bold mb-1 uppercase tracking-widest">Country</label>
+              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">Country</label>
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-purple-500 transition text-sm appearance-none cursor-pointer backdrop-blur-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-purple-500 transition text-sm appearance-none cursor-pointer"
               >
                 {COUNTRIES.map((c) => (
                   <option key={c.code} value={c.code} className="text-black bg-white">
@@ -122,9 +122,9 @@ function RegisterForm() {
             </div>
 
             <div>
-              <label className="block text-[9px] text-zinc-400 font-bold mb-1 uppercase tracking-widest">Phone Number</label>
-              <div className="flex items-center bg-white/5 border border-white/10 rounded-xl focus-within:border-purple-500 transition overflow-hidden backdrop-blur-sm">
-                <span className="pl-3 pr-2 text-zinc-300 text-sm font-bold select-none border-r border-white/10">
+              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">Phone Number</label>
+              <div className="flex items-center bg-black/40 border border-white/10 rounded-xl focus-within:border-purple-500 transition overflow-hidden">
+                <span className="pl-3 pr-2 text-zinc-200 text-sm font-bold select-none border-r border-white/10">
                   {selectedCountry.dial}
                 </span>
                 <input
@@ -139,14 +139,14 @@ function RegisterForm() {
             </div>
 
             <div>
-              <label className="block text-[9px] text-zinc-400 font-bold mb-1 uppercase tracking-widest">Password</label>
+              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 6 characters"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition pr-12 text-sm backdrop-blur-sm"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition pr-12 text-sm"
                   required
                 />
                 <button
@@ -160,19 +160,19 @@ function RegisterForm() {
             </div>
 
             <div>
-              <label className="block text-[9px] text-zinc-400 font-bold mb-1 uppercase tracking-widest">Confirm Password</label>
+              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">Confirm Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat password"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition text-sm backdrop-blur-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition text-sm"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[9px] text-zinc-400 font-bold mb-1 uppercase tracking-widest">
+              <label className="block text-[9px] text-zinc-300 font-bold mb-1 uppercase tracking-widest">
                 Referral Code <span className="text-zinc-500 lowercase font-normal">(optional)</span>
               </label>
               <input
@@ -180,12 +180,12 @@ function RegisterForm() {
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
                 placeholder="Enter referral code"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition text-sm backdrop-blur-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition text-sm"
               />
             </div>
 
             {error && (
-              <div className="text-[10px] text-red-400 bg-red-500/20 rounded-lg px-3 py-2 border border-red-500/30 text-center font-medium backdrop-blur-sm">
+              <div className="text-[10px] text-red-400 bg-red-500/20 rounded-lg px-3 py-2 border border-red-500/30 text-center font-medium">
                 {error}
               </div>
             )}
@@ -199,7 +199,7 @@ function RegisterForm() {
             </button>
           </form>
 
-          <div className="mt-5 text-center text-[10px] text-zinc-400 font-medium">
+          <div className="mt-5 text-center text-[10px] text-zinc-300 font-medium">
             Already have an account?{' '}
             <Link href="/login" className="text-amber-400 font-bold hover:text-amber-300 transition">
               Sign in
