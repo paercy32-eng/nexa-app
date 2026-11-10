@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import BottomNav from "@/components/BottomNav";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -19,23 +18,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-[#0a0a0f] text-zinc-100 antialiased min-h-screen`}>
-        {/* Main Page Content */}
         <div className="max-w-md mx-auto relative min-h-screen">
           {children}
         </div>
-
-        {/* Bottom Navigation (Hides automatically on auth/admin pages) */}
-        <BottomNav />
-
-        {/* Toast Notifications */}
         <Toaster 
           position="top-center" 
           toastOptions={{
-            style: {
-              background: '#12121a',
-              color: '#fff',
-              border: '1px solid rgba(255,255,255,0.1)',
-            },
+            style: { background: '#12121a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
           }} 
         />
       </body>
