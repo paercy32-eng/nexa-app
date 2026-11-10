@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 
 type Me = {
@@ -25,28 +26,35 @@ export default function HomePage() {
   const [me, setMe] = useState<Me | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
 
   async function loadMe() {
     const res = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
     if (res.status === 401) {
-      router.replace('/login');
+      setIsAuthenticated(false);
+      setLoading(false);
       return;
     }
     const data = await res.json();
     setMe(data.user);
+    setIsAuthenticated(true);
   }
 
   useEffect(() => {
     async function load() {
       const meRes = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
       if (meRes.status === 401) {
-        router.replace('/login');
+        setIsAuthenticated(false);
+        setLoading(false);
         return;
       }
+      
       const meData = await meRes.json();
       setMe(meData.user);
+      setIsAuthenticated(true);
 
       const prodRes = await fetch('/api/products?t=' + Date.now(), { cache: 'no-store' });
       const prodData = await prodRes.json();
@@ -112,6 +120,64 @@ export default function HomePage() {
     );
   }
 
+  // ==========================================
+  // 🍫 LANDING PAGE (If NOT logged in)
+  // ==========================================
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen relative flex flex-col items-center justify-center px-6 overflow-hidden">
+        
+        {/* Background Image of People eating Chocolate */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-black/70 z-10"></div>
+          <img 
+            src="https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&q=80" 
+            alt="People eating chocolate" 
+            className="w-full h-full object-cover" 
+          />
+        </div>
+
+        <div className="relative z-20 w-full max-w-sm text-center animate-fade-in">
+          {/* Real Cadbury Logo */}
+          <div className="flex justify-center mb-8">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Cadbury_logo.svg/1200px-Cadbury_logo.svg.png" 
+              alt="Cadbury Logo" 
+              className="h-16 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" 
+            />
+          </div>
+
+          <h1 className="text-4xl font-black text-white leading-tight mb-4 drop-shadow-md">
+            The Sweet Taste of <span className="text-amber-400">Success</span>
+          </h1>
+          
+          <p className="text-zinc-300 text-sm mb-12 font-medium leading-relaxed drop-shadow-md">
+            Invest in premium Cadbury assets and earn daily returns. Unwrap your financial future today.
+          </p>
+
+          <div className="space-y-4">
+            <Link 
+              href="/register" 
+              className="block w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(217,119,6,0.5)] active:scale-95 transition"
+            >
+              Create an Account
+            </Link>
+            
+            <Link 
+              href="/login" 
+              className="block w-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold py-4 rounded-xl active:scale-95 transition hover:bg-white/20"
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ==========================================
+  // 📱 DASHBOARD (If logged in)
+  // ==========================================
   return (
     <main className="min-h-screen px-4 py-6 bg-[#0a0a0f] text-zinc-100 animate-fade-in pb-24 selection:bg-amber-500/30">
 
@@ -131,13 +197,11 @@ export default function HomePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-3">
-          {/* 👈 COCOA GRADIENT LOGO */}
           <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-amber-700 to-amber-900 rounded-xl shadow-[0_0_15px_rgba(217,119,6,0.5)] overflow-hidden">
             <span className="text-white font-black text-xl">C</span>
           </div>
           <div>
             <h1 className="text-xl font-black text-white leading-tight tracking-widest uppercase drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">CADBURY</h1>
-            {/* 👈 GOLD SUBTEXT */}
             <p className="text-[9px] text-amber-500 font-bold tracking-[0.2em] uppercase">Wealth</p>
           </div>
         </div>
@@ -152,7 +216,6 @@ export default function HomePage() {
       {/* Products List */}
       <div className="flex items-center justify-between mb-4 px-1">
         <h2 className="text-sm font-bold text-zinc-200 tracking-wide uppercase">Available Assets</h2>
-        {/* 👈 GOLD DIVIDER LINE */}
         <div className="h-px bg-gradient-to-r from-amber-500/50 to-transparent flex-1 ml-4"></div>
       </div>
 
@@ -169,4 +232,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-      }
+}
