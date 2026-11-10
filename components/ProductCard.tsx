@@ -21,10 +21,10 @@ export default function ProductCard({
   loading?: boolean;
 }) {
   return (
-    <div className="relative flex flex-col bg-[#12121a] border border-white/10 rounded-2xl overflow-hidden shadow-lg transition hover:border-amber-500/40 group h-full">
+    <div className="relative flex flex-col bg-[#1a0b1c] border border-purple-500/20 rounded-2xl overflow-hidden shadow-xl transition hover:border-amber-500/40 group h-full">
       
       {/* Image Section */}
-      <div className="relative w-full h-28 bg-[#0a0a0f] overflow-hidden">
+      <div className="relative w-full h-28 bg-[#120804] overflow-hidden">
         {product.image_url ? (
           <img 
             src={product.image_url} 
@@ -33,14 +33,14 @@ export default function ProductCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-3xl font-black text-amber-500/20">C</span>
+            <span className="text-3xl font-black text-purple-500/20">C</span>
           </div>
         )}
         
-        <div className="absolute inset-0 bg-gradient-to-t from-[#12121a] via-[#12121a]/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a0b1c] via-[#1a0b1c]/20 to-transparent"></div>
 
         {/* Cycle Badge */}
-        <div className="absolute top-2 left-2 bg-amber-600/90 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm">
+        <div className="absolute top-2 left-2 bg-amber-500 backdrop-blur-md text-black text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shadow-[0_0_10px_rgba(251,191,36,0.5)]">
           {product.cycle_days} Days
         </div>
       </div>
@@ -55,15 +55,16 @@ export default function ProductCard({
         
         {/* Stacked Stats */}
         <div className="space-y-1 mb-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[8px] text-zinc-500 font-bold uppercase">Daily</span>
+          <div className="flex justify-between items-center bg-black/30 px-1.5 py-1 rounded">
+            <span className="text-[8px] text-zinc-400 font-bold uppercase">Daily</span>
+            {/* 👈 Gold Text */}
             <span className="text-[9px] font-black text-amber-400">
               {currency} {Number(product.daily_return).toLocaleString()}
             </span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[8px] text-zinc-500 font-bold uppercase">Total</span>
-            <span className="text-[9px] font-bold text-zinc-300">
+          <div className="flex justify-between items-center bg-black/30 px-1.5 py-1 rounded">
+            <span className="text-[8px] text-zinc-400 font-bold uppercase">Total</span>
+            <span className="text-[9px] font-bold text-zinc-200">
               {currency} {(Number(product.daily_return) * product.cycle_days).toLocaleString()}
             </span>
           </div>
@@ -71,14 +72,16 @@ export default function ProductCard({
 
         {/* Price & Button */}
         <div className="mt-auto">
-          <div className="text-[11px] font-black text-white mb-1.5">
+          {/* 👈 Gold Price */}
+          <div className="text-[11px] font-black text-amber-400 mb-1.5 drop-shadow-[0_0_5px_rgba(251,191,36,0.3)]">
             {currency} {Number(product.price).toLocaleString()}
           </div>
+          {/* 👈 Cadbury Purple Button */}
           <button
             type="button"
             onClick={() => onRent(product)}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white text-[9px] font-black py-2 rounded-lg active:scale-95 transition shadow-md disabled:opacity-60 flex items-center justify-center gap-1 uppercase tracking-wider"
+            className="w-full bg-gradient-to-r from-purple-700 to-purple-900 text-white text-[9px] font-black py-2 rounded-lg active:scale-95 transition shadow-[0_0_15px_rgba(147,51,234,0.3)] disabled:opacity-60 flex items-center justify-center gap-1 uppercase tracking-wider"
           >
             {loading ? (
               <span className="w-2.5 h-2.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
@@ -90,4 +93,4 @@ export default function ProductCard({
       </div>
     </div>
   );
-            }
+}
