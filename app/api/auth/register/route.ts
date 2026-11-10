@@ -5,7 +5,8 @@ import { convertFromUGX } from '@/lib/currency';
 
 function generateReferralCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'NEXA-';
+  // 👈 CHANGED FROM NEXA- TO CADB-
+  let code = 'CADB-'; 
   for (let i = 0; i < 5; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
         name: defaultName,
         phone: cleanPhone,
         password_hash: passwordHash,
-        balance: localWelcomeBonus, // 🚨 SAVING THE CONVERTED AMOUNT
+        balance: localWelcomeBonus, 
         referral_code: newCode,
         referred_by: referredBy,
         country: country || 'UG',
