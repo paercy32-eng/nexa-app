@@ -22,33 +22,26 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Fetch Level 1
-    const { data: l1Data, error: l1Error } = await supabaseAdmin.from('users').select('id').eq('referred_by', userId);
-    const l1Ids = (l1Data ?? []).map(u => u.id);
+    // 1. Fetch ALL users at once (Bypasses ALL query bugs)
+    const { data: allUsers, error: allUsersError } = await supabaseAdmin
+      .from('users')
+      .select('id, referred_by, phone');
 
-    // 2. Fetch Level 2 (Using a loop to guarantee it works)
-    let l2Data: any[] = [];
-    let l2Error: any = null;
-    if (l1Ids.length > 0) {
-      for (const id of l1Ids) {
-        const res2 = await supabaseAdmin.from('users').select('id').eq('referred_by', id);
-        if (res2.data) l2Data.push(...res2.data);
-        if (res2.error) l2Error = res2.error;
-      }
-    }
-    const l2Ids = l2Data.map((u: any) => u.id);
+    if (allUsersError) throw allUsersError;
 
-    // 3. Fetch Level 3 (Using a loop)
-    let l3Data: any[] = [];
-    let l3Error: any = null;
-    if (l2Ids.length > 0) {
-      for (const id of l2Ids) {
-        const res3 = await supabaseAdmin.from('users').select('id').eq('referred_by', id);
-        if (res3.data) l3Data.push(...res3.data);
-        if (res3.error) l3Error = res3.error;
-      }
-    }
-    const l3Ids = l3Data.map((u: any) => u.id);
+    // Clean the IDs just in case there are hidden spaces
+    const safeUsers = (allUsers ?? []).map(u => ({
+      ...u,
+      id: u.id?.trim(),
+      referred_by: u.referred_by?.trim()
+    }));
+
+    const safeUserId = userId.trim();
+
+    // 2. Build levels using pure JavaScript
+    const l1Ids = safeUsers.filter(u => u.referred_by === safeUserId).map(u => u.id);
+    const l2Ids = safeUsers.filter(u => u.referred_by && l1Ids.includes(u.referred_by)).map(u => u.id);
+    const l3Ids = safeUsers.filter(u => u.referred_by && l2Ids.includes(u.referred_by)).map(u => u.id);
 
     const allTeamIds = [...l1Ids, ...l2Ids, ...l3Ids];
     const teamSize = allTeamIds.length;
@@ -74,7 +67,7 @@ export async function GET(req: NextRequest) {
     const { data: existingRewards } = await supabaseAdmin
       .from('transactions')
       .select('meta')
-      .eq('user_id', userId)
+      .eq('user_id', safeUserId)
       .eq('type', 'team_reward');
 
     const claimedTargets = new Set((existingRewards ?? []).map(r => Number(r.meta?.tier_target)));
@@ -95,14 +88,10 @@ export async function GET(req: NextRequest) {
         l3Count, 
         tiers,
         debug: {
-          sessionUserId: userId,
-          rawL1Data: l1Data,
-          l1Error: l1Error,
-          l1Ids: l1Ids,
-          rawL2Data: l2Data,
-          l2Error: l2Error,
-          rawL3Data: l3Data,
-          l3Error: l3Error
+          sessionUserId: safeUserId,
+          allUsersCount: safeUsers.length,
+          // 👈 SHOWING YOU THE RAW DATABASE DUMP
+          allUsers: safeUsers 
         }
       },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
