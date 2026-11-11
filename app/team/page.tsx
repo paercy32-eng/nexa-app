@@ -29,6 +29,10 @@ export default function TeamPage() {
         const rewardsRes = await fetch('/api/rewards?t=' + Date.now());
         if (rewardsRes.ok) {
           const rewardsData = await rewardsRes.json();
+          
+          // 🚨 TEMPORARY DEBUG ALERT TO FIND THE ISSUE
+          alert("DEBUG INFO:\n" + JSON.stringify(rewardsData.debug, null, 2));
+          
           setTeamStats({
             teamSize: rewardsData.teamSize || 0,
             l1Count: rewardsData.l1Count || 0,
@@ -74,7 +78,6 @@ export default function TeamPage() {
         </div>
         <div className="bg-[#1a0b1c] border border-purple-500/20 rounded-2xl p-4 text-center">
           <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Team Size</div>
-          {/* 👈 Now uses the accurate team size from the API */}
           <div className="text-lg font-black text-purple-300">{teamStats.teamSize} Users</div>
         </div>
       </div>
@@ -99,17 +102,14 @@ export default function TeamPage() {
       <div className="flex bg-[#1a0b1c] p-1.5 rounded-2xl border border-purple-500/20 mb-6">
         <button onClick={() => setActiveTab(1)} className={`flex-1 py-2 rounded-xl text-center transition ${activeTab === 1 ? 'bg-gradient-to-r from-purple-700 to-purple-900 shadow-lg' : ''}`}>
           <div className={`text-[9px] font-bold uppercase ${activeTab === 1 ? 'text-white' : 'text-zinc-500'}`}>Level 1</div>
-          {/* 👈 Now uses l1Count */}
           <div className={`text-xs font-black mt-0.5 ${activeTab === 1 ? 'text-white' : 'text-amber-400'}`}>26% ({teamStats.l1Count})</div>
         </button>
         <button onClick={() => setActiveTab(2)} className={`flex-1 py-2 rounded-xl text-center transition ${activeTab === 2 ? 'bg-gradient-to-r from-purple-700 to-purple-900 shadow-lg' : ''}`}>
           <div className={`text-[9px] font-bold uppercase ${activeTab === 2 ? 'text-white' : 'text-zinc-500'}`}>Level 2</div>
-          {/* 👈 Now uses l2Count */}
           <div className={`text-xs font-black mt-0.5 ${activeTab === 2 ? 'text-white' : 'text-amber-400'}`}>3% ({teamStats.l2Count})</div>
         </button>
         <button onClick={() => setActiveTab(3)} className={`flex-1 py-2 rounded-xl text-center transition ${activeTab === 3 ? 'bg-gradient-to-r from-purple-700 to-purple-900 shadow-lg' : ''}`}>
           <div className={`text-[9px] font-bold uppercase ${activeTab === 3 ? 'text-white' : 'text-zinc-500'}`}>Level 3</div>
-          {/* 👈 Now uses l3Count */}
           <div className={`text-xs font-black mt-0.5 ${activeTab === 3 ? 'text-white' : 'text-amber-400'}`}>2% ({teamStats.l3Count})</div>
         </button>
       </div>
@@ -126,4 +126,4 @@ export default function TeamPage() {
       <BottomNav />
     </main>
   );
-    }
+}
