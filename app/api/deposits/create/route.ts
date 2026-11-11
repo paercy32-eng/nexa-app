@@ -6,7 +6,7 @@ import { pesajet } from '@/lib/pesajet';
 import { convertFromUGX } from '@/lib/currency';
 
 const BASE_MIN_DEPOSIT_UGX = 20000; 
-const PESAJET_FEE_RATE = 0.035; 
+const PESAJET_FEE_RATE = 0.035; // 3.5% fee
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum deposit is ${userCurrency} ${minDeposit.toLocaleString()}` }, { status: 400 });
     }
 
-    const reference = crypto.randomUUID();
+    // 🚨 FIX: Remove hyphens to make it strictly alphanumeric for PesaJet
+    const reference = crypto.randomUUID().replace(/-/g, '');
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.aurua.shop';
 
     // ==========================================
     // ROUTE A: MANUAL DEPOSITS (ZAMBIA & RWANDA)
@@ -50,7 +52,6 @@ export async function POST(req: NextRequest) {
 
       const gatewayName = userCountry === 'ZM' ? 'manual_zm' : 'manual_rw';
 
-      // Save the deposit as 'pending' for the admin to review
       const { data: deposit, error: insErr } = await supabaseAdmin
         .from('deposits')
         .insert({
@@ -66,7 +67,6 @@ export async function POST(req: NextRequest) {
 
       if (insErr) throw insErr;
 
-      // Log the transaction
       await supabaseAdmin.from('transactions').insert({
         user_id: user.id,
         amount: numAmount,
@@ -85,12 +85,18 @@ export async function POST(req: NextRequest) {
     // ROUTE B: UGANDA (PESAJET AUTOMATED)
     // ==========================================
     if (userCountry === 'UG') {
+      // Calculate amount to prompt (amount + fee)
       let amountToPrompt = Math.ceil(numAmount / (1 - PESAJET_FEE_RATE));
 
       const { data: deposit, error: insErr } = await supabaseAdmin
         .from('deposits')
         .insert({
-          user_id: user.id, amount: numAmount, currency: userCurrency, gateway: 'pesajet', status: 'pending', reference: reference,
+          user_id: user.id, 
+          amount: numAmount, 
+          currency: userCurrency, 
+          gateway: 'pesajet', 
+          status: 'pending', 
+          reference: reference,
         })
         .select('id, reference')
         .single();
@@ -98,7 +104,10 @@ export async function POST(req: NextRequest) {
       if (insErr) throw insErr;
 
       await supabaseAdmin.from('transactions').insert({
-        user_id: user.id, amount: numAmount, type: 'deposit', status: 'pending',
+        user_id: user.id, 
+        amount: numAmount, 
+        type: 'deposit', 
+        status: 'pending',
         meta: { reference: reference, deposit_id: deposit.id, fee_charged: amountToPrompt - numAmount }
       });
 
@@ -107,11 +116,20 @@ export async function POST(req: NextRequest) {
         let provider = pesajet.utils.detectProvider(phone) || 'mtn'; 
 
         const payment = await pesajet.payments.create({
-          amount: amountToPrompt, currency: 'UGX', phoneNumber: formattedPhone, provider: provider, reference: reference, description: `Nexa Deposit`,
+          amount: amountToPrompt, 
+          currency: 'UGX', 
+          phoneNumber: formattedPhone, 
+          provider: provider, 
+          reference: reference, 
+          description: `Cadbury Deposit`,
         });
 
         return NextResponse.json({ 
-          success: true, depositId: deposit.id, reference, amount: numAmount, transactionId: payment.transactionId,
+          success: true, 
+          depositId: deposit.id, 
+          reference, 
+          amount: numAmount, 
+          transactionId: payment.transactionId,
           message: `A PIN prompt for ${amountToPrompt.toLocaleString()} UGX was sent to your phone.` 
         });
 
@@ -126,4 +144,4 @@ export async function POST(req: NextRequest) {
     console.error(err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-    }
+}
