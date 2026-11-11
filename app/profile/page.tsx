@@ -326,7 +326,10 @@ function GiftCodeModal({ onClose, onSuccess }: { onClose: () => void, onSuccess:
 function RechargeModal({ currency, onClose, onSuccess }: any) {
   const minDeposit = convertFromUGX(20000, currency);
   
-  // 🚨 STATE FOR NETWORK SELECTION
+  // 🚨 STEP 1: CHOOSE METHOD (Manual or PesaJet)
+  const [method, setMethod] = useState<'pesajet' | 'manual' | null>(null);
+  
+  // 🚨 STEP 2: IF MANUAL, CHOOSE NETWORK
   const [network, setNetwork] = useState<'MTN' | 'Airtel' | null>(null);
   
   const [amount, setAmount] = useState(String(minDeposit));
@@ -334,7 +337,12 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
   const [manualTxId, setManualTxId] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  
+  // PesaJet States
   const [sent, setSent] = useState(false);
+  const [reference, setReference] = useState('');
+  const [txId, setTxId] = useState('');
+  const [pollCount, setPollCount] = useState(0);
 
   useEffect(() => { 
     fetch('/api/me').then(res => res.json()).then(data => { 
@@ -344,10 +352,13 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
 
   async function submit(e: any) {
     e.preventDefault();
-    if (!manualTxId) { 
+    
+    // If Manual, require TX ID
+    if (method === 'manual' && !manualTxId) { 
       setMsg('Please enter the Transaction ID from your mobile money.'); 
       return; 
     }
+
     setLoading(true); 
     setMsg('');
     try {
@@ -357,20 +368,60 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         body: JSON.stringify({ 
           amount: Number(amount), 
           phone, 
-          transactionId: manualTxId 
+          transactionId: method === 'manual' ? manualTxId : undefined,
+          method: method 
         }),
       });
       const data = await res.json();
+      
       if (!res.ok) { 
         setMsg(data.error); 
       } else {
-        setSent(true);
+        if (method === 'manual') {
+          setSent(true);
+        } else {
+          // PesaJet Automated Flow
+          setReference(data.reference);
+          setTxId(data.transactionId);
+          setSent(true);
+          startPolling(data.reference, data.transactionId);
+        }
       }
     } catch { 
       setMsg('Something went wrong.'); 
     } finally { 
       setLoading(false); 
     }
+  }
+
+  function startPolling(ref: string, transactionId: string) {
+    let count = 0;
+    const interval = setInterval(async () => {
+      count++; setPollCount(count);
+      
+      if (count >= 40) { 
+        clearInterval(interval); 
+        onClose(); 
+        return; 
+      }
+      
+      try {
+        const res = await fetch('/api/deposits/verify', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ reference: ref, transactionId }) 
+        });
+        const data = await res.json();
+        if (data.status === 'completed') { 
+          clearInterval(interval); 
+          onSuccess(); 
+        } else if (data.status === 'failed') { 
+          clearInterval(interval); 
+          setMsg('Payment failed or expired. Please try again.'); 
+          setSent(false); 
+        }
+      } catch (e) {}
+    }, 3000);
   }
 
   return (
@@ -401,44 +452,66 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
               </div>
             </div>
 
-            {/* 🚨 NETWORK SELECTION & INSTRUCTIONS (UGANDA ONLY) */}
+            {/* 🚨 UGANDA MULTI-STEP FLOW */}
             {currency === 'UGX' && (
               <>
-                {!network ? (
+                {!method ? (
                   <div>
-                    <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider mt-4">Select Payment Method</label>
+                    <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider mt-4">Select Deposit Method</label>
                     <div className="grid grid-cols-2 gap-3">
-                      <button type="button" onClick={() => setNetwork('MTN')} className="bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20 text-yellow-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-2">
-                        <span className="text-lg">MTN</span>
-                        <span className="text-[10px] uppercase tracking-wider">MoMo Pay</span>
+                      <button type="button" onClick={() => setMethod('manual')} className="bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-purple-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-1">
+                        <span className="text-sm">Option A</span>
+                        <span className="text-[9px] uppercase tracking-wider opacity-70">Manual / Merchant</span>
                       </button>
-                      <button type="button" onClick={() => setNetwork('Airtel')} className="bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-2">
-                        <span className="text-lg">Airtel</span>
-                        <span className="text-[10px] uppercase tracking-wider">Money</span>
+                      <button type="button" onClick={() => setMethod('pesajet')} className="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-1">
+                        <span className="text-sm">Option B</span>
+                        <span className="text-[9px] uppercase tracking-wider opacity-70">PesaJet (Auto)</span>
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-[#120804] border border-purple-500/30 rounded-xl p-4 text-xs space-y-3 mb-4 animate-fade-in mt-4">
-                    <div className="flex justify-between items-center">
-                      <div className="font-bold text-purple-400 uppercase tracking-wider">{network} Instructions</div>
-                      <button type="button" onClick={() => setNetwork(null)} className="text-zinc-400 text-[10px] hover:text-white uppercase underline">Change</button>
+                  <div className="animate-fade-in mt-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="font-bold text-purple-400 uppercase tracking-wider text-xs">
+                        {method === 'manual' ? 'Manual Instructions' : 'PesaJet Automated'}
+                      </div>
+                      <button type="button" onClick={() => { setMethod(null); setNetwork(null); }} className="text-zinc-400 text-[10px] hover:text-white uppercase underline">Change</button>
                     </div>
-                    
-                    {network === 'MTN' ? (
-                      <>
-                        <div className="text-zinc-300">1. Dial <strong className="text-white select-all">*165*3#</strong></div>
-                        <div className="text-zinc-300">2. Merchant Code: <strong className="text-white select-all text-lg">44867602</strong></div>
-                        <div className="text-zinc-300">3. Name: <strong className="text-white">Nabirye Flavia</strong></div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-zinc-300">1. Dial <strong className="text-white select-all">*185*9#</strong></div>
-                        <div className="text-zinc-300">2. Merchant Code: <strong className="text-white select-all text-lg">7182484</strong></div>
-                        <div className="text-zinc-300">3. Name: <strong className="text-white">Essentials limited</strong></div>
-                      </>
+
+                    {method === 'manual' && (
+                      <div className="bg-[#120804] border border-purple-500/30 rounded-xl p-4 text-xs space-y-3 mb-4">
+                        {!network ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => setNetwork('MTN')} className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-bold py-2 rounded-lg">MTN</button>
+                            <button type="button" onClick={() => setNetwork('Airtel')} className="bg-red-500/20 text-red-400 border border-red-500/30 font-bold py-2 rounded-lg">Airtel</button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {network === 'MTN' ? (
+                              <>
+                                <div className="text-zinc-300">1. Dial <strong className="text-white select-all">*165*3#</strong></div>
+                                <div className="text-zinc-300">2. Merchant Code: <strong className="text-white select-all text-lg">44867602</strong></div>
+                                <div className="text-zinc-300">3. Name: <strong className="text-white">Nabirye Flavia</strong></div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="text-zinc-300">1. Dial <strong className="text-white select-all">*185*9#</strong></div>
+                                <div className="text-zinc-300">2. Merchant Code: <strong className="text-white select-all text-lg">7182484</strong></div>
+                                <div className="text-zinc-300">3. Name: <strong className="text-white">Essentials limited</strong></div>
+                              </>
+                            )}
+                            <button type="button" onClick={() => setNetwork(null)} className="text-amber-400 text-[10px] underline mt-1">Switch Network</button>
+                          </div>
+                        )}
+                        <div className="text-zinc-400 text-[10px] mt-2 pt-2 border-t border-white/10">Enter the Transaction ID from your SMS receipt below.</div>
+                      </div>
                     )}
-                    <div className="text-zinc-400 text-[10px] mt-2 pt-2 border-t border-white/10">Enter the Transaction ID from your SMS receipt below.</div>
+
+                    {method === 'pesajet' && (
+                      <div className="bg-[#120804] border border-amber-500/30 rounded-xl p-4 text-xs space-y-2 mb-4">
+                        <div className="text-zinc-300">A prompt will be sent to your phone to enter your PIN.</div>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -464,23 +537,25 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
               </div>
             )}
 
-            {/* ONLY SHOW THE REST OF THE FORM IF NETWORK IS SELECTED (FOR UGX) OR IF NOT UGX */}
-            {(currency !== 'UGX' || network) && (
+            {/* ONLY SHOW THE REST OF THE FORM IF METHOD IS CHOSEN */}
+            {(currency !== 'UGX' || (method === 'manual' && network) || method === 'pesajet') && (
               <div className="animate-fade-in space-y-4">
                 <div>
                   <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Phone Number Used</label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-purple-500 transition" required />
                 </div>
 
-                <div>
-                  <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Transaction ID</label>
-                  <input type="text" value={manualTxId} onChange={(e) => setManualTxId(e.target.value)} placeholder="e.g. TX123456789" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-purple-500 transition" required />
-                </div>
+                {method === 'manual' && (
+                  <div>
+                    <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Transaction ID</label>
+                    <input type="text" value={manualTxId} onChange={(e) => setManualTxId(e.target.value)} placeholder="e.g. TX123456789" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-purple-500 transition" required />
+                  </div>
+                )}
 
                 {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
                 
                 <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-purple-700 to-purple-900 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(168,85,247,0.3)] disabled:opacity-50">
-                  {loading ? 'Sending Request...' : 'Submit Deposit'}
+                  {loading ? 'Sending Request...' : method === 'manual' ? 'Submit Deposit' : 'Deposit Now'}
                 </button>
               </div>
             )}
@@ -488,13 +563,30 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         ) : (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              {method === 'manual' ? (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              ) : (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              )}
             </div>
-            <div className="text-lg font-bold text-white mb-2">Deposit Submitted!</div>
-            <div className="text-sm text-zinc-400 mb-4">Admin will verify your Transaction ID and credit your account shortly.</div>
-            <button onClick={onClose} className="mt-6 w-full border border-white/10 text-zinc-300 font-bold py-4 rounded-xl hover:bg-white/5 transition">
-              Close
-            </button>
+            <div className="text-lg font-bold text-white mb-2">
+              {method === 'manual' ? 'Deposit Submitted!' : 'Check your phone'}
+            </div>
+            <div className="text-sm text-zinc-400 mb-4">
+              {method === 'manual' ? 'Admin will verify your Transaction ID and credit your account shortly.' : 'Enter your PIN to complete the deposit.'}
+            </div>
+            
+            {method === 'pesajet' && (
+              <div className="text-xs text-purple-400 font-bold animate-pulse">
+                Verifying payment... ({120 - pollCount * 3}s)
+              </div>
+            )}
+
+            {method === 'manual' && (
+               <button onClick={onClose} className="mt-6 w-full border border-white/10 text-zinc-300 font-bold py-4 rounded-xl hover:bg-white/5 transition">
+                 Close
+               </button>
+            )}
           </div>
         )}
       </div>
@@ -557,4 +649,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-                                               }
+               }
