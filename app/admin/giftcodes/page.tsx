@@ -6,7 +6,6 @@ import Link from 'next/link';
 
 export default function AdminGiftCodesPage() {
   const router = useRouter();
-  const [amount, setAmount] = useState('5000');
   const [maxUses, setMaxUses] = useState('30');
   const [loading, setLoading] = useState(false);
   const [generatedCodes, setGeneratedCodes] = useState<any[]>([]);
@@ -22,7 +21,7 @@ export default function AdminGiftCodesPage() {
       const res = await fetch('/api/admin/giftcodes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Number(amount), maxUses: Number(maxUses) }),
+        body: JSON.stringify({ maxUses: Number(maxUses) }),
       });
 
       if (res.status === 401) {
@@ -64,20 +63,10 @@ export default function AdminGiftCodesPage() {
         
         {/* Generator Form */}
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 mb-6 shadow-lg">
-          <h2 className="text-white font-bold mb-4">Generate Shared Code</h2>
+          <h2 className="text-white font-bold mb-2">Generate Random Gift Code</h2>
+          <p className="text-xs text-slate-400 mb-4">Users will win a random amount between 50 and 700 UGX.</p>
           
           <form onSubmit={handleGenerate} className="space-y-4">
-            <div>
-              <label className="block text-xs text-slate-400 font-bold mb-1">Amount per User (UGX)</label>
-              <input 
-                type="number" 
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold"
-                required
-              />
-            </div>
-            
             <div>
               <label className="block text-xs text-slate-400 font-bold mb-1">Max Users Allowed</label>
               <input 
@@ -111,8 +100,7 @@ export default function AdminGiftCodesPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="text-amber-400 font-mono font-black text-2xl tracking-wider">{c.code}</div>
-                      <div className="text-xs text-slate-400 mt-1">Value: <strong className="text-white">UGX {c.amount}</strong></div>
-                      <div className="text-xs text-slate-400">Limit: <strong className="text-white">{c.max_uses} Users</strong></div>
+                      <div className="text-xs text-slate-400 mt-1">Limit: <strong className="text-white">{c.max_uses} Users</strong></div>
                     </div>
                     <button 
                       onClick={() => copyToClipboard(c.code)}
