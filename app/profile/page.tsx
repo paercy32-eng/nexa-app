@@ -10,7 +10,7 @@ type Me = {
   total_deposited?: number; total_withdrawn?: number; bound_phone?: string; bound_name?: string;
 };
 
-const CS_TELEGRAM_LINK = 'https://t.me/aaaaa56590'; 
+const CS_TELEGRAM_LINK = 'https://t.me/pixel56899'; 
 const WHATSAPP_CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbDiFDI3LdQdJfKehp1m';
 
 export default function ProfilePage() {
@@ -321,11 +321,13 @@ function GiftCodeModal({ onClose, onSuccess }: { onClose: () => void, onSuccess:
 }
 
 // ==========================================
-// RECHARGE (DEPOSIT) MODAL 
+// RECHARGE (DEPOSIT) MODAL - UPDATED MULTI-STEP
 // ==========================================
 function RechargeModal({ currency, onClose, onSuccess }: any) {
   const minDeposit = convertFromUGX(20000, currency);
-  const isManual = true; // 🚨 FORCED MANUAL FOR ALL
+  
+  // 🚨 STATE FOR NETWORK SELECTION
+  const [network, setNetwork] = useState<'MTN' | 'Airtel' | null>(null);
   
   const [amount, setAmount] = useState(String(minDeposit));
   const [phone, setPhone] = useState('');
@@ -382,34 +384,6 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         {!sent ? (
           <form onSubmit={submit} className="space-y-4">
             
-            <div className="bg-[#120804] border border-purple-500/30 rounded-xl p-4 text-xs space-y-3 mb-4">
-              <div className="font-bold text-purple-400 uppercase tracking-wider">Manual Deposit</div>
-              
-              {currency === 'UGX' && (
-                <>
-                  <div className="text-zinc-300">1. Send to MTN: <strong className="text-white select-all">0768521710</strong><br/><span className="text-zinc-400 text-[10px]">(Nabirye Flavia)</span></div>
-                  <div className="text-zinc-300">   OR Airtel: <strong className="text-white select-all">0705371032</strong><br/><span className="text-zinc-400 text-[10px]">(Ronald Lubwama)</span></div>
-                  <div className="text-zinc-300 mt-2 pt-2 border-t border-white/10">2. Enter the Transaction ID below.</div>
-                </>
-              )}
-
-              {currency === 'RWF' && (
-                <>
-                  <div className="text-zinc-300">1. Dial <strong className="text-white">*182#</strong></div>
-                  <div className="text-zinc-300">2. Send MTN to: <strong className="text-white select-all">+256 768 521 710</strong><br/><span className="text-zinc-400 text-[10px]">(Nabirye Flavia)</span></div>
-                  <div className="text-zinc-300">   OR Airtel to: <strong className="text-white select-all">+256 749 507 321</strong><br/><span className="text-zinc-400 text-[10px]">(Naiema Katuramu)</span></div>
-                </>
-              )}
-
-              {currency === 'ZMW' && (
-                <>
-                  <div className="text-zinc-300">1. Dial <strong className="text-white">*115#</strong> (or your network's transfer code)</div>
-                  <div className="text-zinc-300">2. Send to: <strong className="text-white select-all">+256 705 371 032</strong></div>
-                  <div className="text-zinc-300">3. Name: <strong className="text-white">Ronald Lubwama</strong></div>
-                </>
-              )}
-            </div>
-
             <div>
               <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">
                 Amount ({currency})
@@ -426,22 +400,90 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
                 Minimum deposit: {currency} {minDeposit.toLocaleString()}
               </div>
             </div>
-            
-            <div>
-              <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Phone Number Used</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-purple-500 transition" required />
-            </div>
 
-            <div>
-              <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Transaction ID</label>
-              <input type="text" value={manualTxId} onChange={(e) => setManualTxId(e.target.value)} placeholder="e.g. TX123456789" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-purple-500 transition" required />
-            </div>
+            {/* 🚨 NETWORK SELECTION & INSTRUCTIONS (UGANDA ONLY) */}
+            {currency === 'UGX' && (
+              <>
+                {!network ? (
+                  <div>
+                    <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider mt-4">Select Payment Method</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button type="button" onClick={() => setNetwork('MTN')} className="bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20 text-yellow-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-2">
+                        <span className="text-lg">MTN</span>
+                        <span className="text-[10px] uppercase tracking-wider">MoMo Pay</span>
+                      </button>
+                      <button type="button" onClick={() => setNetwork('Airtel')} className="bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-2">
+                        <span className="text-lg">Airtel</span>
+                        <span className="text-[10px] uppercase tracking-wider">Money</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-[#120804] border border-purple-500/30 rounded-xl p-4 text-xs space-y-3 mb-4 animate-fade-in mt-4">
+                    <div className="flex justify-between items-center">
+                      <div className="font-bold text-purple-400 uppercase tracking-wider">{network} Instructions</div>
+                      <button type="button" onClick={() => setNetwork(null)} className="text-zinc-400 text-[10px] hover:text-white uppercase underline">Change</button>
+                    </div>
+                    
+                    {network === 'MTN' ? (
+                      <>
+                        <div className="text-zinc-300">1. Dial <strong className="text-white select-all">*165*3#</strong></div>
+                        <div className="text-zinc-300">2. Merchant Code: <strong className="text-white select-all text-lg">44867602</strong></div>
+                        <div className="text-zinc-300">3. Name: <strong className="text-white">Nabirye Flavia</strong></div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-zinc-300">1. Dial <strong className="text-white select-all">*185*9#</strong></div>
+                        <div className="text-zinc-300">2. Merchant Code: <strong className="text-white select-all text-lg">7182484</strong></div>
+                        <div className="text-zinc-300">3. Name: <strong className="text-white">Essentials limited</strong></div>
+                      </>
+                    )}
+                    <div className="text-zinc-400 text-[10px] mt-2 pt-2 border-t border-white/10">Enter the Transaction ID from your SMS receipt below.</div>
+                  </div>
+                )}
+              </>
+            )}
 
-            {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
-            
-            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-purple-700 to-purple-900 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(168,85,247,0.3)] disabled:opacity-50">
-              {loading ? 'Sending Request...' : 'Submit Deposit'}
-            </button>
+            {/* ZAMBIA / RWANDA INSTRUCTIONS (ALWAYS SHOWN IF NOT UGX) */}
+            {currency !== 'UGX' && (
+              <div className="bg-[#120804] border border-purple-500/30 rounded-xl p-4 text-xs space-y-3 mb-4">
+                <div className="font-bold text-purple-400 uppercase tracking-wider">Manual Deposit</div>
+                {currency === 'RWF' ? (
+                  <>
+                    <div className="text-zinc-300">1. Dial <strong className="text-white">*182#</strong></div>
+                    <div className="text-zinc-300">2. Send MTN to: <strong className="text-white select-all">+256 768 521 710</strong><br/><span className="text-zinc-400 text-[10px]">(Nabirye Flavia)</span></div>
+                    <div className="text-zinc-300">   OR Airtel to: <strong className="text-white select-all">+256 749 507 321</strong><br/><span className="text-zinc-400 text-[10px]">(Naiema Katuramu)</span></div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-zinc-300">1. Dial <strong className="text-white">*115#</strong> (or your network's transfer code)</div>
+                    <div className="text-zinc-300">2. Send to: <strong className="text-white select-all">+256 705 371 032</strong></div>
+                    <div className="text-zinc-300">3. Name: <strong className="text-white">Ronald Lubwama</strong></div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ONLY SHOW THE REST OF THE FORM IF NETWORK IS SELECTED (FOR UGX) OR IF NOT UGX */}
+            {(currency !== 'UGX' || network) && (
+              <div className="animate-fade-in space-y-4">
+                <div>
+                  <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Phone Number Used</label>
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-purple-500 transition" required />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider">Transaction ID</label>
+                  <input type="text" value={manualTxId} onChange={(e) => setManualTxId(e.target.value)} placeholder="e.g. TX123456789" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-purple-500 transition" required />
+                </div>
+
+                {msg && <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">{msg}</div>}
+                
+                <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-purple-700 to-purple-900 text-white font-bold py-4 rounded-xl mt-4 shadow-[0_0_15px_rgba(168,85,247,0.3)] disabled:opacity-50">
+                  {loading ? 'Sending Request...' : 'Submit Deposit'}
+                </button>
+              </div>
+            )}
           </form>
         ) : (
           <div className="text-center py-8">
@@ -515,4 +557,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-      }
+                                               }
