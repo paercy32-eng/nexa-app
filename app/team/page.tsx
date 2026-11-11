@@ -19,16 +19,18 @@ export default function TeamPage() {
   useEffect(() => {
     async function load() {
       try {
-        // 1. Fetch User Info
         const meRes = await fetch('/api/me?t=' + Date.now(), { cache: 'no-store' });
         if (meRes.status === 401) { router.replace('/login'); return; }
         const meData = await meRes.json();
         setUser(meData.user);
 
-        // 2. Fetch Team Stats
         const rewardsRes = await fetch('/api/rewards?t=' + Date.now(), { cache: 'no-store' });
         if (rewardsRes.ok) {
           const rewardsData = await rewardsRes.json();
+          
+          // 🚨 RAW DEBUG POPUP
+          alert("API IS RETURNING:\n" + JSON.stringify(rewardsData.rawDebug, null, 2));
+          
           setTeamStats({
             teamSize: rewardsData.teamSize || 0,
             l1Count: rewardsData.l1Count || 0,
