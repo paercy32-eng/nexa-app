@@ -23,14 +23,17 @@ export async function GET(req: NextRequest) {
     const userId = session.userId;
 
     // 1. Call the database function
-    const { data: teamData, error: teamError } = await supabaseAdmin.rpc('get_team_details', { root_id: userId });
+    const { data: rawData, error: teamError } = await supabaseAdmin.rpc('get_team_details', { root_id: userId });
 
     if (teamError) throw teamError;
 
-    // 2. Extract the counts
+    // 🚨 FIX: Parse data if Supabase returns it as a string
+    const teamData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+
+    // 2. Extract the counts safely
     const l1Count = teamData.l1_count || 0;
     const l2Count = teamData.l2_count || 0;
-    const l3Count = teamData.l3_count || 0; // 👈 LEVEL 3 IS RIGHT HERE
+    const l3Count = teamData.l3_count || 0;
     const teamSize = teamData.team_size || 0;
     const allIds = teamData.all_ids || [];
 
@@ -69,13 +72,14 @@ export async function GET(req: NextRequest) {
         teamSize, 
         l1Count, 
         l2Count, 
-        l3Count, // 👈 SENDING LEVEL 3 TO THE FRONTEND
-        tiers
+        l3Count, 
+        tiers,
+        rawDebug: rawData // 👈 Sending raw data for the debug popup
       },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error('Rewards API error:', err);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
   }
 }
