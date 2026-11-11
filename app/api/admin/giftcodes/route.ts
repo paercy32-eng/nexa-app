@@ -21,17 +21,15 @@ export async function POST(req: NextRequest) {
     const session = await verifySession(token);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { amount, maxUses } = await req.json();
-    
-    const codeAmount = Number(amount) || 5000;
+    const { maxUses } = await req.json();
     const codeMaxUses = Number(maxUses) || 10;
 
     const newCode = {
       code: generateCode(),
-      amount: codeAmount,
+      amount: 0, // 👈 Amount is now handled randomly on redemption
       max_uses: codeMaxUses,
       times_used: 0,
-      is_used: false // Keeping this for backwards compatibility, but times_used is what matters now
+      is_used: false
     };
 
     const { data, error } = await supabaseAdmin
