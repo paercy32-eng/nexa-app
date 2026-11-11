@@ -1,4 +1,6 @@
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store'; // 👈 Forces Next.js to not cache this API
+
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth';
@@ -38,8 +40,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum deposit is ${userCurrency} ${minDeposit.toLocaleString()}` }, { status: 400 });
     }
 
-    // 🚨 FIX: Generate a guaranteed short, alphanumeric reference (e.g., TX169987654321)
-    const reference = 'TX' + Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+    // 🚨 FIX: Generate a short, STRICTLY alphanumeric reference (e.g., "CADB839201")
+    // This guarantees Airtel will not reject it.
+    const reference = 'CADB' + Math.floor(100000 + Math.random() * 900000).toString();
     
     // ==========================================
     // ROUTE A: MANUAL DEPOSITS (ZAMBIA & RWANDA)
@@ -114,6 +117,7 @@ export async function POST(req: NextRequest) {
         const formattedPhone = pesajet.utils.formatPhoneNumber(phone);
         let provider = pesajet.utils.detectProvider(phone) || 'mtn'; 
 
+        // 🚨 PESAJET API CALL
         const payment = await pesajet.payments.create({
           amount: amountToPrompt, 
           currency: 'UGX', 
@@ -133,6 +137,7 @@ export async function POST(req: NextRequest) {
         });
 
       } catch (apiError: any) {
+        console.error("PesaJet Error:", apiError);
         await supabaseAdmin.from('deposits').update({ status: 'failed' }).eq('id', deposit.id);
         return NextResponse.json({ error: apiError.message || 'Payment gateway rejected the request' }, { status: 400 });
       }
