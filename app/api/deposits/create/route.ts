@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store'; // 👈 Forces Next.js to not cache this API
+export const fetchCache = 'force-no-store';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -40,8 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum deposit is ${userCurrency} ${minDeposit.toLocaleString()}` }, { status: 400 });
     }
 
-    // 🚨 FIX: Generate a short, STRICTLY alphanumeric reference (e.g., "CADB839201")
-    // This guarantees Airtel will not reject it.
+    // 🚨 STRICT ALPHANUMERIC REFERENCE FOR AIRTEL
     const reference = 'CADB' + Math.floor(100000 + Math.random() * 900000).toString();
     
     // ==========================================
@@ -87,7 +86,6 @@ export async function POST(req: NextRequest) {
     // ROUTE B: UGANDA (PESAJET AUTOMATED)
     // ==========================================
     if (userCountry === 'UG') {
-      // Calculate amount to prompt (amount + fee)
       let amountToPrompt = Math.ceil(numAmount / (1 - PESAJET_FEE_RATE));
 
       const { data: deposit, error: insErr } = await supabaseAdmin
@@ -117,7 +115,6 @@ export async function POST(req: NextRequest) {
         const formattedPhone = pesajet.utils.formatPhoneNumber(phone);
         let provider = pesajet.utils.detectProvider(phone) || 'mtn'; 
 
-        // 🚨 PESAJET API CALL
         const payment = await pesajet.payments.create({
           amount: amountToPrompt, 
           currency: 'UGX', 
@@ -127,12 +124,15 @@ export async function POST(req: NextRequest) {
           description: `Cadbury Deposit`,
         });
 
+        // 🚨 Safely extract the transaction ID from PesaJet's response
+        const pjTxId = (payment as any)?.transactionId || (payment as any)?.id || (payment as any)?.transaction?.id || (payment as any)?.data?.id;
+
         return NextResponse.json({ 
           success: true, 
           depositId: deposit.id, 
           reference, 
           amount: numAmount, 
-          transactionId: payment.transactionId,
+          transactionId: pjTxId, 
           message: `A PIN prompt for ${amountToPrompt.toLocaleString()} UGX was sent to your phone.` 
         });
 
@@ -148,4 +148,4 @@ export async function POST(req: NextRequest) {
     console.error(err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+    }
