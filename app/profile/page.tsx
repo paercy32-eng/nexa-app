@@ -11,7 +11,7 @@ type Me = {
 };
 
 const CS_TELEGRAM_LINK = 'https://t.me/pixel56899'; 
-const WHATSAPP_CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbDiFDI3LdQdJfKehp1m'; // 👈 NEW LINK
+const WHATSAPP_CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbDiFDI3LdQdJfKehp1m';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -148,22 +148,18 @@ export default function ProfilePage() {
           </div>
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-purple-400 transition">Deposit</span>
         </button>
-
         <button onClick={() => setShowWithdraw(true)} className="flex flex-col items-center gap-2 group">
           <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(34,211,238,0.1)]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </div>
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-cyan-400 transition">Withdraw</span>
         </button>
-
         <a href={CS_TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
           <div className="w-14 h-14 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 group-hover:bg-fuchsia-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(217,70,239,0.1)]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
           </div>
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-fuchsia-400 transition">Service</span>
         </a>
-
-        {/* 👈 WhatsApp Channel Icon (Replaced Telegram Group) */}
         <a href={WHATSAPP_CHANNEL_LINK} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
           <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400 group-hover:bg-green-500/20 group-active:scale-95 transition shadow-[0_0_15px_rgba(34,197,94,0.1)]">
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
@@ -303,11 +299,13 @@ function GiftCodeModal({ onClose, onSuccess }: { onClose: () => void, onSuccess:
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-sm bg-[#1a0b1c] border border-purple-500/30 rounded-3xl p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start mb-6">
-  <div className="text-xl font-black text-white flex items-center gap-2">
-    <span className="text-amber-400">🎁</span> Gift Code
-  </div>
-  <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
-</div>
+          <div>
+            <div className="text-xl font-black text-white flex items-center gap-2">
+              <span className="text-amber-400">🎁</span> Gift Code
+            </div>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition text-2xl leading-none">×</button>
+        </div>
         <form onSubmit={submit} className="space-y-4">
           <div>
             <input type="text" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Enter gift code" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-center text-white font-bold tracking-widest text-lg focus:outline-none focus:border-purple-500 transition uppercase" required />
@@ -362,7 +360,14 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
     let count = 0;
     const interval = setInterval(async () => {
       count++; setPollCount(count);
-      if (count >= 20) { clearInterval(interval); onClose(); return; }
+      
+      // 🚨 INCREASED TO 40 ATTEMPTS (120 SECONDS)
+      if (count >= 40) { 
+        clearInterval(interval); 
+        onClose(); 
+        return; 
+      }
+      
       try {
         const res = await fetch('/api/deposits/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reference: ref, transactionId }) });
         const data = await res.json();
@@ -427,7 +432,7 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
             </div>
             <div className="text-lg font-bold text-white mb-2">{isManual ? 'Deposit Submitted!' : 'Check your phone'}</div>
             <div className="text-sm text-zinc-400 mb-4">{isManual ? 'Admin will verify your Transaction ID and credit your account shortly.' : 'Enter your PIN to complete the deposit.'}</div>
-            {!isManual && (<div className="text-xs text-purple-400 font-bold animate-pulse">Verifying payment... ({60 - pollCount * 3}s)</div>)}
+            {!isManual && (<div className="text-xs text-purple-400 font-bold animate-pulse">Verifying payment... ({120 - pollCount * 3}s)</div>)}
             {isManual && (<button onClick={onClose} className="mt-6 w-full border border-white/10 text-zinc-300 font-bold py-4 rounded-xl hover:bg-white/5 transition">Close</button>)}
           </div>
         )}
@@ -491,4 +496,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-      }
+        }
