@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'You have already claimed this gift code.' }, { status: 400 });
     }
 
-    // 4. Get User details (currency and current balance)
+    // 4. Get User details
     const { data: user } = await supabaseAdmin
       .from('users')
       .select('balance, currency')
@@ -53,9 +53,12 @@ export async function POST(req: NextRequest) {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    // 5. Convert UGX amount to user's local currency
+    // 🚨 5. GENERATE RANDOM AMOUNT BETWEEN 50 AND 700 UGX
+    const randomUGX = Math.floor(Math.random() * (700 - 50 + 1)) + 50;
+    
+    // Convert the random UGX amount to the user's local currency
     const userCurrency = user.currency || 'UGX';
-    const creditAmount = convertFromUGX(Number(giftCode.amount), userCurrency);
+    const creditAmount = convertFromUGX(randomUGX, userCurrency);
 
     // 6. Update the code's times_used
     const { error: updateError } = await supabaseAdmin
@@ -87,7 +90,7 @@ export async function POST(req: NextRequest) {
       type: 'gift_code',
       amount: creditAmount,
       status: 'completed',
-      meta: { code: giftCode.code, original_ugx: giftCode.amount },
+      meta: { code: giftCode.code, original_ugx: randomUGX },
     });
 
     return NextResponse.json({
