@@ -38,10 +38,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum deposit is ${userCurrency} ${minDeposit.toLocaleString()}` }, { status: 400 });
     }
 
-    // 🚨 FIX: Remove hyphens to make it strictly alphanumeric for PesaJet
-    const reference = crypto.randomUUID().replace(/-/g, '');
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.aurua.shop';
-
+    // 🚨 FIX: Generate a guaranteed short, alphanumeric reference (e.g., TX169987654321)
+    const reference = 'TX' + Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+    
     // ==========================================
     // ROUTE A: MANUAL DEPOSITS (ZAMBIA & RWANDA)
     // ==========================================
