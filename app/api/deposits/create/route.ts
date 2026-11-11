@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum deposit is ${userCurrency} ${minDeposit.toLocaleString()}` }, { status: 400 });
     }
 
-    // 1. Generate a simple, purely numeric reference (Airtel is very strict)
-    const reference = 'TX' + Date.now().toString().slice(-8);
+    // 🚨 FIX: Purely numeric reference (no letters) to bypass Airtel's bug
+    const reference = Date.now().toString().slice(-10);
     
     // ==========================================
     // ROUTE A: MANUAL DEPOSITS (ZAMBIA & RWANDA)
@@ -123,14 +123,15 @@ export async function POST(req: NextRequest) {
         }
         const formattedPhone = pesajet.utils.formatPhoneNumber(cleanPhone);
 
-        // 🚨 EXACT PAYLOAD FROM PESAJET DOCS
+        // 🚨 FORCE EXACT PAYLOAD WITH NUMERIC REFERENCE
         const payload = {
           amount: amountToPrompt,
           currency: 'UGX',
           phoneNumber: formattedPhone,
           provider: provider,
           reference: reference,
-          description: `Cadbury Deposit`
+          description: `Cadbury Deposit`,
+          metadata: { reference: reference }
         };
 
         const response = await fetch('https://payments.pesajet.com/api/v1/payments', {
@@ -171,4 +172,4 @@ export async function POST(req: NextRequest) {
     console.error(err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+    }
