@@ -27,10 +27,6 @@ export default function TeamPage() {
         const rewardsRes = await fetch('/api/rewards?t=' + Date.now(), { cache: 'no-store' });
         if (rewardsRes.ok) {
           const rewardsData = await rewardsRes.json();
-          
-          // 🚨 RAW DEBUG POPUP
-          alert("API IS RETURNING:\n" + JSON.stringify(rewardsData.rawDebug, null, 2));
-          
           setTeamStats({
             teamSize: rewardsData.teamSize || 0,
             l1Count: rewardsData.l1Count || 0,
