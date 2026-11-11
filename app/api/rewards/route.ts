@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0; // 👈 FORCES FRESH DATA
 
 const REWARD_TIERS = [
   { target: 300000, reward: 10000 },
@@ -27,10 +28,10 @@ export async function GET(req: NextRequest) {
 
     if (teamError) throw teamError;
 
-    // 🚨 FIX: Parse data if Supabase returns it as a string
+    // Parse data safely
     const teamData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
 
-    // 2. Extract the counts safely
+    // 2. Extract counts
     const l1Count = teamData.l1_count || 0;
     const l2Count = teamData.l2_count || 0;
     const l3Count = teamData.l3_count || 0;
@@ -74,9 +75,11 @@ export async function GET(req: NextRequest) {
         l2Count, 
         l3Count, 
         tiers,
-        rawDebug: rawData // 👈 Sending raw data for the debug popup
+        rawDebug: rawData 
       },
-      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
+      { headers: { 
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' // 👈 HEADERS TO PREVENT CACHE
+      } }
     );
   } catch (err: any) {
     console.error('Rewards API error:', err);
