@@ -14,33 +14,37 @@ export async function POST(req: NextRequest) {
     const { code } = await req.json();
     if (!code) return NextResponse.json({ error: 'Code is required' }, { status: 400 });
 
+    const cleanCode = code.trim().toUpperCase();
+
     // 1. Find the code
     const { data: giftCode, error: codeError } = await supabaseAdmin
       .from('gift_codes')
       .select('*')
-      .eq('code', code)
+      .eq('code', cleanCode)
       .single();
 
     if (codeError || !giftCode) {
       return NextResponse.json({ error: 'Invalid gift code.' }, { status: 404 });
     }
 
-    if (giftCode.is_used) {
-      return NextResponse.json({ error: 'This code has already been used.' }, { status: 400 });
+    // 2. Check if the code has reached its max uses
+    if (giftCode.times_used >= giftCode.max_uses) {
+      return NextResponse.json({ error: 'This gift code has expired (max uses reached).' }, { status: 400 });
     }
 
-    // 2. Mark it as used safely (prevents race conditions)
-    const { error: updateError } = await supabaseAdmin
-      .from('gift_codes')
-      .update({ is_used: true, used_by: session.userId })
-      .eq('id', giftCode.id)
-      .eq('is_used', false); // Ensures it hasn't been claimed milliseconds ago
+    // 3. Check if THIS user has already claimed it
+    const { data: existingClaim } = await supabaseAdmin
+      .from('gift_code_claims')
+      .select('id')
+      .eq('code', cleanCode)
+      .eq('user_id', session.userId)
+      .maybeSingle();
 
-    if (updateError) {
-      return NextResponse.json({ error: 'Failed to redeem code. Try again.' }, { status: 500 });
+    if (existingClaim) {
+      return NextResponse.json({ error: 'You have already claimed this gift code.' }, { status: 400 });
     }
 
-    // 3. Get User details (currency and current balance)
+    // 4. Get User details (currency and current balance)
     const { data: user } = await supabaseAdmin
       .from('users')
       .select('balance, currency')
@@ -49,18 +53,35 @@ export async function POST(req: NextRequest) {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    // 4. Convert UGX amount to user's local currency
+    // 5. Convert UGX amount to user's local currency
     const userCurrency = user.currency || 'UGX';
     const creditAmount = convertFromUGX(Number(giftCode.amount), userCurrency);
 
-    // 5. Add to balance
+    // 6. Update the code's times_used
+    const { error: updateError } = await supabaseAdmin
+      .from('gift_codes')
+      .update({ times_used: giftCode.times_used + 1 })
+      .eq('id', giftCode.id);
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to process code. Try again.' }, { status: 500 });
+    }
+
+    // 7. Record the claim so they can't use it again
+    await supabaseAdmin.from('gift_code_claims').insert({
+      code: cleanCode,
+      user_id: session.userId,
+      amount: creditAmount
+    });
+
+    // 8. Add to balance
     const newBalance = Number(user.balance || 0) + creditAmount;
     await supabaseAdmin
       .from('users')
       .update({ balance: newBalance })
       .eq('id', session.userId);
 
-    // 6. Log the transaction
+    // 9. Log the transaction
     await supabaseAdmin.from('transactions').insert({
       user_id: session.userId,
       type: 'gift_code',
@@ -79,4 +100,4 @@ export async function POST(req: NextRequest) {
     console.error('Redeem error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-        }
+}
