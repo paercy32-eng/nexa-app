@@ -22,21 +22,21 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Fetch ALL users at once (Bypasses ALL query bugs)
+    // 1. Fetch ALL users at once
     const { data: allUsers, error: allUsersError } = await supabaseAdmin
       .from('users')
       .select('id, referred_by, phone');
 
     if (allUsersError) throw allUsersError;
 
-    // Clean the IDs just in case there are hidden spaces
+    // Clean the IDs (trim spaces and force lowercase)
     const safeUsers = (allUsers ?? []).map(u => ({
       ...u,
-      id: u.id?.trim(),
-      referred_by: u.referred_by?.trim()
+      id: u.id?.trim().toLowerCase(),
+      referred_by: u.referred_by?.trim().toLowerCase()
     }));
 
-    const safeUserId = userId.trim();
+    const safeUserId = userId.trim().toLowerCase();
 
     // 2. Build levels using pure JavaScript
     const l1Ids = safeUsers.filter(u => u.referred_by === safeUserId).map(u => u.id);
@@ -89,9 +89,11 @@ export async function GET(req: NextRequest) {
         tiers,
         debug: {
           sessionUserId: safeUserId,
-          allUsersCount: safeUsers.length,
-          // 👈 SHOWING YOU THE RAW DATABASE DUMP
-          allUsers: safeUsers 
+          totalUsersInDb: safeUsers.length,
+          l1Count,
+          l2Count,
+          l3Count,
+          teamSize
         }
       },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
