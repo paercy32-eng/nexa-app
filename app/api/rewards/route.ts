@@ -22,27 +22,32 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Call the new database function
+    // 1. Call the database function
     const { data: teamData, error: teamError } = await supabaseAdmin.rpc('get_team_details', { root_id: userId });
 
     if (teamError) throw teamError;
 
-    const { l1_count, l2_count, l3_count, team_size, all_ids } = teamData;
+    // 2. Extract the counts
+    const l1Count = teamData.l1_count || 0;
+    const l2Count = teamData.l2_count || 0;
+    const l3Count = teamData.l3_count || 0; // 👈 LEVEL 3 IS RIGHT HERE
+    const teamSize = teamData.team_size || 0;
+    const allIds = teamData.all_ids || [];
 
-    // 2. Calculate Team Investment using the IDs
+    // 3. Calculate Team Investment
     let teamInvestment = 0;
-    if (all_ids && all_ids.length > 0) {
+    if (allIds.length > 0) {
       const { data: modules } = await supabaseAdmin
         .from('user_modules')
         .select('price_paid')
-        .in('user_id', all_ids);
+        .in('user_id', allIds);
 
       if (modules) {
         teamInvestment = modules.reduce((sum, m) => sum + Number(m.price_paid || 0), 0);
       }
     }
 
-    // 3. Check claimed tiers
+    // 4. Check claimed tiers
     const { data: existingRewards } = await supabaseAdmin
       .from('transactions')
       .select('meta')
@@ -61,10 +66,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       { 
         teamInvestment, 
-        teamSize: team_size, 
-        l1Count: l1_count, 
-        l2Count: l2_count, 
-        l3Count: l3_count, 
+        teamSize, 
+        l1Count, 
+        l2Count, 
+        l3Count, // 👈 SENDING LEVEL 3 TO THE FRONTEND
         tiers
       },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
