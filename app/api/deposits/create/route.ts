@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum deposit is ${userCurrency} ${minDeposit.toLocaleString()}` }, { status: 400 });
     }
 
-    // 1. Generate a simple, valid alphanumeric reference (e.g., TX83920145)
+    // 1. Generate a simple, valid alphanumeric reference
     const reference = 'TX' + Date.now().toString().slice(-8);
     
     // ==========================================
@@ -112,33 +112,42 @@ export async function POST(req: NextRequest) {
       });
 
       try {
-        // 🚨 FIX: Clean the phone number (remove spaces, keep + and digits)
         const cleanPhone = phone.replace(/[^\d+]/g, '');
-        
-        // Force provider detection based on the clean number
         let provider = pesajet.utils.detectProvider(cleanPhone);
         if (!provider) {
-          // Fallback if detectProvider returns null (e.g., for 073 or unexpected formats)
           if (cleanPhone.includes('70') || cleanPhone.includes('74')) {
             provider = 'airtel';
           } else {
             provider = 'mtn';
           }
         }
-
-        // Format the phone number
         const formattedPhone = pesajet.utils.formatPhoneNumber(cleanPhone);
 
-        const payment = await pesajet.payments.create({
-          amount: amountToPrompt, 
-          currency: 'UGX', 
-          phoneNumber: formattedPhone, 
-          provider: provider, 
-          reference: reference, 
-          description: `Cadbury Deposit`,
+        // 🚨 BYPASS THE SDK AND CALL PESAJET DIRECTLY
+        const response = await fetch('https://payments.pesajet.com/api/v1/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': process.env.PESAJET_API_KEY!,
+          },
+          body: JSON.stringify({
+            amount: amountToPrompt,
+            currency: 'UGX',
+            phoneNumber: formattedPhone,
+            provider: provider,
+            reference: reference,
+            description: `Cadbury Deposit`,
+          }),
         });
 
-        const pjTxId = (payment as any)?.transactionId || (payment as any)?.id || (payment as any)?.transaction?.id || (payment as any)?.data?.id;
+        const payment = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payment.message || payment.error || 'PesaJet API rejected the request');
+        }
+
+        // Extract the transaction ID from the direct API response
+        const pjTxId = payment.transactionId || payment.id || payment.transaction?.id || payment.data?.id;
 
         return NextResponse.json({ 
           success: true, 
@@ -150,7 +159,7 @@ export async function POST(req: NextRequest) {
         });
 
       } catch (apiError: any) {
-        console.error("PesaJet Error:", apiError);
+        console.error("PesaJet Direct API Error:", apiError);
         await supabaseAdmin.from('deposits').update({ status: 'failed' }).eq('id', deposit.id);
         return NextResponse.json({ error: apiError.message || 'Payment gateway rejected the request' }, { status: 400 });
       }
