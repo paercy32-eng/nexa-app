@@ -123,22 +123,15 @@ export async function POST(req: NextRequest) {
         }
         const formattedPhone = pesajet.utils.formatPhoneNumber(cleanPhone);
 
-        // 🚨 BYPASS THE SDK AND FORCE EVERY REFERENCE FIELD
+        // 🚨 EXACT PAYLOAD FROM PESAJET DOCS
         const payload = {
           amount: amountToPrompt,
           currency: 'UGX',
           phoneNumber: formattedPhone,
-          msisdn: formattedPhone, // Airtel sometimes expects this
           provider: provider,
           reference: reference,
-          reference_id: reference,
-          external_reference: reference,
-          transactionId: reference,
-          description: `Cadbury Deposit`,
-          metadata: { reference: reference, reference_id: reference }
+          description: `Cadbury Deposit`
         };
-
-        console.log("PESAJET PAYLOAD SENT:", JSON.stringify(payload, null, 2));
 
         const response = await fetch('https://payments.pesajet.com/api/v1/payments', {
           method: 'POST',
@@ -150,7 +143,6 @@ export async function POST(req: NextRequest) {
         });
 
         const payment = await response.json();
-        console.log("PESAJET RESPONSE RECEIVED:", JSON.stringify(payment, null, 2));
 
         if (!response.ok) {
           throw new Error(payment.message || payment.error || 'PesaJet API rejected the request');
