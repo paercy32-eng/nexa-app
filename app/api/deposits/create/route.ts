@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum deposit is ${userCurrency} ${minDeposit.toLocaleString()}` }, { status: 400 });
     }
 
-    // 🚨 STRICT ALPHANUMERIC REFERENCE FOR AIRTEL
-    const reference = 'CADB' + Math.floor(100000 + Math.random() * 900000).toString();
+    // 1. Generate a simple, valid alphanumeric reference (e.g., TX83920145)
+    const reference = 'TX' + Date.now().toString().slice(-8);
     
     // ==========================================
     // ROUTE A: MANUAL DEPOSITS (ZAMBIA & RWANDA)
@@ -112,8 +112,22 @@ export async function POST(req: NextRequest) {
       });
 
       try {
-        const formattedPhone = pesajet.utils.formatPhoneNumber(phone);
-        let provider = pesajet.utils.detectProvider(phone) || 'mtn'; 
+        // 🚨 FIX: Clean the phone number (remove spaces, keep + and digits)
+        const cleanPhone = phone.replace(/[^\d+]/g, '');
+        
+        // Force provider detection based on the clean number
+        let provider = pesajet.utils.detectProvider(cleanPhone);
+        if (!provider) {
+          // Fallback if detectProvider returns null (e.g., for 073 or unexpected formats)
+          if (cleanPhone.includes('70') || cleanPhone.includes('74')) {
+            provider = 'airtel';
+          } else {
+            provider = 'mtn';
+          }
+        }
+
+        // Format the phone number
+        const formattedPhone = pesajet.utils.formatPhoneNumber(cleanPhone);
 
         const payment = await pesajet.payments.create({
           amount: amountToPrompt, 
@@ -124,7 +138,6 @@ export async function POST(req: NextRequest) {
           description: `Cadbury Deposit`,
         });
 
-        // 🚨 Safely extract the transaction ID from PesaJet's response
         const pjTxId = (payment as any)?.transactionId || (payment as any)?.id || (payment as any)?.transaction?.id || (payment as any)?.data?.id;
 
         return NextResponse.json({ 
@@ -148,4 +161,4 @@ export async function POST(req: NextRequest) {
     console.error(err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-    }
+}
