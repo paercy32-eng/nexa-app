@@ -30,6 +30,8 @@ export default function TeamPage() {
         if (rewardsRes.ok) {
           const rewardsData = await rewardsRes.json();
           
+          // 🚨 TEMPORARY DEBUG ALERT - ADDED BACK TO SEE L2 & L3
+          alert("DEBUG INFO:\n" + JSON.stringify(rewardsData.debug, null, 2));
           
           setTeamStats({
             teamSize: rewardsData.teamSize || 0,
