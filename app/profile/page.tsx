@@ -321,13 +321,13 @@ function GiftCodeModal({ onClose, onSuccess }: { onClose: () => void, onSuccess:
 }
 
 // ==========================================
-// RECHARGE (DEPOSIT) MODAL - UPDATED MULTI-STEP
+// RECHARGE (DEPOSIT) MODAL - CLEAN BANK A/B
 // ==========================================
 function RechargeModal({ currency, onClose, onSuccess }: any) {
   const minDeposit = convertFromUGX(20000, currency);
   
-  // 🚨 STEP 1: CHOOSE METHOD (Manual or PesaJet)
-  const [method, setMethod] = useState<'pesajet' | 'manual' | null>(null);
+  // 🚨 STEP 1: CHOOSE METHOD (Bank A or Bank B)
+  const [method, setMethod] = useState<'manual' | 'pesajet' | null>(null);
   
   // 🚨 STEP 2: IF MANUAL, CHOOSE NETWORK
   const [network, setNetwork] = useState<'MTN' | 'Airtel' | null>(null);
@@ -353,7 +353,6 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
   async function submit(e: any) {
     e.preventDefault();
     
-    // If Manual, require TX ID
     if (method === 'manual' && !manualTxId) { 
       setMsg('Please enter the Transaction ID from your mobile money.'); 
       return; 
@@ -380,7 +379,6 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
         if (method === 'manual') {
           setSent(true);
         } else {
-          // PesaJet Automated Flow
           setReference(data.reference);
           setTxId(data.transactionId);
           setSent(true);
@@ -459,13 +457,13 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
                   <div>
                     <label className="block text-[10px] text-zinc-500 font-bold mb-2 uppercase tracking-wider mt-4">Select Deposit Method</label>
                     <div className="grid grid-cols-2 gap-3">
-                      <button type="button" onClick={() => setMethod('manual')} className="bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-purple-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-1">
-                        <span className="text-sm">Option A</span>
-                        <span className="text-[9px] uppercase tracking-wider opacity-70">Manual / Merchant</span>
+                      {/* 👈 CLEAN BANK A */}
+                      <button type="button" onClick={() => setMethod('manual')} className="bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-purple-400 font-bold py-4 rounded-xl transition flex items-center justify-center">
+                        <span className="text-sm">Bank A</span>
                       </button>
-                      <button type="button" onClick={() => setMethod('pesajet')} className="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-1">
-                        <span className="text-sm">Option B</span>
-                        <span className="text-[9px] uppercase tracking-wider opacity-70">PesaJet (Auto)</span>
+                      {/* 👈 CLEAN BANK B */}
+                      <button type="button" onClick={() => setMethod('pesajet')} className="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 font-bold py-4 rounded-xl transition flex items-center justify-center">
+                        <span className="text-sm">Bank B</span>
                       </button>
                     </div>
                   </div>
@@ -473,7 +471,7 @@ function RechargeModal({ currency, onClose, onSuccess }: any) {
                   <div className="animate-fade-in mt-4">
                     <div className="flex justify-between items-center mb-3">
                       <div className="font-bold text-purple-400 uppercase tracking-wider text-xs">
-                        {method === 'manual' ? 'Manual Instructions' : 'PesaJet Automated'}
+                        {method === 'manual' ? 'Bank A Instructions' : 'Bank B Instructions'}
                       </div>
                       <button type="button" onClick={() => { setMethod(null); setNetwork(null); }} className="text-zinc-400 text-[10px] hover:text-white uppercase underline">Change</button>
                     </div>
@@ -649,4 +647,4 @@ function WithdrawModal({ balance, currency, onClose, onSuccess }: any) {
       </div>
     </div>
   );
-               }
+    }
