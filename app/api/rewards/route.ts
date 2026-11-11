@@ -26,27 +26,29 @@ export async function GET(req: NextRequest) {
     const { data: l1Data, error: l1Error } = await supabaseAdmin.from('users').select('id').eq('referred_by', userId);
     const l1Ids = (l1Data ?? []).map(u => u.id);
 
-    // 2. Fetch Level 2
-    let l2Ids: string[] = [];
-    let l2Data: any = [];
+    // 2. Fetch Level 2 (Using a loop to guarantee it works)
+    let l2Data: any[] = [];
     let l2Error: any = null;
     if (l1Ids.length > 0) {
-      const res2 = await supabaseAdmin.from('users').select('id').in('referred_by', l1Ids);
-      l2Data = res2.data;
-      l2Error = res2.error;
-      l2Ids = (l2Data ?? []).map((u: any) => u.id);
+      for (const id of l1Ids) {
+        const res2 = await supabaseAdmin.from('users').select('id').eq('referred_by', id);
+        if (res2.data) l2Data.push(...res2.data);
+        if (res2.error) l2Error = res2.error;
+      }
     }
+    const l2Ids = l2Data.map((u: any) => u.id);
 
-    // 3. Fetch Level 3
-    let l3Ids: string[] = [];
-    let l3Data: any = [];
+    // 3. Fetch Level 3 (Using a loop)
+    let l3Data: any[] = [];
     let l3Error: any = null;
     if (l2Ids.length > 0) {
-      const res3 = await supabaseAdmin.from('users').select('id').in('referred_by', l2Ids);
-      l3Data = res3.data;
-      l3Error = res3.error;
-      l3Ids = (l3Data ?? []).map((u: any) => u.id);
+      for (const id of l2Ids) {
+        const res3 = await supabaseAdmin.from('users').select('id').eq('referred_by', id);
+        if (res3.data) l3Data.push(...res3.data);
+        if (res3.error) l3Error = res3.error;
+      }
     }
+    const l3Ids = l3Data.map((u: any) => u.id);
 
     const allTeamIds = [...l1Ids, ...l2Ids, ...l3Ids];
     const teamSize = allTeamIds.length;
@@ -99,8 +101,8 @@ export async function GET(req: NextRequest) {
           l1Ids: l1Ids,
           rawL2Data: l2Data,
           l2Error: l2Error,
-          rawL3Data: l3Data,   // 👈 Added L3 Data
-          l3Error: l3Error     // 👈 Added L3 Error
+          rawL3Data: l3Data,
+          l3Error: l3Error
         }
       },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
@@ -109,4 +111,4 @@ export async function GET(req: NextRequest) {
     console.error('Rewards API error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-      }
+}
