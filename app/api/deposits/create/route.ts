@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum deposit is ${userCurrency} ${minDeposit.toLocaleString()}` }, { status: 400 });
     }
 
-    // 1. Generate a simple, valid alphanumeric reference
+    // 1. Generate a simple, purely numeric reference (Airtel is very strict)
     const reference = 'TX' + Date.now().toString().slice(-8);
     
     // ==========================================
@@ -123,30 +123,39 @@ export async function POST(req: NextRequest) {
         }
         const formattedPhone = pesajet.utils.formatPhoneNumber(cleanPhone);
 
-        // 🚨 BYPASS THE SDK AND CALL PESAJET DIRECTLY
+        // 🚨 BYPASS THE SDK AND FORCE EVERY REFERENCE FIELD
+        const payload = {
+          amount: amountToPrompt,
+          currency: 'UGX',
+          phoneNumber: formattedPhone,
+          msisdn: formattedPhone, // Airtel sometimes expects this
+          provider: provider,
+          reference: reference,
+          reference_id: reference,
+          external_reference: reference,
+          transactionId: reference,
+          description: `Cadbury Deposit`,
+          metadata: { reference: reference, reference_id: reference }
+        };
+
+        console.log("PESAJET PAYLOAD SENT:", JSON.stringify(payload, null, 2));
+
         const response = await fetch('https://payments.pesajet.com/api/v1/payments', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-API-Key': process.env.PESAJET_API_KEY!,
           },
-          body: JSON.stringify({
-            amount: amountToPrompt,
-            currency: 'UGX',
-            phoneNumber: formattedPhone,
-            provider: provider,
-            reference: reference,
-            description: `Cadbury Deposit`,
-          }),
+          body: JSON.stringify(payload),
         });
 
         const payment = await response.json();
+        console.log("PESAJET RESPONSE RECEIVED:", JSON.stringify(payment, null, 2));
 
         if (!response.ok) {
           throw new Error(payment.message || payment.error || 'PesaJet API rejected the request');
         }
 
-        // Extract the transaction ID from the direct API response
         const pjTxId = payment.transactionId || payment.id || payment.transaction?.id || payment.data?.id;
 
         return NextResponse.json({ 
