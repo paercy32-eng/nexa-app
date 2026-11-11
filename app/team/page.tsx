@@ -19,19 +19,22 @@ export default function TeamPage() {
   useEffect(() => {
     async function load() {
       try {
-        // 1. Fetch User Info (for referral code and balance)
         const meRes = await fetch('/api/me?t=' + Date.now());
         if (meRes.status === 401) { router.replace('/login'); return; }
         const meData = await meRes.json();
         setUser(meData.user);
 
-        // 2. Fetch Team Stats (for accurate level counts)
         const rewardsRes = await fetch('/api/rewards?t=' + Date.now());
         if (rewardsRes.ok) {
           const rewardsData = await rewardsRes.json();
           
-          // 🚨 TEMPORARY DEBUG ALERT - ADDED BACK TO SEE L2 & L3
-          alert("DEBUG INFO:\n" + JSON.stringify(rewardsData.debug, null, 2));
+          // 🚨 SIMPLE DEBUG ALERT
+          alert(`DEBUG INFO:
+L1 Count: ${rewardsData.l1Count}
+L2 Count: ${rewardsData.l2Count}
+L3 Count: ${rewardsData.l3Count}
+Total Team Size: ${rewardsData.teamSize}
+Total Users in DB: ${rewardsData.debug.totalUsersInDb}`);
           
           setTeamStats({
             teamSize: rewardsData.teamSize || 0,
