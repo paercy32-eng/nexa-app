@@ -22,18 +22,18 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 👈 1. Fetch Level 1 DIRECTLY from the database
-    const { data: l1Data } = await supabaseAdmin.from('users').select('id').eq('referred_by', userId);
+    // 1. Fetch Level 1
+    const { data: l1Data, error: l1Error } = await supabaseAdmin.from('users').select('id').eq('referred_by', userId);
     const l1Ids = (l1Data ?? []).map(u => u.id);
 
-    // 👈 2. Fetch Level 2
+    // 2. Fetch Level 2
     let l2Ids: string[] = [];
     if (l1Ids.length > 0) {
       const { data: l2Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l1Ids);
       l2Ids = (l2Data ?? []).map(u => u.id);
     }
 
-    // 👈 3. Fetch Level 3
+    // 3. Fetch Level 3
     let l3Ids: string[] = [];
     if (l2Ids.length > 0) {
       const { data: l3Data } = await supabaseAdmin.from('users').select('id').in('referred_by', l2Ids);
@@ -77,7 +77,20 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json(
-      { teamInvestment, teamSize, l1Count, l2Count, l3Count, tiers },
+      { 
+        teamInvestment, 
+        teamSize, 
+        l1Count, 
+        l2Count, 
+        l3Count, 
+        tiers,
+        // 👈 DEBUG INFO ADDED HERE
+        debug: {
+          sessionUserId: userId,
+          rawL1Data: l1Data,
+          l1Error: l1Error
+        }
+      },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
     );
   } catch (err) {
