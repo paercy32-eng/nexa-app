@@ -28,13 +28,7 @@ export default function TeamPage() {
         if (rewardsRes.ok) {
           const rewardsData = await rewardsRes.json();
           
-          // 🚨 SIMPLE DEBUG ALERT
-          alert(`DEBUG INFO:
-L1 Count: ${rewardsData.l1Count}
-L2 Count: ${rewardsData.l2Count}
-L3 Count: ${rewardsData.l3Count}
-Total Team Size: ${rewardsData.teamSize}
-Total Users in DB: ${rewardsData.debug.totalUsersInDb}`);
+          // 👈 DEBUG ALERT REMOVED
           
           setTeamStats({
             teamSize: rewardsData.teamSize || 0,
