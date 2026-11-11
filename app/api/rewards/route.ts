@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0; // 👈 FORCES FRESH DATA
+export const revalidate = 0;
 
 const REWARD_TIERS = [
   { target: 300000, reward: 10000 },
@@ -74,11 +74,10 @@ export async function GET(req: NextRequest) {
         l1Count, 
         l2Count, 
         l3Count, 
-        tiers,
-        rawDebug: rawData 
+        tiers
       },
       { headers: { 
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' // 👈 HEADERS TO PREVENT CACHE
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' 
       } }
     );
   } catch (err: any) {
