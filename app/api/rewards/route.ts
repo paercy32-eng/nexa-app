@@ -22,52 +22,31 @@ export async function GET(req: NextRequest) {
 
     const userId = session.userId;
 
-    // 1. Fetch ALL users at once
-    const { data: allUsers, error: allUsersError } = await supabaseAdmin
-      .from('users')
-      .select('id, referred_by, phone');
+    // 1. Call the new database function
+    const { data: teamData, error: teamError } = await supabaseAdmin.rpc('get_team_details', { root_id: userId });
 
-    if (allUsersError) throw allUsersError;
+    if (teamError) throw teamError;
 
-    // Clean the IDs (trim spaces and force lowercase)
-    const safeUsers = (allUsers ?? []).map(u => ({
-      ...u,
-      id: u.id?.trim().toLowerCase(),
-      referred_by: u.referred_by?.trim().toLowerCase()
-    }));
+    const { l1_count, l2_count, l3_count, team_size, all_ids } = teamData;
 
-    const safeUserId = userId.trim().toLowerCase();
-
-    // 2. Build levels using pure JavaScript
-    const l1Ids = safeUsers.filter(u => u.referred_by === safeUserId).map(u => u.id);
-    const l2Ids = safeUsers.filter(u => u.referred_by && l1Ids.includes(u.referred_by)).map(u => u.id);
-    const l3Ids = safeUsers.filter(u => u.referred_by && l2Ids.includes(u.referred_by)).map(u => u.id);
-
-    const allTeamIds = [...l1Ids, ...l2Ids, ...l3Ids];
-    const teamSize = allTeamIds.length;
-    
-    const l1Count = l1Ids.length;
-    const l2Count = l2Ids.length;
-    const l3Count = l3Ids.length;
-
-    // 4. Calculate Team Investment
+    // 2. Calculate Team Investment using the IDs
     let teamInvestment = 0;
-    if (allTeamIds.length > 0) {
+    if (all_ids && all_ids.length > 0) {
       const { data: modules } = await supabaseAdmin
         .from('user_modules')
         .select('price_paid')
-        .in('user_id', allTeamIds);
+        .in('user_id', all_ids);
 
       if (modules) {
         teamInvestment = modules.reduce((sum, m) => sum + Number(m.price_paid || 0), 0);
       }
     }
 
-    // 5. Check claimed tiers
+    // 3. Check claimed tiers
     const { data: existingRewards } = await supabaseAdmin
       .from('transactions')
       .select('meta')
-      .eq('user_id', safeUserId)
+      .eq('user_id', userId)
       .eq('type', 'team_reward');
 
     const claimedTargets = new Set((existingRewards ?? []).map(r => Number(r.meta?.tier_target)));
@@ -82,19 +61,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       { 
         teamInvestment, 
-        teamSize, 
-        l1Count, 
-        l2Count, 
-        l3Count, 
-        tiers,
-        debug: {
-          sessionUserId: safeUserId,
-          totalUsersInDb: safeUsers.length,
-          l1Count,
-          l2Count,
-          l3Count,
-          teamSize
-        }
+        teamSize: team_size, 
+        l1Count: l1_count, 
+        l2Count: l2_count, 
+        l3Count: l3_count, 
+        tiers
       },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } }
     );
