@@ -1,11 +1,20 @@
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth';
-import { convertFromUGX } from '@/lib/currency';
+
+// 🚨 YOUR REWARD MAPPING
+const PURCHASE_REWARDS: Record<number, number> = {
+  20000: 3000,
+  30000: 6000,
+  50000: 8000,
+  80000: 12000,
+  100000: 15000,
+  150000: 20000,
+  250000: 25000,
+  350000: 30000,
+  // Others can be added here later
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,176 +24,114 @@ export async function POST(req: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
 
     const { productId } = await req.json();
-    if (!productId) return NextResponse.json({ error: 'productId required' }, { status: 400 });
+    if (!productId) return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
 
-    // 1. Load user
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('*') 
-      .eq('id', session.userId)
-      .maybeSingle();
-
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    if (user.is_banned) return NextResponse.json({ error: 'Account suspended' }, { status: 403 });
-
-    // 2. Load product (Price in DB is in UGX)
-    const { data: product } = await supabaseAdmin
+    // 1. Get the product details
+    const { data: product, error: prodError } = await supabaseAdmin
       .from('products')
       .select('*')
       .eq('id', productId)
-      .maybeSingle();
+      .single();
 
-    if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    if (!product.is_active) return NextResponse.json({ error: 'Product unavailable' }, { status: 400 });
-
-    const userCurrency = user.currency || 'UGX';
-    
-    // Convert prices to user's local currency
-    const localPrice = convertFromUGX(Number(product.price), userCurrency);
-    const localDailyReturn = convertFromUGX(Number(product.daily_return), userCurrency);
-    const cycleDays = product.cycle_days || 60;
-
-    // 3. 🚨 Check existing modules. 
-    // Any module (bought OR granted by admin) counts here.
-    const { count: moduleCount } = await supabaseAdmin
-      .from('user_modules')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', session.userId);
-
-    const hasNoPreviousPurchases = (moduleCount ?? 0) === 0;
-
-    // 4. FIRST PURCHASE RULES (Skipped if they have a granted product)
-    if (hasNoPreviousPurchases) {
-      const { data: deposits } = await supabaseAdmin
-        .from('deposits') 
-        .select('amount')
-        .eq('user_id', session.userId)
-        .in('status', ['completed', 'approved']); 
-
-      const approvedTotal = (deposits ?? []).reduce(
-        (sum, d) => sum + Number(d.amount),
-        0
-      );
-
-      if (approvedTotal < localPrice) {
-        const missing = localPrice - approvedTotal;
-        return NextResponse.json(
-          {
-            error: `First purchase must be fully funded by approved deposits. You have ${userCurrency} ${approvedTotal.toLocaleString()} in deposits but need ${userCurrency} ${localPrice.toLocaleString()}. Please deposit ${userCurrency} ${missing.toLocaleString()} more.`,
-            reason: 'first_purchase_deposit_required',
-          },
-          { status: 400 }
-        );
-      }
+    if (prodError || !product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // 5. Check balance (Must be enough to deduct)
-    if (Number(user.balance) < localPrice) {
-      return NextResponse.json(
-        { error: `Insufficient balance. You need ${userCurrency} ${(localPrice - Number(user.balance)).toLocaleString()} more to buy this.` },
-        { status: 400 }
-      );
+    // 2. Get the user details
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('balance')
+      .eq('id', session.userId)
+      .single();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // 6. Deduct balance
+    const price = Number(product.price);
+
+    // 3. Check if the user has enough balance
+    if (Number(user.balance) < price) {
+      return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
+    }
+
+    // 4. Deduct the balance
+    const newBalance = Number(user.balance) - price;
     await supabaseAdmin
       .from('users')
-      .update({ balance: Number(user.balance) - localPrice })
+      .update({ balance: newBalance })
       .eq('id', session.userId);
 
-    // 7. Create the module
-    const startedAt = new Date();
-    const expiresAt = new Date(startedAt.getTime() + cycleDays * 24 * 60 * 60 * 1000);
+    // 5. Create the user module (the active investment)
+    const startAt = new Date();
+    const expiresAt = new Date(startAt.getTime() + product.cycle_days * 24 * 60 * 60 * 1000);
 
-    const { data: newModule, error: moduleErr } = await supabaseAdmin
+    const { error: moduleError } = await supabaseAdmin
       .from('user_modules')
       .insert({
         user_id: session.userId,
         product_id: product.id,
         product_name: product.name,
-        price_paid: localPrice, 
-        cycle_days: cycleDays,
-        daily_return: localDailyReturn, 
-        total_creditable: cycleDays * localDailyReturn,
+        price_paid: price,
+        cycle_days: product.cycle_days,
+        daily_return: product.daily_return,
+        total_creditable: Number(product.daily_return) * product.cycle_days,
         days_credited: 0,
         total_credited: 0,
-        started_at: startedAt.toISOString(),
+        started_at: startAt.toISOString(),
         expires_at: expiresAt.toISOString(),
         status: 'active',
-        last_credited_at: startedAt.toISOString(), 
-      })
-      .select('id')
-      .single();
+        last_credited_at: startAt.toISOString(),
+      });
 
-    if (moduleErr || !newModule) {
-      // Refund if insert fails
-      await supabaseAdmin.from('users').update({ balance: Number(user.balance) }).eq('id', session.userId);
-      return NextResponse.json({ error: `Module creation failed: ${moduleErr?.message}` }, { status: 500 });
-    }
+    if (moduleError) throw moduleError;
 
-    // 8. Update total_invested
-    await supabaseAdmin
-      .from('users')
-      .update({ total_invested: Number(user.total_invested || 0) + localPrice })
-      .eq('id', session.userId);
-
-    // 9. Log transaction
+    // 6. Log the investment transaction
     await supabaseAdmin.from('transactions').insert({
       user_id: session.userId,
-      type: 'rental',
-      amount: localPrice,
+      amount: price,
+      type: 'investment',
       status: 'completed',
-      meta: { product_id: product.id, product_name: product.name, module_id: newModule.id, currency: userCurrency },
+      meta: { product_id: product.id, product_name: product.name },
     });
 
-    // 10. Pay referral commissions (ONLY ON VERY FIRST PURCHASE)
-    if (hasNoPreviousPurchases && user.referred_by) {
-      
-      const baseUGXPrice = Number(product.price);
+    // 🚨 7. CHECK FOR PURCHASE REWARD AND CREDIT IT AUTOMATICALLY
+    const rewardAmount = PURCHASE_REWARDS[price];
 
-      const payCommission = async (referrerId: string, amountInUGX: number, level: number) => {
-        const { data: ref } = await supabaseAdmin.from('users').select('balance, currency').eq('id', referrerId).single();
-        if (!ref) return;
+    if (rewardAmount) {
+      // A. Fetch the latest balance (since we just deducted the price)
+      const { data: updatedUser } = await supabaseAdmin
+        .from('users')
+        .select('balance')
+        .eq('id', session.userId)
+        .single();
 
-        const refCurrency = ref.currency || 'UGX';
-        const localCommission = convertFromUGX(amountInUGX, refCurrency);
+      const finalBalance = Number(updatedUser?.balance || 0) + rewardAmount;
 
-        await supabaseAdmin
-          .from('users')
-          .update({ balance: Number(ref.balance || 0) + localCommission })
-          .eq('id', referrerId);
+      // B. Add the reward to their balance
+      await supabaseAdmin
+        .from('users')
+        .update({ balance: finalBalance })
+        .eq('id', session.userId);
 
-        await supabaseAdmin.from('transactions').insert({
-          user_id: referrerId,
-          type: 'referral',
-          amount: localCommission,
-          status: 'completed',
-          meta: { referred_user_id: session.userId, level: level, currency: refCurrency },
-        });
-      };
-
-      // Level 1 (25%)
-      await payCommission(user.referred_by, Math.round(baseUGXPrice * 0.25), 1);
-
-      // Level 2 (3%)
-      const { data: l1User } = await supabaseAdmin.from('users').select('referred_by').eq('id', user.referred_by).single();
-      if (l1User?.referred_by) {
-        await payCommission(l1User.referred_by, Math.round(baseUGXPrice * 0.03), 2);
-
-        // Level 3 (2%)
-        const { data: l2User } = await supabaseAdmin.from('users').select('referred_by').eq('id', l1User.referred_by).single();
-        if (l2User?.referred_by) {
-          await payCommission(l2User.referred_by, Math.round(baseUGXPrice * 0.02), 3);
-        }
-      }
+      // C. Log the reward transaction
+      await supabaseAdmin.from('transactions').insert({
+        user_id: session.userId,
+        amount: rewardAmount,
+        type: 'purchase_reward', // 👈 Special transaction type
+        status: 'completed',
+        meta: { product_name: product.name, reason: 'Instant cashback reward' },
+      });
     }
 
-    return NextResponse.json({
-      success: true,
-      rental: { id: newModule.id, product: product.name, dailyProfit: localDailyReturn, durationDays: cycleDays },
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Investment successful!',
+      reward: rewardAmount || 0
     });
+
   } catch (err: any) {
-    console.error('Rental create error:', err);
-    return NextResponse.json({ error: `Server error` }, { status: 500 });
+    console.error('Investment error:', err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+        }
